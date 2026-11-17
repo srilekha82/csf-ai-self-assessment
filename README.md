@@ -6,7 +6,7 @@ and how you use AI.
 
 ```
 Stage 1: questionnaire  →  Stage 2: answers → maturity scores  →  Stage 3: reports
-(done)                     (being designed)                        (later)
+(done)                     (next)                                  (later)
 ```
 
 ## Quick start
