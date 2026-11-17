@@ -1,9 +1,8 @@
-# /ai-questionnaire — NIST AI RMF 1.0 draft questions for an engagement
+# /ai-questionnaire — NIST AI RMF 1.0 questions for an engagement
 
 Argument: the run folder (`runs/<Org>_<date>`, created by `/generate-questions` or `scripts/intake.py`). Reads its
-`ai_usage.json` (how the org uses AI); writes `ai_scope.json` and `ai_questions_draft_<bank>.json` for the two banks
-(foundation, areas). It does not
-review the draft or write the workbook: `/assess-questionnaire` does both. Uses the AI RMF banks in the repo
+`ai_usage.json` (how the org uses AI); writes `ai_scope.json`, `ai_questions_draft_<bank>.json` for the two banks
+(foundation, areas) and the AI RMF sheet of `questionnaire.xlsx`. Uses the AI RMF banks in the repo
 (built by `/build-ai-bank`). Scripts decide everything here; there is no agent judgement in this command.
 
 Tools: Bash, Read. Working directory: repo root. Say little: the script's summary line, and anything you need from the
@@ -30,6 +29,16 @@ not apply). Every AI question is full discovery: they ask what is done for AI, s
 changes nothing here. Exit 1 lists what is wrong with `ai_usage.json`: tell the user, fix it with them
 (re-run `scripts/intake.py` for a new intake) and run again.
 
+## 4 — Check and write the AI RMF sheet
+`.venv/bin/python ./scripts/check_questionnaire.py <run_dir> --framework ai`
+
+It checks the picked questions against the intake and the banks (every question from the bank, for a role and AI areas
+the org has, nothing missing). Exit 1 lists the problems: show them to the user and stop; never edit the drafts by
+hand. Exit 0:
+
+`.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/ai_questions_draft_foundation.json <run_dir>/ai_questions_draft_areas.json <run_dir>/questionnaire.xlsx --framework ai`
+
+It writes or replaces only the AI RMF sheet (and the AI systems sheet when the inventory question is asked).
+
 ## Done
-Tell the user: the run folder and the counts per bank (subcategories, questions). Next:
-`/assess-questionnaire <run_dir>`.
+Tell the user: the run folder and the counts per bank (subcategories, questions).

@@ -3,7 +3,7 @@
 The whole pipeline from one intake. This command does only the shared steps (intake, bank age check) and then runs
 the other commands in order, each of which also works on its own for a run folder:
 
-  intake → bank age check → `/csf-questionnaire` → `/ai-questionnaire` → `/assess-questionnaire` (both, fresh reviewers)
+  intake → bank age check → `/csf-questionnaire` (CSF sheet) → `/ai-questionnaire` (AI RMF sheet)
 
 The client sees one `questionnaire.xlsx` with two sheets; the two tracks are internal. This command only uses the
 question banks already in the repo; it never builds them. Building and refreshing banks is the maintainer's job:
@@ -49,12 +49,6 @@ the user's answer.
 ## 4 — AI RMF questions
 Run `/ai-questionnaire <run_dir>`.
 
-## 5 — Independent review and workbook
-Run `/assess-questionnaire <run_dir>`. It reviews every draft in the run folder with fresh reviewers and writes the
-workbook.
-
 ## Done
-Tell the user: the run folder, the files written
-(`intake.json`, `ai_usage.json`, `csf_scope.json`, `csf_questions_draft.json`, `csf_questions_assessed.json`, and 
-`ai_scope.json`, `ai_questions_draft_<bank>.json`, `ai_questions_assessed_<bank>.json` (banks foundation and areas), `questionnaire.xlsx`,
-`judgement_log/`), and the assessor's report from step 5.
+Tell the user: the run folder, the counts each step printed, and that `questionnaire.xlsx` (CSF sheet + AI RMF sheet)
+is ready to send to the control owners. The answers filled into it go to Stage 2.

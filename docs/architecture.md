@@ -41,8 +41,9 @@ One intake, two tailored sheets in one workbook.
 | How | Each subcategory gets a question type: `full_discovery`, `gap`, `confirmatory` or `skip`, depending on what the certifications already cover (`compute_scope.py`, `build_questions.py`) | Questions are filtered from the two banks by role and AI areas (`build_ai_questions.py`). All are `full_discovery`: they ask about AI, so certifications change nothing. |
 | Command | `/csf-questionnaire` | `/ai-questionnaire` |
 
-`/generate-questions` runs the whole stage: the intake (`intake.py`), the two sheets, an independent review of the
-drafts (`/assess-questionnaire`), then `write_questionnaire.py` writes `runs/<Org>_<date>/questionnaire.xlsx`. The run
+`/generate-questions` runs the whole stage: the intake (`intake.py`), a check that the banks are recent enough, then
+the two sheets. Each sheet's picks are checked against the intake and the banks (`check_questionnaire.py`) before
+`write_questionnaire.py` writes it into `runs/<Org>_<date>/questionnaire.xlsx`. The run
 folder holds client data and is never committed.
 
 ## Stage 2 and Stage 3 (later)
@@ -57,7 +58,8 @@ built.
    writer.
 2. **Questions come from banks, never written per assessment.** Banks are built from structured sources, checked, then
    frozen and reused.
-3. **Every AI agent that writes is checked by another** that runs separately and sees only what it needs.
+3. **Every AI agent that writes is checked by another** that runs separately and sees only what it needs. Questions are
+   reviewed once, when a bank is built; a client run only picks and checks them.
 4. **Honest gaps.** An answer with no evidence must say so; a claim of coverage without a cited source is rejected.
 5. **CIS safeguards show how to fix gaps, not how mature you are.** Maturity comes from the scores in the profile.
 6. **Works for any organisation.** Nothing specific to one organisation is an input.

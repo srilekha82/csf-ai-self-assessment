@@ -14,7 +14,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    file, rejects it if anything is wrong (exit 1, nothing stored), otherwise stores it and writes a write-once record
    (model, prompt hash, input hash, output snapshot). The contract lives once, in `audit.record_agent_output`; a recording
    script supplies only its validator and its store. CSF: `record_judgements.py`. AI RMF: `record_ai_bank.py`
-   (mapping, questions, notes), and `record_judgements.py log --base --patch` for patch steps.
+   (mapping, questions, notes). In a client run: `record_judgements.py log` (the SoA reading).
 5. **Everything is audited.** Every script calls `scripts/audit.py` (`begin`, then `finish` / `fail` / `pending`), which
    appends to the folder's `audit.jsonl`. Do not invent another logging scheme. Use `audit.write_once_record` for
    write-once records.
@@ -24,11 +24,13 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    constant in one place only: scripts import shared facts from `scripts/options.py` (which reads those files) and
    paths from `scripts/paths.py`; a script never defines its own copy of a domain list, function order or bank name.
 7. **Every agent that writes is checked by another, in a fresh context** (a subagent with only the files it needs):
-   questions, notes, mapping rows, and the questionnaire reviewers' rewrites (`prompts/assessor_rewrite_checker.md`).
-   The same loop everywhere: a verdict on every item, fail when unsure; one revision turn on the failures; round 2
-   judges only what changed (an unchanged item keeps its pass, and the recording script enforces it); two turns at
-   most; what still fails goes to a person (a review sheet, or a LOW flag in the questionnaire), whose decisions are
-   never overwritten. An assessor is never the same conversation that generated the draft. (Decided 2026-10-31.)
+   questions, notes, mapping rows. The same loop everywhere: a verdict on every item, fail when unsure; one revision
+   turn on the failures; round 2 judges only what changed (an unchanged item keeps its pass, and the recording script
+   enforces it); two turns at most; what still fails goes to a person (a review sheet), whose decisions are never
+   overwritten. An evaluator is never the same conversation that generated the draft. (Decided 2026-10-31.)
+   **Questions are reviewed once, when a bank is built, never per client run.** A client run only picks from the banks;
+   `check_questionnaire.py` then checks the picks against the intake and the banks (a script, no agent), and the
+   workbook is written only if it passes. (Decided 2026-11-17.)
 8. **Few scripts, small files, one job each.** Reuse by importing a shared helper when the logic is the same; do not
    copy it, and do not merge scripts that do different jobs. Add a script only for a genuinely new deterministic job, and
    do not split one job across scripts unless a step can pause for an agent. Add a command only for a repeated step.
@@ -43,9 +45,9 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 ## CSF track
 - **CSF questions come from CSET only; they are never generated** (decided 2026-11-02). CSF is a mature practice: the
   bank holds CSET's own CSF 2.0 set (`NCSF_V2`, one question per subcategory, first) and the maturity-model questions
-  CSET maps to CSF 2.0 (practice detail). A gap is closed by reading more of CSET, not by writing questions. The
-  questionnaire reviewer may reword a CSET question or remove an off-topic one, never add one or drop the CSF 2.0
-  question (`record_judgements.py` rejects it). Evidence prompts are not questions: each subcategory gets one, written
+  CSET maps to CSF 2.0 (practice detail). A gap is closed by reading more of CSET, not by writing questions. A
+  client run never rewords them; CSET's own CSF 2.0 question is always kept (`check_questionnaire.py` checks it).
+  Evidence prompts are not questions: each subcategory gets one, written
   once from NIST's implementation examples and checked by an evaluator. The AI RMF track builds on CSF, not beside it.
 
 ## AI RMF track

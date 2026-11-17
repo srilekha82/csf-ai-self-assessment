@@ -69,7 +69,7 @@ def main():
     intake = load_intake(run_dir)
     domain, certs = intake["domain"], intake["certs"]
     client = (f"Sector: {DOMAIN_LABELS.get(domain, domain)}. Certifications held: "
-              f"{', '.join(CERT_LABELS.get(c, c) for c in certs if c in CERT_LABELS) or 'none'}.")  # for the reviewer
+              f"{', '.join(CERT_LABELS.get(c, c) for c in certs if c in CERT_LABELS) or 'none'}.")  # who the questions are for
     ev = audit.begin(audit.run_log(run_dir), "build_questions", {"domain": domain, "certs": certs})
     bank_file = bank_path(domain)
     core_path = CSF_CORE
@@ -139,7 +139,6 @@ def main():
             "scope_reason": entry.get("reason", ""),
             "client": client,
             "confidence_flag": confidence_flag,
-            "assessor_note": None,
         })
 
     output.sort(key=lambda q: (CSF_FUNCTION_ORDER.get(q["function"], 99), q["subcategory_id"]))

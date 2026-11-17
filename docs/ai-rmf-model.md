@@ -269,14 +269,15 @@ mapping rows changed is shown incomplete by the freshness check).
   rewrote every AI entry because the draft's evidence line was generic): each bank question may carry its own
   `evidence_prompt`, written once by an evidence writer and checked by an evidence evaluator (`/build-ai-bank` Step 6b,
   `record_ai_bank.py evidence`). A prompt the evaluator fails is not stored and there is no revision turn: the
-  question keeps the generic line of `data/ai/evidence_prompts.json`, which the engagement's (checked) reviewer
-  sharpens, so a failure loses nothing. The question generator and evaluator prompts are unchanged, so the accepted
+  question keeps the generic line of `data/ai/evidence_prompts.json`, so a failure loses nothing (until 2026-11-17
+  the per-run reviewer also sharpened that line; it has since been removed, see below). The question generator and evaluator prompts are unchanged, so the accepted
   pilot stays valid. Editable in the question review sheets (a blank cell keeps the bank's prompt).
-- **What the reviewer is told** (decided 2026-10-31): each AI draft question carries `criticality_frame` (`required`,
-  `optional` for the areas in `criticality_frame_optional`, `none` for foundation) and the CSF draft carries `client`
-  (sector and certifications); the reviewer may not change them, nor add or remove AI questions
-  (`record_judgements.py` rejects it). The reviewer prompts follow the rewrite checker's question form: one "how" plus
-  at most one short follow-up; coverage, artefacts and frequency go in the evidence prompt.
+- **No per-run review** (decided 2026-11-17, replacing the per-run reviewer of 2026-10-31): questions are reviewed
+  once, when a bank is built. A client run only picks them from the banks, and `check_questionnaire.py` (a script, no
+  agent) checks the picks against the intake and the banks before the sheet is written: every question from the bank,
+  for a role, producer flags and AI areas the org has, nothing missing. Each AI draft question still records its
+  `criticality_frame` (`required`, `optional` for the areas in `criticality_frame_optional`, `none` for foundation),
+  and the CSF draft its `client` (sector and certifications).
 ## Code review findings from the same review (all fixed 2026-11-02, tests in `tests/test_csf_scripts.py`)
 1. `parse_soa.py`: numeric control ids collapsed (5.10 -> 5.1). Fixed: an id stored as a number whose minor part goes
    backwards within its theme gets its lost zero back from row order; any duplicate id after parsing fails the run.
@@ -289,5 +290,6 @@ mapping rows changed is shown incomplete by the freshness check).
    stale.
 6. `extract_cset_candidates.freshness`: an unknown stored commit now means extract again.
 7. `record_judgements.validate_patch`: also locks `scope_reason` and `usage_note` (the reviewer prompts say so).
+   Removed with the per-run review on 2026-11-17.
 8. `intake.py --date` must be a real YYYY-MM-DD date before it becomes part of the run folder path.
 9. `parse_soa.py` column detection: an exact header match wins, and the id column skips headers such as "title".

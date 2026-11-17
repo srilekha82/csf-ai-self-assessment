@@ -135,80 +135,14 @@ class Intake(unittest.TestCase):
 
 
 class RecordLog(unittest.TestCase):
-    """record_judgements.py log (assessor patch merge) now goes through audit.record_agent_output."""
+    """record_judgements.py log (an agent step in a run, e.g. the SoA reading) goes through audit.record_agent_output."""
 
-    def test_a_bad_patch_is_rejected_and_nothing_is_written(self):
+    def test_a_run_step_is_logged_with_a_write_once_record(self):
         import record_judgements as RJ
         run = Path(tempfile.mkdtemp())
-        entry = {"subcategory_id": "GV.RM-01", "function": "GV", "outcome": "o", "question_type": "full_discovery",
-                 "questions": [{"question_text": "How is risk managed?"}], "evidence_prompt": "", "scope_reason": "",
-                 "confidence_flag": "", "assessor_note": None}
-        (run / "draft.json").write_text(json.dumps([entry]))
-        (run / "patch.json").write_text(json.dumps([entry]))          # identical to the draft, no note: invalid
-        argv = [str(run), "--step", "assessor", "--base", "draft.json", "--patch", "patch.json",
-                "--output", "assessed.json", "--model", "test"]
-        with self.assertRaises(SystemExit) as cm:
-            RJ.log_run_step(argv)
-        self.assertEqual(cm.exception.code, 1)
-        self.assertFalse((run / "assessed.json").exists())
-        self.assertFalse((run / "judgement_log").exists())
-        changed = dict(entry, assessor_note="Reworded.", questions=[{"question_text": "How is risk owned and reviewed?"}])
-        (run / "patch.json").write_text(json.dumps([changed]))
-        RJ.log_run_step(argv)
-        self.assertEqual(json.loads((run / "assessed.json").read_text())[0]["assessor_note"], "Reworded.")
-        self.assertEqual(len(list((run / "judgement_log").glob("*_assessor.json"))), 1)
-
-    def test_a_reviewer_cannot_change_the_facts_it_is_given(self):
-        import record_judgements as RJ
-        csf = {"subcategory_id": "GV.RM-01", "function": "GV", "outcome": "o", "client": "Sector: Financial.",
-               "questions": [{"question_text": "How is risk managed?"}], "question_type": "full_discovery",
-               "assessor_note": None}
-        self.assertTrue(RJ.validate_patch([csf], [dict(csf, client="Sector: Healthcare.", assessor_note="x")]))
-        ai = {"subcategory_id": "MAP 1.1", "bank": "areas", "function": "MAP", "outcome": "o",
-              "question_type": "full_discovery", "assessor_note": None,
-              "questions": [{"question_text": "How?", "applies_to": "Agents", "rows": ["agent|MAP 1.1"],
-                             "criticality_frame": "required"}]}
-        reworded = dict(ai, assessor_note="Reworded.", questions=[dict(ai["questions"][0], question_text="How now?")])
-        self.assertEqual(RJ.validate_patch([ai], [reworded]), [])
-        for change in ({"criticality_frame": "optional"}, {"applies_to": "Model"}, {"rows": []}):
-            bad = dict(reworded, questions=[dict(reworded["questions"][0], **change)])
-            self.assertTrue(RJ.validate_patch([ai], [bad]), change)
-        self.assertTrue(RJ.validate_patch([ai], [dict(reworded, questions=reworded["questions"] * 2)]))
-
-    def test_the_checker_flags_rewrites_it_does_not_confirm(self):
-        import record_judgements as RJ
-        run = Path(tempfile.mkdtemp())
-        mk = lambda sid: {"subcategory_id": sid, "function": "GV", "outcome": "o", "question_type": "full_discovery",  # noqa: E731
-                          "questions": [{"question_text": f"How is {sid} done?"}], "evidence_prompt": "",
-                          "scope_reason": "", "confidence_flag": "", "assessor_note": None}
-        a, b = mk("GV.RM-01"), mk("GV.RM-02")
-        (run / "draft.json").write_text(json.dumps([a, b]))
-        pa = dict(a, assessor_note="Reworded A.", questions=[{"question_text": "Who owns A and how is it reviewed?"}])
-        pb = dict(b, assessor_note="Reworded B.", questions=[{"question_text": "Do you have B?"}])
-        (run / "patch.json").write_text(json.dumps([pa, pb]))
-        w = lambda name, obj: (run / name).write_text(json.dumps(obj))  # noqa: E731
-        argv = lambda *extra: [str(run), "--step", "assessor", "--base", "draft.json", "--patch", "patch.json",  # noqa: E731
-                               "--output", "assessed.json", "--model", "test", "--check", "check.json", *extra]
-        for bad in ([{"subcategory_id": "GV.RM-01", "verdict": "pass", "reason": ""}],             # one verdict missing
-                    [{"subcategory_id": "GV.RM-01", "verdict": "pass", "reason": ""},
-                     {"subcategory_id": "GV.RM-02", "verdict": "fail", "reason": ""}]):            # a fail without reason
-            w("check.json", bad)
-            with self.assertRaises(SystemExit):
-                RJ.log_run_step(argv())
-        check1 = [{"subcategory_id": "GV.RM-01", "verdict": "pass", "reason": ""},
-                  {"subcategory_id": "GV.RM-02", "verdict": "fail", "reason": "Check 2: yes / no."}]
-        w("check.json", check1)
-        RJ.log_run_step(argv())
-        out = {e["subcategory_id"]: e for e in json.loads((run / "assessed.json").read_text())}
-        self.assertEqual(out["GV.RM-01"]["confidence_flag"], "")
-        self.assertTrue(out["GV.RM-02"]["confidence_flag"].startswith("LOW"))
-        self.assertEqual(out["GV.RM-02"]["assessor_note"], "Reworded B. | Checker: Check 2: yes / no.")
-        # round 2: an unchanged entry that passed round 1 must still pass
-        w("patch1.json", [pa, pb]), w("check1.json", check1)
-        w("check.json", [{"subcategory_id": "GV.RM-01", "verdict": "fail", "reason": "Check 3: now chained."},
-                         {"subcategory_id": "GV.RM-02", "verdict": "fail", "reason": "Check 2: still yes / no."}])
-        with self.assertRaises(SystemExit):
-            RJ.log_run_step(argv("--prev-patch", "patch1.json", "--prev-check", "check1.json"))
+        (run / "soa_judgements.json").write_text(json.dumps({"A.5.1": {"reason": "r"}}))
+        RJ.log_run_step([str(run), "--step", "soa_exclusions", "--output", "soa_judgements.json", "--model", "test"])
+        self.assertEqual(len(list((run / "judgement_log").glob("*_soa_exclusions.json"))), 1)
 
 
 class Metadata(unittest.TestCase):
@@ -272,32 +206,6 @@ class CsetCsf2Set(unittest.TestCase):
         got = [(c["cset_question_id"], c.get("cset_set")) for c in bank["questions"]["GV.OV-01"]["candidates"]]
         self.assertEqual(got, [(2, "NCSF_V2"), (8, None)])
         self.assertEqual((bank["with_candidates"], bank["with_maturity_questions"], bank["empty"]), (1, 1, 2))
-
-
-class CsfReviewerKeepsCsetQuestions(unittest.TestCase):
-    """The CSF reviewer may reword or remove CSET questions; it never adds one or drops the CSF 2.0 question."""
-    def entry(self, *questions):
-        return {"subcategory_id": "PR.DS-11", "function": "PR", "outcome": "o", "question_type": "full_discovery",
-                "questions": list(questions), "evidence_prompt": "e", "scope_reason": "r", "confidence_flag": "",
-                "assessor_note": None}
-
-    def setUp(self):
-        self.csf2 = {"question_text": "Are backups kept?", "source_reference": "CSET NCSF_V2: 9", "cset_question_id": 9}
-        self.mat = {"question_text": "Is DLP on?", "source_reference": "CSET: 5", "cset_question_id": 5}
-        self.base = [self.entry(self.csf2, self.mat)]
-
-    def errors(self, *questions):
-        import record_judgements as RJ
-        return RJ.validate_patch(self.base, [dict(self.entry(*questions), assessor_note="n")])
-
-    def test_reword_and_remove_pass(self):
-        self.assertEqual(self.errors(dict(self.csf2, question_text="How are backups kept?")), [])
-
-    def test_an_added_question_or_a_dropped_csf2_question_is_rejected(self):
-        new = {"question_text": "How are restores tested?", "source_reference": "NIST CSF 2.0", "cset_question_id": None}
-        self.assertTrue(any("never added" in e for e in self.errors(self.csf2, new)))
-        self.assertTrue(any("must stay" in e for e in self.errors(self.mat)))
-        self.assertTrue(any("re-sourced" in e for e in self.errors(self.csf2, dict(self.mat, cset_question_id=6))))
 
 
 class CsfEvidencePrompts(unittest.TestCase):
