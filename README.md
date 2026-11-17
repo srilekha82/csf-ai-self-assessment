@@ -26,6 +26,21 @@ Then, in Claude Code from the repo root:
 It asks the intake as numbered choices and writes `runs/<Org>_<date>/questionnaire.xlsx`. Send that to the people who
 own the controls.
 
+## What's in each folder
+
+| Folder | What's in it |
+|---|---|
+| `scripts/` | The Python programs that do the work: intake, picking questions, writing the spreadsheet |
+| `.claude/commands/` | The commands you run in Claude Code, such as `/generate-questions`. Each lists the scripts to run, in order. |
+| `prompts/` | Instructions for the AI agents, used when they judge or write something a script can't decide |
+| `data/` | The prepared content: the frameworks, the question banks, and the rules for tailoring. Split into `csf/`, `ai/` and `common/`. |
+| `templates/` | The empty CSF and AI RMF profile spreadsheets (for Stage 2) |
+| `runs/` | One folder per assessment: intake answers and the finished `questionnaire.xlsx`. Created when you run the tool. Holds your data, so it's never committed. |
+| `tests/` | Checks for the scripts |
+| `docs/` | The detailed documentation |
+
+File by file: the "What is where" section of the [guide](docs/guide.md).
+
 ## Keep private
 
 `runs/` holds your organisation's answers and is never committed (`.gitignore`).
@@ -40,6 +55,10 @@ own the controls.
 
 ## Sources
 
-Built on NIST CSF 2.0 and the NIST AI RMF 1.0 Playbook (NIST), CSF questions from [CSET](https://github.com/cisagov/cset)
-(CISA), and CIS Controls v8.1 safeguard IDs (Center for Internet Security, CC BY-NC-ND 4.0; no CIS text is included, see
-`data/ai/source/README.md`). Not endorsed by NIST, CISA or CIS.
+This tool uses free, public material from:
+- **NIST:** the Cybersecurity Framework (CSF) 2.0 and the AI Risk Management Framework (AI RMF) 1.0 Playbook.
+- **CISA:** the cybersecurity questions, from its free assessment tool [CSET](https://github.com/cisagov/cset).
+- **CIS (Center for Internet Security):** the ID numbers of its safeguards. CIS's own text is not included; its licence
+  (CC BY-NC-ND 4.0) does not allow that.
+
+NIST, CISA and CIS do not endorse this tool.
