@@ -1,165 +1,81 @@
-# AI Assessment Pipeline — Design Document
+# Architecture
 
-## Overview
-
-End-to-end pipeline that takes org inputs and produces interactive assessment HTMLs for NIST CSF 2.0 and NIST AI RMF 1.0. The XLS is the canonical handoff between stages — everything upstream produces it, everything downstream consumes it.
-
----
-
-## Pipeline Architecture
+How the parts fit together, for both frameworks. The tool runs in three stages, preceded by a bank-building step that
+runs only when its sources change. Stage 1 is built; Stage 2 is being designed; Stage 3 comes after it.
 
 ```
-Question Bank Build  (subagents in csf-ai-self-assessment — infrequent, runs only when sources change)
-├── CSF      → CSET already exists; freshness check only
-└── AI RMF   → mapping (AI area x subcategory), then two banks (foundation, areas), generated from: AI RMF Playbook + CIS AI companion guides
-               gate: skip if Playbook and CIS guides unchanged this quarter
-               design: docs/ai-rmf-model.md
-         ↓
-Stage 1: Questionnaire Generation  (csf-ai-self-assessment)
-         uses question bank above + org profile + compliance status + AI usage profile
-         ↓
-Stage 2: Agentic Answer Session    (gen-eval-loop — runs per org engagement)
-         fills answers from org knowledge docs; gen-eval validates grounding
-         ↓
-Stage 3: Reports                   (to be rebuilt after Stage 2)
+Bank building (occasional)  →  Stage 1: questionnaire  →  Stage 2: answers and scores  →  Stage 3: reports
+built, reused by every run     built                       being designed                   later
 ```
 
----
+## Bank building
 
-## Stage 1 — Questionnaire Generation
+Questions are prepared once, checked, and stored in banks that every assessment reuses. A bank is rebuilt only when a
+source it was built from changes.
 
-**Tool:** `csf-ai-self-assessment` (exists and working)
+| | NIST CSF 2.0 | NIST AI RMF 1.0 |
+|---|---|---|
+| Source of the questions | CISA's [CSET](https://github.com/cisagov/cset): its own CSF 2.0 question set plus the maturity-model questions it maps to CSF, read from CSET's SQL files | The AI RMF Playbook's suggested actions. The CIS AI companion guides add the safeguards a question may cite as evidence. |
+| How questions are made | Taken from CSET, never written. An AI agent only decides which sector each question suits and repairs wording. | Written by an AI agent, checked by a second agent, piloted and reviewed by a person |
+| Banks | One per sector: `data/csf/banks/question_bank_<sector>.json` | Two: foundation (asked once per organisation) and areas (per AI area), in `data/ai/banks/` |
+| Command | `/build-csf-bank` | `/build-ai-bank` |
+| Rebuilt when | CSET changes a question | The Playbook or a CIS guide changes, or the mapping changes |
 
-**Inputs:**
-- Org profile: name, industry/domain, compliance certifications held (ISO 27001, SOC2, PCI DSS)
-- AI usage profile (see the AI RMF track below): AI in use none / some / unsure, role (producer / consumer / both), producer flags (built on an existing model, given to others), the client's AI areas; plus engagement flags (CSF assessment done, ISO 27001 held, ISO 42001 held)
-- SOA (Statement of Applicability) if ISO 27001 certified
-- Compliance reports if available
+The AI RMF track needs one extra step first: a **mapping** that links each AI area to the AI RMF subcategories that
+check it (`data/ai/mapping.json`, reviewed and accepted by a person). The full model is in
+[AI RMF model](ai-rmf-model.md).
 
-**CSF track (exists):**
-- Question bank: CSET (`CSET_Industry_Questions_CSF2_v2.xlsx`) — structured questions mapped to CSF 2.0 subcategories
-- Scope logic: SOA → OLIR crosswalk (ISO→CSF) → question type per subcategory
-- Question types: `full_discovery` / `gap` / `confirmatory` / `skip`
-- Output: `csf_questions_assessed.json`
+The AI RMF build also writes **AI impact notes** for the CSF side (`data/csf/ai_impact_notes.json`): a short note per CSF
+subcategory on what AI changes there, so even an organisation with no AI of its own sees the AI threats it is exposed
+to. Each note has two layers: an `exposure` note shown to every organisation, and a `use` note added only when AI is in
+use (`mcp_agentic` for organisations with MCP tools or agents, `base_rag` for the rest). Stage 2 writes them into the
+CSF profile's Considerations column.
 
-**AI RMF track (built — the model is `docs/ai-rmf-model.md`):**
-- Model: how AI is used and what it is made of (**AI areas**, decided by a person in `data/ai/authoring/ai_areas.xlsx`) -> the attack areas they impact -> AI RMF function -> subcategory. GOVERN and 12 other subcategories are the **foundation**, asked once for the organisation; MAP, MEASURE and MANAGE are mapped per AI area (`data/ai/mapping.json`, reviewed and accepted by a person).
-- Question banks: **two files, foundation and areas** (`question_bank_ai_rmf_foundation.json`, `question_bank_ai_rmf_areas.json`, under `data/ai/banks/`, reused across org runs). They hold every possible question: area questions per mapping row (a question may stand for several areas' rows), foundation questions per subcategory, each tagged with the roles it is asked of (none / consumer / producer) and any producer flags. No CSET equivalent exists for AI RMF, so they are generated.
-- Sources: **AI RMF Playbook** (72 subcategories and their suggested actions — the primary question content) and the three **CIS v8.1 AI companion guides** (LLM, MCP, Agents — evidence and safeguards per mapping row, not question text). The profile XLS supplies the 72-subcategory structure.
-- Generation: a generate–evaluate loop with subagents in this repo (pilot, then per-function batches), not the `gen-eval-loop` harness. One-time or infrequent build, not per-org.
-- **Freshness gate:** the banks are not regenerated unless the Playbook or the CIS guides changed, or a mapping row changed after its questions were written. Mirrors `check_freshness.py`.
-- **Scope driver is how AI is used, not certifications or sector.** Sector sets a severity floor and decorates the report. The intake captures AI in use (none / some / unsure), role (producer / consumer / both), for a producer whether the model is built on an existing model and given to others, how AI is used and what it includes (the client's AI areas; some areas are automatic).
-- Selection is a filter: a client gets the questions whose roles, producer flags and (for area questions) AI areas match its intake. Area questions are asked once, proportionate to criticality ("for your highest-criticality AI systems"); the AI system inventory (GOVERN 1.6) is the only per-system question.
-- Question types: same names as CSF. Every AI RMF question is `full_discovery`: each asks what is done for AI (an AI area, or AI in the organisation), never general security, so it does not repeat the CSF sheet or ISO 27001 and needs no gap rule (an ISO control excluded in the SoA leaves no hole). ISO 42001 coverage is a later optional phase.
-- Engagement sequence: the CSF assessment first, then the AI RMF assessment scoped by AI usage, then the CSF output is updated with the AI-world notes according to the same usage pattern.
-- Orgs that use no AI but are exposed to external agents or AI-enabled attackers are covered on the CSF side by short "AI-world impact" notes per CSF subcategory (`data/csf/ai_impact_notes.json`). The notes have two layers: an exposure note shown to every org, plus a use note added only when AI is in use (`mcp_agentic` for orgs with MCP / tools or agents, `base_rag` for the rest; written to the CSF profile's Considerations column by the Stage 2 writer). They are produced in the AI RMF build (CIS MCP/agents safeguards joined to CSF subcategories through the official CIS v8.1 → CSF 2.0 mapping).
+## Stage 1: questionnaire (built)
 
-The earlier usage models are retired: the 3-tier model (LLM prompting / MCP-agentic / client environment) was derived from an earlier single-organisation assessment and mixed technology reach with usage context, and the first AI RMF design (technology rungs, usage contexts, modifiers, topic categories) under-mapped the attack surface.
+One intake, two tailored sheets in one workbook.
 
----
+| | CSF sheet | AI RMF sheet |
+|---|---|---|
+| Tailored by | Sector and certifications (ISO 27001, PCI DSS), plus the ISO 27001 Statement of Applicability if there is one | How the organisation uses AI: AI in use, role (uses or builds AI) and the AI areas ticked |
+| How | Each subcategory gets a question type: `full_discovery`, `gap`, `confirmatory` or `skip`, depending on what the certifications already cover (`compute_scope.py`, `build_questions.py`) | Questions are filtered from the two banks by role and AI areas (`build_ai_questions.py`). All are `full_discovery`: they ask about AI, so certifications change nothing. |
+| Command | `/csf-questionnaire` | `/ai-questionnaire` |
 
-## Stage 2 — Agentic Answer Session
+`/generate-questions` runs the whole stage: the intake (`intake.py`), the two sheets, an independent review of the
+drafts (`/assess-questionnaire`), then `write_questionnaire.py` writes `runs/<Org>_<date>/questionnaire.xlsx`. The run
+folder holds client data and is never committed.
 
-**Tool:** `gen-eval-loop` (exists, generic harness)
+## Stage 2: answers and scores (being designed)
 
-**What it does:** Takes the questionnaire (`csf_questions_assessed.json`) and available org knowledge, fills answers per question using a generator–evaluator loop, outputs a completed profile XLS.
+Turns the questionnaire into two filled profile spreadsheets (`templates/`): one for CSF, one for AI RMF.
 
-**Inputs:**
-- `csf_questions_assessed.json` (from Stage 1)
-- Org profile markdown (collected during intake)
-- Interview notes / knowledge wiki (from assessor interviews with client)
-- Compliance reports (SOA, audit reports, penetration test summaries if available)
-- `soa_parsed.json` (if ISO 27001)
+- **Three inputs:** the ISO 27001 Statement of Applicability, the organisation's documents (policies, AI governance
+  document, operating records), and the answers of a knowledgeable person. Documents say what should happen; a person
+  knows what does.
+- **Answer flow:** read the documents, find what each question needs, record claims that cite their source, draft the
+  answer or record "no evidence found", have a second agent check it, then let the control owner confirm or correct it.
+- **Scoring:** the 1–4 scale of the profile templates. The kind of evidence caps the score: a policy alone supports at
+  most level 2; dated operating records level 3; metrics reviewed over time level 4.
+- **Testing:** fictitious companies with a known true answer, never data from a real organisation.
 
-**NOT inputs:** Any back-and-forth assessment decisions specific to one organisation. Inputs are only what any org would provide through standard intake. This must be repeatable for any org.
+## Stage 3: reports (later)
 
-**Gen-eval loop design:**
+One report per profile spreadsheet (CSF, AI RMF) and a page linking both. CIS safeguards appear as the "how to fix it"
+layer, with a roadmap built from each organisation's gaps.
 
-```
-Generator agent
-├── Context: one question + question_type + mapped controls + org knowledge docs
-├── Task: draft an answer grounded in the org knowledge; cite specific evidence
-└── Output: draft answer with evidence citations
+## Key design principles
 
-        ↓ if evaluator returns FAIL
+1. **The profile spreadsheet is the handoff.** Stage 2 writes it; reporting reads it. Its layout is fixed by the Stage 2
+   writer.
+2. **Questions come from banks, never written per assessment.** Banks are built from structured sources, checked, then
+   frozen and reused.
+3. **Every AI agent that writes is checked by another** that runs separately and sees only what it needs.
+4. **Honest gaps.** An answer with no evidence must say so; a claim of coverage without a cited source is rejected.
+5. **CIS safeguards show how to fix gaps, not how mature you are.** Maturity comes from the scores in the profile.
+6. **Works for any organisation.** Nothing specific to one organisation is an input.
 
-Evaluator agent (fresh session — no org context)
-├── Input: question + draft answer only
-├── Checks:
-│   ├── Every claim traceable to a cited source (no inference)
-│   ├── Gap questions honestly acknowledge the gap (not papered over)
-│   ├── Evidence prompt answered with specifics (not "yes we do this")
-│   └── Scope not over-claimed (answer doesn't assert org-wide coverage without basis)
-└── Output: PASS or FAIL with specific critique per failing point
+## Where it runs
 
-Loop: max 2–3 cycles. If still FAIL → human_review_required: true
-```
-
-**Output schema per question:**
-```json
-{
-  "subcategory_id": "PR.DS-01",
-  "question_type": "gap",
-  "answer": "...",
-  "evidence_cited": ["SOA: A.8.24 — Implemented", "..."],
-  "fill_confidence": "HIGH | MEDIUM | LOW",
-  "human_review_required": false,
-  "fill_iterations": 1,
-  "ai_overlay": true
-}
-```
-
-**Final outputs:**
-- CSF profile XLS — answers mapped to maturity scores; schema = NIST CSF 2.0 Organizational Profile Template (`templates/csf_org_profile_template.xlsx`, sheet "Current and Target Profile", 19 columns: outcome ID and description, included, rationale; current priority / status / policies and processes / internal practices / roles / informative references / artifacts and evidence; target priority / tier / policies / practices / roles / informative references; notes; considerations)
-- AI RMF profile XLS — answers mapped to maturity scores; schema = `templates/ai_rmf_profile_template.xlsx` format (11 columns: ID, Outcome, Included, Rationale, Priority, Layer, CurrentMaturity, CurrentState, TargetMaturity, TargetState, Evidence)
-
-The XLS schema is fixed by the Stage 2 writer; reporting reads the files as they are.
-
-**Granularity:** Run one loop over all questions (generator fills all, evaluator flags specific subcategory IDs that are weak, generator revises only those in turn 2). Batch by CSF function if context becomes unwieldy.
-
----
-
-## Stage 3 — Reports
-
-To be rebuilt after Stage 2: one report per profile XLS (CSF, AI RMF) and a page linking both. CIS controls appear as the "how to fix it" layer (safeguard IDs only), with the roadmap derived from each organisation's gaps and priorities.
-
----
-
-## What Exists vs What Needs Building
-
-| Component | Status |
-|-----------|--------|
-| CSF question bank (CSET) | ✅ Exists |
-| Questionnaire generation tool (csf-ai-self-assessment) | ✅ Exists and working |
-| Gen-eval loop harness | ✅ Exists (generic, needs scenario config) |
-| AI RMF mapping and question banks (foundation, areas) | ✅ Mapping accepted; both banks built and reviewed |
-| Agentic answer session (gen-eval scenario config + prompts) | ❌ To build |
-| XLS writer (maps filled answers → profile XLS) | ❌ To build |
-| Reports (Stage 3) | ❌ To rebuild after Stage 2 |
-
----
-
-## Key Design Principles
-
-1. **XLS is the canonical artefact.** Everything upstream produces it; everything downstream consumes it. Schema is fixed by the Stage 2 writer.
-
-2. **Question bank must be grounded and frozen.** Free-form LLM question generation per engagement is costly and non-deterministic. The bank is built once from structured sources (CSET for CSF; the Playbook and CIS guides for AI RMF), checked by an evaluator, then frozen and reused. For AI RMF the bank is generated with subagents under a strict generate–evaluate loop (see `docs/ai-rmf-model.md`); the `gen-eval-loop` harness is used for *answering* (Stage 2).
-
-3. **Evaluator has no org context.** The evaluator agent runs in a fresh session with only the question and draft answer. This ensures it judges the answer on its own merits, not on what it knows about the org.
-
-4. **Honest gaps are mandatory.** If the org profile has no evidence for a control, the answer must say so. The evaluator must reject any answer that claims coverage without cited evidence. This is what makes the output usable vs. misleading.
-
-5. **CIS controls are prescription, not diagnosis.** They live in the roadmap (how to fix gaps), not in the gap assessment itself (which is driven by maturity scores from the XLS).
-
-6. **Pipeline is org-agnostic.** The tool must work for any org, not just the one it was first tried on. Decisions specific to one organisation's review sessions are not inputs to this pipeline.
-
----
-
-## Codebase Locations
-
-| Repo | Purpose |
-|------|---------|
-| `csf-ai-self-assessment/` | Stage 1 (questionnaire, banks); Stage 2 and 3 to follow |
-| `gen-eval-loop/` | Stage 2 harness (generic, separate) |
-
-New scenario for Stage 2 goes in: `gen-eval-loop/examples/csf-questionnaire-fill/`
+Everything is in this repository and runs in Claude Code. Scripts do the deterministic work (`scripts/`); AI agents
+judge or write only where a script cannot decide, following the instructions in `prompts/`. Rules for changing the code
+are in `DESIGN_RULES.md`.
