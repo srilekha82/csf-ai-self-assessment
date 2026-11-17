@@ -1,8 +1,15 @@
-# /csf-questionnaire — CSF 2.0 questions for an engagement
+# /csf-questionnaire
 
-Argument: the run folder (`runs/<Org>_<date>`, created by `/generate-questions` or `scripts/intake.py`). Reads its
-`intake.json`; writes `csf_scope.json`, `csf_questions_draft.json` and the CSF sheet of `questionnaire.xlsx`. Uses the
-CSF bank for the domain in the repo (built by `/build-csf-bank`).
+Picks the CSF 2.0 questions for one organisation and writes the CSF sheet of its questionnaire.
+
+- **Who runs it:** normally `/generate-questions`, which first checks the banks are recent enough. Run it alone only
+  on an existing run folder, to redo the CSF sheet.
+- **Argument:** the run folder (`runs/<Org>_<date>`).
+- **Reads:** `intake.json` (sector and certifications), the ISO 27001 SoA if there is one, and the CSF bank for the
+  sector (`data/csf/banks/question_bank_<sector>.json`).
+- **Writes:** `csf_scope.json` (question type per subcategory, and why), `csf_questions_draft.json` (the picked
+  questions), `csf_question_bank_used.json` (a copy of the bank used), and the CSF sheet of `questionnaire.xlsx`.
+- **Files explained:** `docs/guide.md`, section "Runs".
 
 Tools: Bash, Read, Write. Working directory: repo root. Say little: the script's summary line, and anything you need
 from the user.
