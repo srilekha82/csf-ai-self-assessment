@@ -10,6 +10,8 @@ Builds or refreshes the AI RMF mapping, the two AI RMF question banks and the CS
   (`data/ai/banks/question_bank_ai_rmf_foundation.json`, asked once per organisation, and
   `question_bank_ai_rmf_areas.json`, per AI area), and the CSF AI impact notes (`data/csf/ai_impact_notes.json`).
 - **Files explained:** `docs/guide.md`, sections "AI RMF track" and "Data"; the model is in `docs/ai-rmf-model.md`.
+- **Terms** (AI area, mapping row, foundation, impact, folded subcategory, required check, pilot, needs human review):
+  `docs/guide.md`, section "Glossary".
 
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
 `scripts/record_ai_bank.py`, which rejects a whole file if anything is wrong. The judging rules are in the prompts

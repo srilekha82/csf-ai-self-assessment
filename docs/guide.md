@@ -225,24 +225,28 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 | Term | Meaning |
 |---|---|
 | **Bank** | A frozen set of questions, built once and reused. CSF: one per domain, from CSET (candidate questions). AI RMF: two, foundation and areas, generated from the Playbook and CIS guides; they hold every possible question, each tagged with the roles it is asked of. A questionnaire picks from a bank; it never invents questions. |
-| **AI area** | A way AI is used (internal process, code generation, customer-facing, vendor AI, model building, invisible usage) or a part of the AI ecosystem (input, output, data, model, source data, MCP / tools, agent, hosting). Decided in `data/ai/authoring/ai_areas.xlsx`. |
-| **Mapping row** | One AI area x one AI RMF subcategory (MAP, MEASURE or MANAGE): what is checked for that area, the CIS safeguards that prove it, the impact. Area questions are written per row. |
+| **AI area** | A way AI is used (internal process, code generation, customer-facing, vendor AI, model building, invisible usage) or a part of the AI ecosystem (input, output, test, tuning and evaluation data, model, source data, MCP / tools, agent, hosting). 14 in all, decided by a person in `data/ai/authoring/ai_areas.xlsx`. |
+| **Mapping row** | One AI area x one AI RMF subcategory (MAP, MEASURE or MANAGE): why that subcategory matters for the area, its impact, and the CIS safeguards that can serve as evidence. Area questions are written per row. All rows together are the **mapping** (`data/ai/mapping.json`). |
 | **Foundation** | GOVERN and 12 other subcategories about how the organisation runs AI risk management: asked once for the organisation, never per area. |
-| **Question type** | Set per subcategory at engagement time. `full_discovery`: nothing is covered, ask everything. `gap`: existing controls cover the standard part, ask what goes beyond (AI: what differs for AI). `confirmatory`: a certification should cover it, ask for evidence (CSF only today). `skip`: not asked. |
+| **Question type** | Set per subcategory at engagement time. `full_discovery`: nothing is covered, ask everything. `gap`: a certification covers the standard part, ask what goes beyond it. `confirmatory`: a certification should cover it, ask for evidence. `skip`: not asked. Every AI RMF question is `full_discovery`: it asks about AI, so certifications change nothing there. |
 | **Domain** | The client's sector for the CSF bank: healthcare, finance, manufacturing_ot, saas_cloud, consulting, other. |
 | **SoA** | The client's ISO 27001 Statement of Applicability. It sets CSF question types for ISO-mapped subcategories. |
 | **AI in use** | `none`, `some` or `unsure`. `unsure` is asked as a consumer and as an org with no AI; the questions discover what AI is used. `none` gets the AI policy and shadow-AI questions only. |
-| **Producer / consumer** | Producer builds or distributes AI models. Consumer uses AI (including fine-tuning a model for own use). Different question sets, not tiers; an org can be both. |
+| **Producer / consumer** | Consumer: uses AI built by others (a vendor model, an API, AI inside products). Producer: builds or tunes its own model, from scratch or on an existing model, for itself or to give to others. Each question is tagged with the roles it is for; an organisation can be both. |
 | **Producer details** | Two follow-up answers for an organisation that builds its own model: is it built on an existing model (then it gets questions about that base model), and is it given to others (then it gets questions about releasing it). Stored as `producer_flags` in the data. |
 | **Covers note** | "This question covers: ..." on an area question that stands for several of the client's areas, naming only the client's own areas. |
+| **Impact** | What could go wrong if an AI area is handled badly: `process` (a business process or decision goes wrong), `data` (data exposed, leaked or poisoned), `access` (permissions or credentials abused), `assets` (model, code or infrastructure stolen or damaged), `people` (harm to individuals). Each AI area and mapping row carries one or more; they shape the evidence asked for. Defined in `data/ai/question_rules.json`. |
+| **Folded subcategory** | A subcategory that would get the same question as another row of the same AI area, so it is merged into that row instead of getting its own. The row's question must cite it. |
+| **Required check** | A subcategory the rules say certain AI areas must always map, for example an audit trail and incident response for every area (`data/ai/mapping_rules.json` `required_checks`). |
+| **Candidate CIS safeguards** | The CIS safeguards an AI area is allowed to cite as evidence (`data/ai/mapping_rules.json` `area_cis`). |
+| **Generator / evaluator** | In the bank build one agent writes (questions, mapping rows, notes) and a second, separate agent checks the result. One revision round at most; what still fails goes to a person. |
+| **Needs human review** | An item the evaluator still failed after the revision round. It is kept, marked `needs_human_review`, and a person decides it in the review sheet. |
+| **Decided by a person** | A line you changed in a review sheet (`decided_by: human`). Later agent runs never overwrite it. |
+| **Review sheet** | A spreadsheet in `data/ai/authoring/` for checking or editing the mapping, the questions or the impact notes (`sheet_io.py export` / `import`). |
 | **Pending file / exit 2** | A script that cannot settle an item writes a `pending_*.json` and exits 2; an agent decides it and a recording script stores the answer. |
 | **Recording** | Validating an agent's output file as a whole, storing it, and writing a write-once log of who decided what. A bad file is rejected and nothing is stored. |
-| **Pilot** | The first AI bank run on a few hand-picked subcategories, reviewed by a person. Accepting it lets later rebuilds run without asking. |
+| **Pilot** | A first AI bank run on a few hand-picked subcategories, reviewed by a person. Accepting it (`ai_pilot.py accept`) approves the question generator and evaluator prompts; while they are unchanged, later rebuilds run without asking. |
 | **Stale / incomplete** | Freshness report words. Stale: built from sources that have since changed. Incomplete: not every subcategory is in the bank yet (AI areas bank: or a mapping row changed after its questions were written). |
 | **Run folder** | `runs/<Org>_<date>/`: everything one engagement produced. It holds client data. |
-| **Profile XLS (Stage 2)** | The XLS built from the answered questionnaire, one for CSF and one for AI RMF, used for the HTML reports. Not built yet. |
+| **Profile XLS (Stage 2)** | The spreadsheet built from the answered questionnaire, one for CSF and one for AI RMF, with maturity scores. Not built yet. |
 | **CSET, OLIR, Playbook, CIS guides** | CSET: CISA's assessment tool whose SQL holds the CSF questions: its CSF 2.0 standard (`NCSF_V2`, one per subcategory) and maturity-model questions mapped to CSF 2.0. OLIR: NIST's mappings between frameworks (ISO 27001 and PCI DSS to CSF). Playbook: the AI RMF's suggested actions. CIS guides: the CIS Controls v8.1 AI companion guides (LLM, MCP, agents). |
-
-## Notes
-
-- Related: `gen-eval-loop` (a separate Stage 2 harness).
