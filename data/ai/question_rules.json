@@ -1,5 +1,5 @@
 {
-  "description": "Rules for the AI RMF question banks. The banks hold every possible question: one bank of area questions (per mapping row, data/ai/mapping.json) and one of foundation questions (per foundation subcategory, mapping_rules.json foundation). Every question carries who it applies to (roles) and, where needed, producer flags, so build_ai_questions.py picks a client's questions by filtering on the intake answers alone. prepare_ai_bank.py batch gives these definitions to the generator and evaluator; record_ai_bank.py questions checks against them. Model: AI_RMF_Mapping_Sheet_Design.md.",
+  "description": "Rules for the AI RMF question banks. The banks hold every possible question: one bank of area questions (per mapping row, data/ai/mapping.json) and one of foundation questions (per foundation subcategory, mapping_rules.json foundation). Every question carries who it applies to (roles) and, where needed, producer flags, so build_ai_questions.py picks a client's questions by filtering on the intake answers alone. prepare_ai_bank.py batch gives these definitions to the generator and evaluator; record_ai_bank.py questions checks against them. Model: docs/ai-rmf-model.md.",
   "banks": [
     "foundation",
     "areas"
@@ -59,7 +59,7 @@
     "description": "Questions per foundation subcategory: min to max, plus at most producer_only_extra more asked of producers only (roles ['producer']) where producers' practice really differs (e.g. standards for training their own models, GOVERN 1.2). A consumer or an org with no AI is never asked more than max. Decided 2026-10-29."
   },
   "ai_system_inventory": {
-    "description": "The AI system inventory (GOVERN 1.6), the one per-system question, answered in its own sheet of questionnaire.xlsx so it reads as a table: one row per AI system, a Yes column per AI area (by its client label, data/ai/area_client_labels.json) and a drop-down per criticality band (AI_RMF_Mapping_Sheet_Design.md section 4). write_questionnaire.py adds the sheet when the AI questions include the subcategory; the question text points to it and does not repeat the areas or bands. Decided 2026-10-29.",
+    "description": "The AI system inventory (GOVERN 1.6), the one per-system question, answered in its own sheet of questionnaire.xlsx so it reads as a table: one row per AI system, a Yes column per AI area (by its client label, data/ai/area_client_labels.json) and a drop-down per criticality band (docs/ai-rmf-model.md section 4). write_questionnaire.py adds the sheet when the AI questions include the subcategory; the question text points to it and does not repeat the areas or bands. Decided 2026-10-29.",
     "subcategory": "GOVERN 1.6",
     "sheet": "AI systems",
     "instructions": "One row per AI system your organisation uses or builds. Mark Yes under each thing it involves, then pick the worst realistic outcome if it gets things wrong.",

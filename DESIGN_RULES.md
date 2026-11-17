@@ -52,7 +52,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 
 In one line: **how an organisation uses AI decides which AI RMF questions it gets.** The questions come from two
 pre-built banks; a script filters them for each client. The full model (AI areas → attack areas → AI RMF function →
-subcategory) is in `AI_RMF_Mapping_Sheet_Design.md`.
+subcategory) is in `docs/ai-rmf-model.md`.
 
 ### What decides the questions
 - **How AI is used, not sector or certifications.** Sector never changes which questions are asked. It only sets a

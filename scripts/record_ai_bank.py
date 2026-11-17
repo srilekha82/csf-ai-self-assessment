@@ -732,7 +732,7 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
     missing = [x for x in missing if x["subcategory"] not in own and x["subcategory"] not in removed]
     doc["description"] = ("AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove "
                           "it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by "
-                          "record_ai_bank.py mapping, reviewed by a person. Model: AI_RMF_Mapping_Sheet_Design.md.")
+                          "record_ai_bank.py mapping, reviewed by a person. Model: docs/ai-rmf-model.md.")
     doc["areas"][data["area"]] = {
         "recorded_on": date.today().isoformat(), "inputs": mapping_input_hashes(inp, data["area"]),
         "rows": rows, "no_question": no_question, **({"missing": missing} if missing else {}),

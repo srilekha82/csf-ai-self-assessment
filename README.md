@@ -32,7 +32,9 @@ own the controls.
 
 ## More
 
-- [Full guide](docs/guide.md): every command, script and data file, and a glossary.
+- [Guide](docs/guide.md): every command, script and data file, and a glossary.
+- [Architecture](docs/architecture.md): how the stages fit together.
+- [AI RMF model](docs/ai-rmf-model.md): AI areas, mapping, severity and the question banks.
 - `CLAUDE.md`: short guide for Claude Code. `DESIGN_RULES.md`: read before changing code.
 
 ## Sources

@@ -13,7 +13,7 @@ Question Bank Build  (subagents in csf-ai-self-assessment — infrequent, runs o
 ├── CSF      → CSET already exists; freshness check only
 └── AI RMF   → mapping (AI area x subcategory), then two banks (foundation, areas), generated from: AI RMF Playbook + CIS AI companion guides
                gate: skip if Playbook and CIS guides unchanged this quarter
-               design: AI_RMF_Mapping_Sheet_Design.md
+               design: docs/ai-rmf-model.md
          ↓
 Stage 1: Questionnaire Generation  (csf-ai-self-assessment)
          uses question bank above + org profile + compliance status + AI usage profile
@@ -42,7 +42,7 @@ Stage 3: Reports                   (to be rebuilt after Stage 2)
 - Question types: `full_discovery` / `gap` / `confirmatory` / `skip`
 - Output: `csf_questions_assessed.json`
 
-**AI RMF track (built — the model is `AI_RMF_Mapping_Sheet_Design.md`):**
+**AI RMF track (built — the model is `docs/ai-rmf-model.md`):**
 - Model: how AI is used and what it is made of (**AI areas**, decided by a person in `data/ai/authoring/ai_areas.xlsx`) -> the attack areas they impact -> AI RMF function -> subcategory. GOVERN and 12 other subcategories are the **foundation**, asked once for the organisation; MAP, MEASURE and MANAGE are mapped per AI area (`data/ai/mapping.json`, reviewed and accepted by a person).
 - Question banks: **two files, foundation and areas** (`question_bank_ai_rmf_foundation.json`, `question_bank_ai_rmf_areas.json`, under `data/ai/banks/`, reused across org runs). They hold every possible question: area questions per mapping row (a question may stand for several areas' rows), foundation questions per subcategory, each tagged with the roles it is asked of (none / consumer / producer) and any producer flags. No CSET equivalent exists for AI RMF, so they are generated.
 - Sources: **AI RMF Playbook** (72 subcategories and their suggested actions — the primary question content) and the three **CIS v8.1 AI companion guides** (LLM, MCP, Agents — evidence and safeguards per mapping row, not question text). The profile XLS supplies the 72-subcategory structure.
@@ -143,7 +143,7 @@ To be rebuilt after Stage 2: one report per profile XLS (CSF, AI RMF) and a page
 
 1. **XLS is the canonical artefact.** Everything upstream produces it; everything downstream consumes it. Schema is fixed by the Stage 2 writer.
 
-2. **Question bank must be grounded and frozen.** Free-form LLM question generation per engagement is costly and non-deterministic. The bank is built once from structured sources (CSET for CSF; the Playbook and CIS guides for AI RMF), checked by an evaluator, then frozen and reused. For AI RMF the bank is generated with subagents under a strict generate–evaluate loop (see `AI_RMF_Mapping_Sheet_Design.md`); the `gen-eval-loop` harness is used for *answering* (Stage 2).
+2. **Question bank must be grounded and frozen.** Free-form LLM question generation per engagement is costly and non-deterministic. The bank is built once from structured sources (CSET for CSF; the Playbook and CIS guides for AI RMF), checked by an evaluator, then frozen and reused. For AI RMF the bank is generated with subagents under a strict generate–evaluate loop (see `docs/ai-rmf-model.md`); the `gen-eval-loop` harness is used for *answering* (Stage 2).
 
 3. **Evaluator has no org context.** The evaluator agent runs in a fresh session with only the question and draft answer. This ensures it judges the answer on its own merits, not on what it knows about the org.
 

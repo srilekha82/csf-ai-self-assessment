@@ -2,7 +2,7 @@
 
 The detail behind the short `README.md`: every command, script, data file and the glossary.
 
-Stage 1 of an AI and cybersecurity assessment pipeline. Given an organisation's profile (domain, certifications, optional ISO 27001 SoA) it produces one questionnaire (`questionnaire.xlsx`) to send to control owners, with two sheets: a tailored NIST CSF 2.0 sheet and a NIST AI RMF 1.0 sheet scoped by how the org uses AI. The client sees one questionnaire; the two tracks are internal. In Stage 2 the answers from the two sheets become two profile XLS files (CSF profile, AI RMF profile). Rules for changing the repo are in `DESIGN_RULES.md`; `CLAUDE.md` is the short operating guide. Pipeline design: `AI_Assessment_Pipeline_Design.md`.
+Stage 1 of an AI and cybersecurity assessment pipeline. Given an organisation's profile (domain, certifications, optional ISO 27001 SoA) it produces one questionnaire (`questionnaire.xlsx`) to send to control owners, with two sheets: a tailored NIST CSF 2.0 sheet and a NIST AI RMF 1.0 sheet scoped by how the org uses AI. The client sees one questionnaire; the two tracks are internal. In Stage 2 the answers from the two sheets become two profile XLS files (CSF profile, AI RMF profile). Rules for changing the repo are in `DESIGN_RULES.md`; `CLAUDE.md` is the short operating guide. Pipeline design: `docs/architecture.md`.
 
 ```
 Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  Stage 3: reports
@@ -27,7 +27,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Review the AI RMF mapping (right, wrong, missing) | `.venv/bin/python ./scripts/sheet_io.py export mapping`, open `data/ai/authoring/mapping.xlsx` (one line per AI area x subcategory, mapped or not, with the Playbook text; a Coverage sheet), edit, then `sheet_io.py import mapping`. Then accept it: `.venv/bin/python ./scripts/ai_pilot.py accept-mapping`. |
 | Review the AI RMF questions | `.venv/bin/python ./scripts/sheet_io.py export area_questions` (and `foundation_questions`), open `data/ai/authoring/questions_areas.xlsx` / `questions_foundation.xlsx` (one line per question: areas covered, who it is asked of, flag, question, Playbook actions, status), edit, then `sheet_io.py import area_questions`. Changed subcategories are stored as decided by a person and a later generator run does not overwrite them. |
 | Review the CSF AI impact notes | `.venv/bin/python ./scripts/sheet_io.py export impact_notes`, open `data/ai/authoring/impact_notes.xlsx` (one line per CSF subcategory: exposure note, the two use notes, status from the notes evaluator), edit, then `sheet_io.py import impact_notes`. Changed lines are stored as decided by a person. |
-| Change the AI areas (usage and ecosystem components, their impact) | Edit `data/ai/authoring/ai_areas.xlsx` (the decision), then `.venv/bin/python ./scripts/sheet_io.py import ai_areas` (checks every row, writes `data/ai/ai_areas.json`). The model is in `AI_RMF_Mapping_Sheet_Design.md`. A change to an area makes its mapping rows, and then their questions, out of date. |
+| Change the AI areas (usage and ecosystem components, their impact) | Edit `data/ai/authoring/ai_areas.xlsx` (the decision), then `.venv/bin/python ./scripts/sheet_io.py import ai_areas` (checks every row, writes `data/ai/ai_areas.json`). The model is in `docs/ai-rmf-model.md`. A change to an area makes its mapping rows, and then their questions, out of date. |
 | Change how an agent judges | The file in `prompts/` (see the table below). Editing the AI generator or evaluator prompt makes the accepted pilot stale. |
 | See what happened in a run | `runs/<Org>_<date>/audit.jsonl` (timeline) and `judgement_log/` (what each agent was shown and answered). |
 | Change the code or add a stage | Read `DESIGN_RULES.md` first, then run the tests (`.venv/bin/python -m unittest discover -s tests`). |
@@ -196,7 +196,7 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 - CSF bank pipeline is built and tested on real CSET data. First bank: `finance`: all 106 subcategories start with CSET's CSF 2.0 question; 68 also have maturity-model questions (2026-11-02; before that the CSF 2.0 set was not read and 38 used a generic fallback).
 - Other domains are not built yet. The ACET questions are tagged for domain once, and those verdicts serve all remaining banks.
 - A full engagement on the new pipeline has not been run end to end.
-- AI RMF track: built on the AI areas model (`AI_RMF_Mapping_Sheet_Design.md`). The sources are parsed (72 subcategories, 459 safeguards); the AI areas, intake and mapping are built and the mapping is accepted; both question banks (foundation, areas) are built and reviewed.
+- AI RMF track: built on the AI areas model (`docs/ai-rmf-model.md`). The sources are parsed (72 subcategories, 459 safeguards); the AI areas, intake and mapping are built and the mapping is accepted; both question banks (foundation, areas) are built and reviewed.
 - Stage 2 (answers → profile XLS) is being designed; Stage 3 (reports) will be rebuilt after it (`TODO.md`).
 
 ## Glossary

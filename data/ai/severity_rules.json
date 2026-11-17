@@ -1,5 +1,5 @@
 {
-  "description": "Priority (High / Medium / Low) of each AI RMF subcategory in the AI RMF profile XLS (its Priority column), from the AI system inventory (GOVERN 1.6, question_rules.json ai_system_inventory). Applied by scripts/ai_priority.py for the Stage 2 writer; it never changes which questions are asked. Decided 2026-11-02 (AI_RMF_Mapping_Sheet_Design.md section 4).",
+  "description": "Priority (High / Medium / Low) of each AI RMF subcategory in the AI RMF profile XLS (its Priority column), from the AI system inventory (GOVERN 1.6, question_rules.json ai_system_inventory). Applied by scripts/ai_priority.py for the Stage 2 writer; it never changes which questions are asked. Decided 2026-11-02 (docs/ai-rmf-model.md section 4).",
   "levels": ["Low", "Medium", "High"],
   "band_levels": {
     "Financial loss if it gets things wrong": ["Low", "Medium", "High"],

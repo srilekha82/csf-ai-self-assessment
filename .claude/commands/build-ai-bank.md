@@ -45,7 +45,7 @@ committed) and `data/ai/cis_ai_safeguard_ids.json` (the same without the text: c
 if a count is off.
 Agents read these files, never the PDFs.
 
-## Steps 3 and 4 — Mapping (see `AI_RMF_Mapping_Sheet_Design.md`)
+## Steps 3 and 4 — Mapping (see `docs/ai-rmf-model.md`)
 
 Maps each AI area (`data/ai/ai_areas.json`, decided by the user in `data/ai/authoring/ai_areas.xlsx`) to AI RMF
 subcategories of MAP, MEASURE and MANAGE, with the CIS safeguards that prove them. GOVERN is the foundation (asked once
