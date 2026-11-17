@@ -1,13 +1,16 @@
 """
-Collects every CSET question linked to a CSF 2.0 subcategory, from CISA's CSET SQL files. Run by /build-csf-bank
-(step 2). No judgement; the same for every sector.
+Collects every CSET question linked to a CSF 2.0 subcategory, from CISA's CSET SQL files. No judgement;
+the same for every sector.
+
+Called by: /build-csf-bank (step 2)
+Input:     the SQL migration files in your local CSET copy
+Output:    data/csf/bank_build/cset_candidates.json
 
 Usage: .venv/bin/python ./scripts/extract_cset_candidates.py [--cset-path PATH] [--output-dir DIR] [--force] [--no-pull]
 
-Reads:  the SQL migration files in your local CSET copy, in file order (later files change or delete earlier rows)
-Writes: data/csf/bank_build/cset_candidates.json, with
-          - CSET's own CSF 2.0 question for each subcategory (question set NCSF_V2)
-          - the maturity-model questions (ACET, CPG, SSG ...) CSET links to each subcategory: text, category, model
+cset_candidates.json holds, per CSF subcategory, CSET's own CSF 2.0 question (question set NCSF_V2) and the
+maturity-model questions (ACET, CPG, SSG ...) CSET links to it, with text, category and model. The SQL files are read
+in file order, because later files change or delete earlier rows.
 
 It skips the work when CSET has not changed since the last run (same commit, or no SQL file changed). Each question
 gets flags for later steps: empty_text, truncated, not_answerable, statement_only (a practice with no question text,

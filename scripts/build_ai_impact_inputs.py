@@ -1,5 +1,9 @@
 """
-Prepares the input for the AI impact notes on the CSF side. Run by /build-ai-bank (step 7). No judgement.
+Prepares the input for the AI impact notes on the CSF side. No judgement.
+
+Called by: /build-ai-bank (step 7)
+Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json
+Output:    data/ai/bank_build/impact_pending.json
 
 Usage: .venv/bin/python ./scripts/build_ai_impact_inputs.py [--xlsx PATH] [--output PATH]
 

@@ -1,10 +1,14 @@
 """
 Decides how each CSF subcategory is asked for this organisation, from its certifications and ISO 27001 SoA.
-Run by /csf-questionnaire (step 3).
+
+Called by: /csf-questionnaire (step 3)
+Input:     <run_dir>/intake.json, soa_parsed.json and soa_judgements.json (if any), data/csf/scope_rules.json,
+           the crosswalks
+Output:    <run_dir>/csf_scope.json (a question type per subcategory, and why), or soa_pending.json (exit 2)
 
 Usage: .venv/bin/python ./scripts/compute_scope.py <run_dir>
 
-Writes <run_dir>/csf_scope.json: one question type per subcategory, and why.
+Question types:
   full_discovery  ask from scratch
   gap             ask what goes beyond what the certification covers
   confirmatory    ask for evidence that the certification covers it

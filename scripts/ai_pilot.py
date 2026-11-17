@@ -1,5 +1,9 @@
 """
-Records your two approvals in the AI RMF bank build. Run by /build-ai-bank.
+Records your two approvals in the AI RMF bank build.
+
+Called by: /build-ai-bank (after the mapping review, and after the pilot)
+Input:     data/ai/mapping.json, the question generator and evaluator prompts
+Output:    data/ai/bank_build/mapping_accepted.json and pilot_accepted.json
 
 Usage: .venv/bin/python ./scripts/ai_pilot.py accept-mapping [--note TEXT]
        .venv/bin/python ./scripts/ai_pilot.py accept [--note TEXT]

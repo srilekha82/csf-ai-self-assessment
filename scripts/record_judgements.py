@@ -1,6 +1,11 @@
 """
 Checks and stores AI agent decisions on the CSF side. Nothing gets into the store without passing its checks.
 
+Called by: /build-csf-bank (steps 4 and 5); /csf-questionnaire (step 3, `log`)
+Input:     the agent's file (decisions, evidence lines, or the SoA reading)
+Output:    data/csf/bank_build/cset_judgements.json, data/csf/evidence_prompts.json, or a record in the run
+           folder; a write-once copy in judgement_log/
+
 Usage: .venv/bin/python ./scripts/record_judgements.py <verdicts.json> [--pending PATH] [--model ID] [--session REF] [--cache-dir DIR]
        .venv/bin/python ./scripts/record_judgements.py evidence prepare
        .venv/bin/python ./scripts/record_judgements.py evidence <prompts.json> --review <verdicts.json> --model ID

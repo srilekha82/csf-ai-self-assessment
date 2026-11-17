@@ -1,6 +1,10 @@
 """
-Shared lists every script uses: sectors (domains), certifications, intake menus, question types, the order of the
-framework functions, and the AI bank names. Not run directly.
+Shared lists every script uses: sectors (domains), certifications, intake menus, question types, the order
+of the framework functions, and the AI bank names.
+
+Called by: most scripts (imported, never run)
+Input:     data/common/intake_options.json, data/csf/scope_rules.json, data/ai/scope_rules.json
+Output:    -
 
 They are read once from the data files (data/common/intake_options.json and each track's scope_rules.json). To change
 one, edit the JSON; never copy a list into a script.

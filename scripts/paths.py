@@ -1,4 +1,10 @@
-"""Where every file lives. Scripts import their paths from here, so no path is typed twice. Not run directly."""
+"""
+Where every file lives. Scripts import their paths from here, so no path is typed twice.
+
+Called by: every script (imported, never run)
+Input:     -
+Output:    -
+"""
 
 from pathlib import Path
 

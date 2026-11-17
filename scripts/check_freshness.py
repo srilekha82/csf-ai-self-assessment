@@ -1,5 +1,9 @@
 """
-Says whether the question banks and their sources are up to date. It reports only; it never rebuilds anything.
+Says whether the question banks and their sources are up to date. It reports only; it never rebuilds.
+
+Called by: /generate-questions (--bank-age); /build-ai-bank and /build-csf-bank (--ai-bank, --all)
+Input:     the banks' build dates and data/metadata.json; for --ai-bank and --all also the source files
+Output:    a report on screen; exit 1 when something needs work
 
 Usage: .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>   (or --domain finance)
        .venv/bin/python ./scripts/check_freshness.py --ai-bank

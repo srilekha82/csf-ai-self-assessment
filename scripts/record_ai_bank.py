@@ -1,5 +1,10 @@
 """
-Checks and stores the AI agents' work in the AI RMF bank build. Run by /build-ai-bank.
+Checks and stores the AI agents' work in the AI RMF bank build.
+
+Called by: /build-ai-bank (steps 3-7)
+Input:     an agent's file (mapping, questions, evidence lines, impact notes or their review)
+Output:    data/ai/mapping.json, data/ai/banks/, data/csf/ai_impact_notes.json; a write-once copy in
+           data/ai/bank_build/judgement_log/
 
 Usage: .venv/bin/python ./scripts/record_ai_bank.py <mode> ...
        (modes that store agent work also take --model ID [--session REF] [--prompt PATH ...])
