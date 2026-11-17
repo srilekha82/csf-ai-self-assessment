@@ -97,31 +97,54 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 
 ### Scripts
 
-| Script | Job |
+The scripts do all the routine work: reading files, picking questions, checking and writing results. They never make
+judgement calls; where one is needed, an AI agent makes it and a script checks the answer before storing it. You
+normally don't run scripts yourself: the commands run them in the right order. They are grouped below by the job they
+belong to.
+
+**Making a questionnaire** (a client run, `/generate-questions`)
+
+| Script | What it does | Run by |
+|---|---|---|
+| `intake.py` | Asks the intake questions as numbered menus and saves the answers in a new run folder (`intake.json`, `ai_usage.json`). | `/generate-questions` |
+| `check_freshness.py` | With `--bank-age`: checks the question banks are not missing or too old before a run starts. (Other modes are for building banks, below.) | `/generate-questions` |
+| `parse_soa.py` | Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) into the run folder. It only copies what is there; it never guesses. | `/csf-questionnaire` |
+| `compute_scope.py` | Decides, for each CSF subcategory, how to ask it: from scratch, what goes beyond the certification, or "show us the evidence", based on the certifications and the SoA. | `/csf-questionnaire` |
+| `build_questions.py` | Picks the CSF questions for the organisation from the CSF bank for its sector. | `/csf-questionnaire` |
+| `build_ai_questions.py` | Picks the AI RMF questions for the organisation from the two AI RMF banks, by how it uses AI. | `/ai-questionnaire` |
+| `check_questionnaire.py` | Checks the picked questions are the right ones for this organisation before anything is written. Stops and lists any problem. | `/csf-questionnaire`, `/ai-questionnaire` |
+| `write_questionnaire.py` | Writes the questions into `questionnaire.xlsx`: one sheet for CSF, one for AI RMF. Each run replaces only its own sheet. | `/csf-questionnaire`, `/ai-questionnaire` |
+
+**Building the CSF banks** (maintainer, `/build-csf-bank`)
+
+| Script | What it does |
 |---|---|
-| `paths.py` | Where every file lives. Other scripts import from it. |
-| `options.py` | Shared facts read from the data files (domains, certs, question types, function order, bank names), so no script keeps its own copy. Not run directly. |
-| `intake.py` | The numbered intake: `menu` prints the choices, `write` maps the typed numbers to values and writes `intake.json` and `ai_usage.json` in a new run folder. |
-| `audit.py` | Shared helper (not run directly). Every script calls it to append to `audit.jsonl`; a step that crashes or is aborted still leaves an `incomplete` line. |
-| `parse_crosswalk.py` | `data/csf/source/csf2.xlsx` (NIST download) → `csf2_core.json` and the crosswalks; records the refresh in `data/metadata.json`. |
-| `check_freshness.py` | Reports stale data files from `data/metadata.json`; `--ai-bank` reports each stage of the AI RMF build as current, stale, missing or incomplete; `--all --run <run>` reports CSF and AI together (maintainer); `--bank-age --run <run>` checks only the build date of the banks a client run uses. |
-| `extract_cset_candidates.py` | CSET SQL → `cset_candidates.json`. |
-| `build_question_bank.py` | Routes questions for a domain; writes the bank or a pending file. |
-| `record_judgements.py` | Validates and logs agent judgements (bank build, and `log` mode for engagement steps). |
-| `parse_soa.py` | SoA Excel → `soa_parsed.json` in the run folder. Extracts only; never assumes. |
-| `compute_scope.py` | Question type per subcategory, from state plus `scope_rules.json`. |
-| `build_questions.py` | Bank + scope → `csf_questions_draft.json`. |
-| `check_questionnaire.py` | Checks a run's picked questions against its intake and the banks before the workbook is written; exit 1 lists the problems. |
-| `write_questionnaire.py` | `csf_questions_draft.json` → the CSF sheet of `questionnaire.xlsx`; with `--framework ai`, the AI question files → the AI RMF sheet of the same workbook (an Area column: whole organisation, the AI area, or the areas a shared question covers). Each replaces only its own sheet. |
-| `parse_ai_rmf_sources.py` | AI RMF Playbook and CIS companion guide PDFs → `ai_rmf_core.json`, `cis_ai_safeguards.json` (local only), `cis_ai_safeguard_ids.json`. |
-| `sheet_io.py` | Spreadsheet ↔ JSON for every sheet a person edits or reviews (`import` checks the whole sheet and writes the JSON; `export` writes the spreadsheet with dropdowns). Columns and allowed values are in `data/common/sheet_specs.json`. Today: `ai_areas` (the spreadsheet is the decision), `mapping` (review sheet of `mapping.json`: one line per AI area x MAP, MEASURE or MANAGE subcategory with the Playbook outcome and safeguard titles, plus a Coverage sheet; edits come back as `decided_by: human`), and `area_questions` / `foundation_questions` (review sheets of the two question banks: one line per question, checked like agent output on import). |
-| `prepare_ai_bank.py` | Writes the compact input an agent reads in the AI bank build: `batch <foundation|areas>` (questions) and `mapping --area ID` (one AI area, the function definitions, the MAP, MEASURE and MANAGE subcategories (GOVERN is the foundation, asked once for the organisation), the area's candidate CIS safeguards). |
-| `record_ai_bank.py` | The door for AI RMF agent output: `mapping`, `questions`, `evidence` (evidence prompts onto bank questions that have none, only those the evidence evaluator passed), `notes` (validate, store, log; `mapping` enforces `data/ai/mapping_rules.json`, `questions` the coverage of every mapping row and role); script-only `assemble` and `revalidate` (after a rules or other-area change, re-checks recorded areas without an agent). |
-| `ai_pilot.py` | The human gates: `accept` records the user's acceptance of the pilot, `accept-mapping` of the reviewed AI RMF mapping; `pilot_status()` and `mapping_status()` are what the freshness check reads. |
-| `ai_bank_common.py` | Helpers shared by the AI bank scripts. Not run directly. |
-| `ai_priority.py` | Priority (High / Medium / Low) per AI RMF subcategory from the AI system inventory and `data/ai/severity_rules.json`, for the Stage 2 writer. Not run directly. |
-| `build_ai_impact_inputs.py` | CIS → CSF 2.0 mapping joined to the MCP and agents guide safeguards → `impact_pending.json` (Step 5 input). |
-| `build_ai_questions.py` | `ai_usage.json` + `scope_rules.json` + the two banks → `ai_scope.json` (what was picked per subcategory and why) and `ai_questions_draft_<foundation|areas>.json`. |
+| `parse_crosswalk.py` | Reads NIST's CSF 2.0 download (`data/csf/source/csf2.xlsx`) into the CSF subcategory list and the ISO 27001 and PCI DSS crosswalks. |
+| `extract_cset_candidates.py` | Reads CISA's CSET (its SQL files) and collects every CSET question linked to a CSF subcategory. |
+| `build_question_bank.py` | Sorts those questions into the bank for one sector. Questions it cannot place on its own are listed for an AI agent to decide. |
+| `record_judgements.py` | Checks the agent's decisions and evidence lines, and stores only valid ones. In a client run it also keeps a record of the agent's SoA reading. |
+
+**Building the AI RMF banks** (maintainer, `/build-ai-bank`)
+
+| Script | What it does |
+|---|---|
+| `check_freshness.py` | With `--ai-bank`: shows which parts of the AI RMF build are up to date with their source files and which need redoing. |
+| `parse_ai_rmf_sources.py` | Reads the AI RMF Playbook and the CIS AI guides (PDFs you download) into data the other scripts use. |
+| `prepare_ai_bank.py` | Prepares a small input file for each AI agent step (one AI area, one batch of questions), so the agent sees only what it needs. |
+| `record_ai_bank.py` | Checks each AI agent's work (the mapping, the questions, evidence lines, impact notes) and stores it only if the whole file is valid. |
+| `ai_pilot.py` | Records your two approvals: the reviewed mapping (`accept-mapping`) and the pilot questions (`accept`). |
+| `sheet_io.py` | Turns data into review spreadsheets for you to check or edit (`export`), and reads your edits back (`import`). |
+| `build_ai_impact_inputs.py` | Prepares the input for the AI impact notes on the CSF side. |
+
+**Shared helpers** (used by other scripts, never run directly)
+
+| Script | What it holds |
+|---|---|
+| `paths.py` | Where every file lives. |
+| `options.py` | Lists every script shares: sectors, certifications, question types, bank names. |
+| `audit.py` | The run log: every script writes a line to `audit.jsonl` saying what it did. |
+| `ai_bank_common.py` | Helpers shared by the AI RMF bank scripts. |
+| `ai_priority.py` | Works out High / Medium / Low priority for AI RMF findings. For Stage 2; not used yet. |
 
 ### Prompts (`prompts/`)
 
