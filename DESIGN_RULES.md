@@ -1,7 +1,7 @@
 # Design rules for csf-ai-self-assessment
 
 Read this when you change the design: add or change a script, prompt, command or data file, or add a track or stage. It is
-not needed to run the flows (`CLAUDE.md` covers that). `README.md` explains the flow and the file layout.
+not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains the flow and the file layout.
 
 ## Design rules (apply to every script, prompt and command)
 1. **Scripts never decide.** They parse, join, look up, validate, format, hash and write. A script that cannot settle an
