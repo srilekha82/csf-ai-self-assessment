@@ -116,7 +116,9 @@ flowchart TD
     AGE -- ok --> AQ["/ai-questionnaire"]:::cmd
 
     CQ -- "ISO 27001 held" --> SOA["parse_soa.py<br/><small>reads: the SoA Excel file</small>"]:::script --> SOAJ([soa_parsed.json]):::file
-    SOAJ --> SC["compute_scope.py<br/><small>also reads: intake.json</small>"]:::script
+    SOAJ --> OK1["you: confirm the sheet and columns it picked"]:::you
+    OK1 -- "a pick is wrong: run again naming the column" --> SOA
+    OK1 -- right --> SC["compute_scope.py<br/><small>also reads: intake.json</small>"]:::script
     CQ --> SC
     SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent --> RJ[record_judgements.py log]:::script --> SC
     SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: intake.json, the CSF bank</small>"]:::script
@@ -136,6 +138,7 @@ flowchart TD
     classDef you fill:#dcfce7,stroke:#16a34a,color:#111
     classDef file fill:#f9fafb,stroke:#9ca3af,color:#111
     classDef stop fill:#fee2e2,stroke:#dc2626,color:#111
+    classDef you fill:#dcfce7,stroke:#16a34a,color:#111
 ```
 
 **Building the CSF banks** (`/build-csf-bank`, maintainer)
@@ -168,17 +171,17 @@ flowchart TD
     CF --> PS[parse_ai_rmf_sources.py]:::script
     SRC --> PS --> CORE([ai_rmf_core.json, cis_ai_safeguards.json, cis_ai_safeguard_ids.json]):::file
 
-    CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_ai_bank.py mapping"]:::script --> MAP([mapping.json]):::file
+    CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_ai_bank.py mapping<br/><small>checks and store: ai_mapping.py</small>"]:::script --> MAP([mapping.json]):::file
     MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then ai_pilot.py accept-mapping"]:::you
 
     U1 --> PB["prepare_ai_bank.py batch"]:::script
-    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_ai_bank.py assemble + questions"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
+    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_ai_bank.py assemble + questions<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
     BANKS --> SQ["sheet_io.py export area_questions, foundation_questions"]:::script --> U2["you: review the pilot, then ai_pilot.py accept"]:::you
 
-    BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_ai_bank.py evidence"]:::script --> BANKS
+    BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_ai_bank.py evidence<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS
 
     SRC --> BI[build_ai_impact_inputs.py]:::script
-    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_ai_bank.py notes + notes-review"]:::script --> NOTES([ai_impact_notes.json]):::file
+    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_ai_bank.py notes + notes-review<br/><small>checks and store: ai_notes.py</small>"]:::script --> NOTES([ai_impact_notes.json]):::file
     NOTES --> SN["sheet_io.py export impact_notes"]:::script --> U3["you: review"]:::you
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
