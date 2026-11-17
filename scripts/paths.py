@@ -1,4 +1,4 @@
-"""Single source of truth for where data lives. Scripts import from here; nothing hard-codes a path."""
+"""Where every file lives. Scripts import their paths from here, so no path is typed twice. Not run directly."""
 
 from pathlib import Path
 

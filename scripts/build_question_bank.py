@@ -1,31 +1,22 @@
 """
-Usage: .venv/bin/python ./scripts/build_question_bank.py --domain <domain|all> [--fanout-threshold N]
+Builds the CSF question bank for one sector from the collected CSET questions. Run by /build-csf-bank (step 3).
+
+Usage: .venv/bin/python ./scripts/build_question_bank.py --domain <sector|all> [--fanout-threshold N]
                                                  [--allow-pending] [--output-dir DIR] [--cache-dir DIR]
 
-  --domain            healthcare|finance|manufacturing_ot|saas_cloud|consulting|other|all
-  --fanout-threshold  a question mapped to >= N subcategories gets a per-subcategory fit check (default 4)
-  --allow-pending     write the bank even if some candidates still need a judgement (they are left out)
-  --output-dir        where the bank is written (default: data/csf/banks/)
-  --cache-dir         where cset_candidates.json, cset_judgements.json and the pending files live
-                      (default: data/csf/bank_build/)
+Reads:  data/csf/bank_build/cset_candidates.json, and the agent's earlier decisions (cset_judgements.json)
+Writes: data/csf/banks/question_bank_<sector>.json
 
-Builds data/csf/banks/question_bank_<domain>.json from data/csf/bank_build/cset_candidates.json (see
-extract_cset_candidates.py). Each subcategory starts with CSET's own CSF 2.0 question (`csf2_set`, set NCSF_V2;
-no routing: it is the subcategory itself, for every domain). The maturity-model questions CSET maps to CSF 2.0
-follow; each (question, subcategory) pair of those is routed:
+Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each other CSET question is then:
+  rejected   not answerable, empty, or already judged unfit or not for this sector
+  accepted   its source model is for this sector (e.g. ACET for finance), or an earlier decision covers it
+  pending    needs an agent: sector unclear, text to (re)write, or linked to many subcategories
+             (--fanout-threshold, default 4)
 
-  reject   not_answerable / empty_text questions; a question already judged unfit or out of domain
-  accept   decided from the schema, no agent needed:
-             - the question's source model is sector-specific and matches the target domain
-               (ACET -> finance), and it does not fan out across many subcategories
-             - or an earlier agent judgement (bank_build/cset_judgements.json) covers it
-  pending  needs an agent: unknown domain (generic source model), a statement-only practice or a
-           truncated question that must be (re)written, or a question fanning out over many subcategories
-
-If anything is pending the script writes pending_judgements_<domain>.json (in the bank_build folder) and exits with
-code 2 without writing the bank. An agent fills the pending items (prompts/question_bank_judge.md),
-record_judgements.py saves the verdicts, and this script is run again. Verdicts are stored per
-question with a hash of its text, so they are only redone when CSET changes the question.
+Exit 2 if anything is pending: it writes pending_judgements_<sector>.json and no bank. An agent decides them
+(prompts/question_bank_judge.md), record_judgements.py stores the decisions, then run it again. Decisions are tied to
+the question's text, so they are redone only if CSET changes the question. --allow-pending writes the bank anyway,
+leaving pending questions out.
 """
 
 import argparse

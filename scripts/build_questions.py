@@ -1,21 +1,16 @@
 """
+Picks the CSF questions for one organisation from the CSF bank for its sector. Run by /csf-questionnaire (step 4).
+
 Usage: .venv/bin/python ./scripts/build_questions.py <run_dir>
 
-  run_dir  — path to run folder containing csf_scope.json and intake.json (the domain picks the bank; the certifications
-             word the gap/confirmatory questions)
+Reads:  <run_dir>/intake.json (sector and certifications), <run_dir>/csf_scope.json (how to ask each subcategory),
+        data/csf/banks/question_bank_<sector>.json, data/csf/csf2_core.json
+Writes: <run_dir>/csf_questions_draft.json      the picked questions
+        <run_dir>/csf_question_bank_used.json   a copy of the bank used, so the run can be reproduced later
 
-Reads question_bank_{domain}.json and csf_scope.json. Picks N candidates per subcategory
-based on question_type, frames each question, and writes csf_questions_draft.json.
-
-Inputs:
-  <run_dir>/csf_scope.json, <run_dir>/intake.json
-  data/csf/banks/question_bank_{domain}.json
-  data/csf/csf2_core.json
-
-Output:
-  <run_dir>/csf_questions_draft.json
-  <run_dir>/csf_question_bank_used.json   snapshot of the bank used, so the run stays reproducible
-                                      after the shared bank is rebuilt
+Per subcategory it takes the first few bank questions (how many depends on the question type: scope_rules.json
+max_questions) and words them for the certifications held. A subcategory with no bank question gets one generic
+question.
 """
 
 import argparse

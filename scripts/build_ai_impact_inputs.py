@@ -1,22 +1,15 @@
 """
+Prepares the input for the AI impact notes on the CSF side. Run by /build-ai-bank (step 7). No judgement.
+
 Usage: .venv/bin/python ./scripts/build_ai_impact_inputs.py [--xlsx PATH] [--output PATH]
 
-Input feed for the AI impact notes (agent steps in prompts/ai_impact_notes_writer.md). Script only, no judgement.
+Links CIS's official CIS -> CSF 2.0 mapping (xlsx) to the AI text of the MCP and Agents guide safeguards, so each CSF
+subcategory gets the AI text of the safeguards mapped to it. Writes data/ai/bank_build/impact_pending.json:
+  items      CSF subcategories with AI text to write a note from
+  unmapped   CSF subcategories with nothing to go on, and why (no CIS mapping, or no AI text); never guessed
 
-Joins the official CIS Controls v8.1 -> NIST CSF 2.0 mapping (xlsx) to the AI-specific text of the MCP and AI Agents
-companion-guide safeguards (data/ai/cis_ai_safeguards.json), by safeguard id, giving per CSF 2.0 subcategory the AI
-text of every mapped safeguard that has any. Writes data/ai/bank_build/impact_pending.json:
-
-  items:    one per CSF subcategory with at least one mapped safeguard that has AI-specific text
-            {subcategory_id, subcategory_text, safeguards: [{id, cis_id, title, relationship, ai_text}]}
-  unmapped: CSF subcategories with no note source, each with a reason (never guessed):
-            no_cis_mapping (no CIS safeguard maps to it) or no_ai_text (mapped, but the guides add nothing)
-
-CIS safeguard ids: the xlsx stores them as numbers, so 4.10, 8.10 and 16.10 collapse into 4.1, 8.1 and 16.1. Ids are
-rebuilt from the control number and row order (a new safeguard starts when the safeguard cell or title changes), and
-checked: the title must equal the companion guide's title for that id, safeguards per control must match
-data/ai/parse_config.json, and the CSF subcategories the workbook lists as unmapped must equal the ones found here.
-Any mismatch fails and nothing is written.
+Good to know: the xlsx stores safeguard IDs as numbers (4.10 becomes 4.1), so IDs are rebuilt from row order and
+checked against the guides' titles and the counts in data/ai/parse_config.json. Any mismatch stops the run.
 """
 
 import argparse

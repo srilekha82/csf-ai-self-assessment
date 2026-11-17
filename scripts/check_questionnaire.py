@@ -1,25 +1,17 @@
 """
+Checks the questions picked for a run are the right ones for this organisation, before the workbook is written.
+Run by /csf-questionnaire and /ai-questionnaire. It does not judge wording: questions were reviewed when the banks
+were built.
+
 Usage: .venv/bin/python ./scripts/check_questionnaire.py <run_dir> [--framework csf|ai]
 
-Checks that the questions picked for this run are the ones its intake and the question banks call for, before the
-workbook is written. It judges nothing about wording: the questions were reviewed when the banks were built. It checks
-every draft present in the run folder (or only one framework with --framework).
+CSF:    every subcategory in scope has questions and none outside it; the right question type; GOVERN always asked in
+        full; "confirm with evidence" questions flagged LOW; no blank, repeated or extra questions; every question from
+        the bank, with CSET's own CSF 2.0 question kept; nothing worded for a certification the organisation lacks.
+AI RMF: every question is in the bank; each is for a role, producer details and AI areas the organisation has; nothing
+        the bank gives this organisation is missing.
 
-CSF (csf_questions_draft.json, against csf_scope.json, intake.json and csf_question_bank_used.json):
-  - one entry per subcategory in scope that is not `skip`, none for the others, each with the scope's question type
-  - every GOVERN (GV) entry is full_discovery; every confirmatory entry carries the LOW confidence flag
-  - at least one non-blank question per entry, none repeated, no more than scope_rules.json max_questions for its type
-  - every question is one of the bank's questions for that subcategory, CSET's own CSF 2.0 question is kept when the
-    bank has it, and the generic fallback appears only when the bank has no question for it
-  - no question is worded for a certification the organisation does not hold
-
-AI RMF (ai_questions_draft_<bank>.json, against ai_usage.json and ai_question_bank_used_<bank>.json):
-  - every question is in the bank under its subcategory, every question is full_discovery
-  - it is asked of a role the client is asked as, needs only producer details the client has, and (area questions)
-    covers only rows of the client's own AI areas
-  - nothing is missing: each subcategory holds exactly the questions the bank gives this client
-
-Exit 0 = all checks pass; exit 1 = problems listed (re-run the step that wrote the draft; do not edit drafts by hand).
+Exit 0: all good. Exit 1: problems listed; re-run the step that picked the questions (never edit the drafts by hand).
 """
 import argparse
 import json

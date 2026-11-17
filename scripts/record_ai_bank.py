@@ -1,81 +1,31 @@
 """
+Checks and stores the AI agents' work in the AI RMF bank build. Run by /build-ai-bank.
+
 Usage: .venv/bin/python ./scripts/record_ai_bank.py <mode> ...
+       (modes that store agent work also take --model ID [--session REF] [--prompt PATH ...])
 
-The AI RMF bank build's one door for agent output. Same contract as record_judgements.py: the agent hands in a file, the
-script validates the WHOLE file and rejects it if anything is wrong (exit 1, nothing stored), otherwise stores it and
-writes a write-once record to data/ai/bank_build/judgement_log/ plus an audit line (actor "agent").
+Each mode checks the whole file and rejects it if anything is wrong (exit 1, nothing stored); otherwise it stores it,
+keeps a write-once record in data/ai/bank_build/judgement_log/ and adds a run-log line. A line a person decided in a
+review sheet is never overwritten by an agent.
 
-Script-only mode (reshapes agent output for the `questions` record; decides nothing):
+Modes that store agent work (the full checks are in the function named):
+  mapping <file> [--review F]   one AI area's mapping -> data/ai/mapping.json                 (validate_mapping)
+  questions <areas|foundation> <file> [--replace-human]
+                                questions for some subcategories -> data/ai/banks/...          (validate_questions)
+  evidence <areas|foundation> <file> --review F
+                                the evidence lines the evaluator passed -> that bank           (validate_evidence)
+  notes <file>                  AI impact notes -> data/csf/ai_impact_notes.json              (validate_notes)
+  notes-review <file>           the notes evaluator's findings -> the same file               (validate_notes_review)
+
+Modes with no agent output:
   assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F
-                                             merge generator output with the evaluator's verdicts into the file
-                                             `questions` records: revision (gen2) replaces the subcategories it
-                                             covers; a subcategory still failing after turn 2 is needs_human_review.
-                                             An evaluator file must hold a verdict on checks 1-9 for every question
-                                             and a `complete` verdict per subcategory; a turn 2 file may fail a
-                                             question that is unchanged and passed turn 1 only on checks 6 and 7.
+                                combines the question writer's and checker's files into the file `questions` stores;
+                                a subcategory still failing after the second round is marked needs_human_review.
+  revalidate                    after a change to the mapping rules or to other AI areas, re-checks the recorded areas
+                                against the current rules: areas that pass are marked current, the rest are listed.
+                                An area whose own sources or AI area row changed must be re-drafted instead.
 
-Preparing the agents' input is prepare_ai_bank.py; the pilot gate is ai_pilot.py; freshness of the stages is reported by
-check_freshness.py --ai-bank.
-
-Record modes (agent output; every one needs --model, optional --session, --prompt PATH ...):
-  questions <areas|foundation> <file>
-                           {"MEASURE 2.8": {"status": "pass"|"needs_human_review", "turns": 1|2, "reason": "...",
-                                            "questions": [question, ...]}}
-                           -> data/ai/banks/question_bank_ai_rmf_<bank>.json   (entries replaced per subcategory)
-                           A question: question_text, playbook_refs ["<subcategory> — suggested action N", ...],
-                           cis_refs, roles (none / consumer / producer), producer_flags (data/ai/question_rules.json);
-                           area bank also rows (mapping row ids "<area>|<subcategory>" it covers).
-                           Rejected unless (area bank) the subcategory has rows in data/ai/mapping.json, each row is
-                           asked once or twice (row_questions max) for each role its area allows (area_roles), a
-                           question's roles are allowed
-                           by every row it covers, its cis_refs are safeguards of those rows, and a row with folded
-                           subcategories has its question cite a suggested action of each; (foundation) the subcategory
-                           is foundation, it has question_rules.json foundation_questions min to max questions (plus
-                           producer_only_extra asked of producers only), at least
-                           one consumer and one producer question without producer flags, and no cis_refs. Both: real
-                           suggested action numbers, distinct question texts, a question with producer flags has roles
-                           ["producer"] only. Whether a question is practice-revealing is the evaluator's job.
-                           A subcategory a person decided in the review sheet (decided_by human) is not overwritten
-                           unless --replace-human.
-  notes <file>             {"PR.AA-05": {"exposure": "...", "use": {"base_rag": "...", "mcp_agentic": "..."}}}
-                           exposure (layer 1) is optional (only where the safeguard text supports something real
-                           for an org with no AI; decided 2026-10-31) and removed with "exposure": null; `use`
-                           (layer 2) is added or removed with "use": null; an entry left with neither is dropped;
-                           a subcategory a person decided in the review sheet is refused. A rewritten note loses
-                           its review status (to be reviewed again).
-                           -> data/csf/ai_impact_notes.json
-  notes-review <file>      the notes evaluator's findings: [{"subcategory_id": "PR.AA-05", "note": "exposure" |
-                           "base_rag" | "mcp_agentic" | "use", "reason": "..."}] ([] = all pass), on notes not yet
-                           reviewed (no status: new or rewritten); each of those, unless decided by a person, gets
-                           status pass or needs_human_review (with the reasons). Reviewed notes keep their verdict.
-                           -> data/csf/ai_impact_notes.json
-  mapping <file> [--review F]  one AI area's mapping (the drafter's file, after the evaluator's turn):
-                           {"area": "mcp_tools",
-                            "rows": [{"function": "MEASURE", "subcategory": "MEASURE 2.8", "cis_refs": ["MCP-8.2"],
-                                      "impact": ["access"], "why": "..."}],
-                            "no_question": [{"function": "MAP", "reason": "..."}]}
-                           Rejected unless: the area is in ai_areas.json; each row's function is a mapped one (MAP,
-                           MEASURE, MANAGE; GOVERN is foundation, asked once for the organisation, never per area); each
-                           subcategory exists and belongs to the row's function; cis_refs come from the area's candidates (mapping_rules.json area_cis); impact is a
-                           non-empty subset of the area's impact; a why on each row; an optional folded list (subcategories
-                           this row also covers, merged by the drafter) names mapped subcategories that have no row of
-                           their own and are folded once; every function has rows or a
-                           no_question reason (not both); no repeated function + subcategory; every required check that applies to
-                           the area is met. --review is the evaluator's last list [{"kind", "function", "subcategory",
-                           "reason"}]: kind "row" (default) fails a row, stored as needs_human_review with the reason;
-                           "missing" names a subcategory that should be a row, stored once in the area's `missing` list
-                           (it needs human review; the area's other rows are not flagged); "note" is a remark that never
-                           blocks (e.g. the area's impacts look too narrow), stored in the area's `notes`.
-                           The rows a person decided (decided_by human, removed_by_human) are merged in and the result
-                           is checked again before anything is stored.
-                           -> data/ai/mapping.json   (the area's entry replaced; other areas kept)
-
-Script-only modes (no agent output):
-  revalidate               a change is a delta: when only the mapping rules or other AI areas changed, every recorded
-                           area that is not current is checked again against the current rules (the same validator as
-                           agent output). An area that passes is stamped current, its rows untouched; one that fails is
-                           listed with its problems (fix them in mapping.xlsx). An area whose own row in the AI areas
-                           sheet changed, or whose sources (Playbook, CIS guides) changed, must be re-drafted instead.
+Related: prepare_ai_bank.py writes the agents' input; ai_pilot.py records your approvals.
 """
 
 import argparse
@@ -218,7 +168,20 @@ def check_question(tag: str, sid: str, q, bank: str, inp: dict, ctx: dict) -> li
 
 def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
     """The whole file, per subcategory: status, the questions, and coverage (area bank: every row asked once, or up to
-    row_questions max times, per role its area allows, folded outcomes cited; foundation: the count, a consumer and a producer question)."""
+    row_questions max times, per role its area allows, folded outcomes cited; foundation: the count, a consumer and a producer question).
+
+    A question: question_text, playbook_refs ["<subcategory> — suggested action N", ...], cis_refs, roles (none /
+    consumer / producer), producer_flags (the producer details, data/ai/question_rules.json); in the area bank also
+    rows (mapping row ids "<area>|<subcategory>" it covers).
+
+    Area bank: the subcategory has rows in data/ai/mapping.json; each row is asked once (twice at most, row_questions
+    max) for each role its area allows; a question's roles are allowed by every row it covers; its cis_refs are
+    safeguards of those rows; a row with folded subcategories has its question cite a suggested action of each.
+    Foundation bank: the subcategory is a foundation one; it has question_rules.json foundation_questions min to max
+    questions (plus producer_only_extra for producers), at least one consumer and one producer question without
+    producer details, and no cis_refs. Both: real suggested action numbers, distinct question texts, and a question
+    needing producer details has roles ["producer"] only. Whether a question reveals practice is the evaluator's job.
+    A subcategory a person decided in the review sheet is not overwritten unless --replace-human."""
     if not isinstance(data, dict) or not data:
         return ["the file must be a non-empty JSON object keyed by subcategory id"]
     errors = []
@@ -546,6 +509,12 @@ def notes_from_sheet(lines: list[dict], doc: dict) -> tuple[dict, list[str], int
 
 
 def validate_notes(data, from_sheet: bool = False) -> list[str]:
+    """AI impact notes: {"PR.AA-05": {"exposure": "...", "use": {"base_rag": "...", "mcp_agentic": "..."}}}
+
+    exposure (shown to every organisation) is optional: only where the safeguard text supports something real for an
+    organisation with no AI (decided 2026-10-31); "exposure": null removes it. use (shown only when AI is in use) is
+    added or removed the same way; an entry left with neither is dropped. A subcategory a person decided in the review
+    sheet is refused. A rewritten note loses its review status and is reviewed again."""
     errors = []
     if not isinstance(data, dict) or not data:
         return ["the file must be a non-empty JSON object keyed by CSF subcategory id"]
@@ -594,6 +563,23 @@ def mapping_inputs(inp: dict) -> dict:
 
 
 def validate_mapping(data, inp, m: dict, review) -> list[str]:
+    """One AI area's mapping (the drafter's file, after the evaluator's turn):
+        {"area": "mcp_tools",
+         "rows": [{"function": "MEASURE", "subcategory": "MEASURE 2.8", "cis_refs": ["MCP-8.2"],
+                   "impact": ["access"], "why": "..."}],
+         "no_question": [{"function": "MAP", "reason": "..."}]}
+
+    Rejected unless: the area is in ai_areas.json; each row's function is MAP, MEASURE or MANAGE (GOVERN is the
+    foundation, asked once for the organisation, never per area); each subcategory exists and belongs to that
+    function; cis_refs come from the area's candidates (mapping_rules.json area_cis); impact is a non-empty subset of
+    the area's impact; every row has a why; an optional `folded` list names mapped subcategories with no row of their
+    own, each folded once; every function has rows or a no_question reason (not both); no function + subcategory
+    twice; every required check that applies to the area is met.
+
+    --review is the evaluator's last list [{"kind", "function", "subcategory", "reason"}]: "row" (default) fails a
+    row, stored as needs_human_review; "missing" names a subcategory that should be a row, stored in the area's
+    `missing` list for human review; "note" is a remark that never blocks, stored in the area's `notes`. Rows a person
+    decided (decided_by human, removed_by_human) are merged in and the result is checked again before storing."""
     if not isinstance(data, dict) or set(data) - {"area", "rows", "no_question"} or "area" not in data:
         return ["the file must be an object with area, rows and no_question"]
     area_id = data["area"]
@@ -1012,7 +998,11 @@ def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], li
 
 def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out: Path) -> str:
     """The file `questions` records, from generator output and evaluator verdicts. No judgement: a subcategory
-    passes iff the last evaluation fails nothing in it."""
+    passes iff the last evaluation fails nothing in it.
+
+    An evaluator file must hold a verdict on checks 1-9 for every question and a `complete` verdict per subcategory.
+    A second-round file may fail a question that is unchanged and passed round 1 only on checks 6 and 7. A revision
+    (gen2) replaces the subcategories it covers."""
     g1 = load_json(gen1, "generator output")
     if not isinstance(g1, dict):
         sys.exit("[record_ai_bank] ERROR: generator output has the wrong JSON type")

@@ -1,20 +1,15 @@
 """
+Writes the picked questions into the questionnaire workbook (questionnaire.xlsx), one row per question.
+Run by /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes.
+
 Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai] [--sheet NAME]
 
-Reads question files (nested format: one entry per subcategory, questions[] array per entry) and writes one sheet of an
-XLSX, one row per question; subcategory fields repeat. The last path is the output. One workbook holds the whole
-questionnaire, one sheet per framework:
+  csf (default)  csf_questions_draft.json -> sheet "CSF Questionnaire"
+  ai             ai_questions_draft_foundation.json and ai_questions_draft_areas.json -> sheet "AI RMF Questionnaire",
+                 with an Area column (whole organisation, one AI area, or "This question covers: ..."). If the AI
+                 system inventory question is asked, it also adds an "AI systems" sheet where the client lists them.
 
-  csf (default)  csf_questions_draft.json -> questionnaire.xlsx, sheet "CSF Questionnaire".
-  ai             ai_questions_draft_<bank>.json (one or two files: foundation, areas) -> the same questionnaire.xlsx,
-                 sheet "AI RMF Questionnaire", with an Area column ("Whole organisation" for a foundation question, the
-                 client's AI area, or "This question covers: ..." for a question shared by several areas) and a
-                 per-question evidence prompt. When the questions include the AI system inventory
-                 (data/ai/question_rules.json ai_system_inventory), it also writes the sheet the client answers it in:
-                 one row per AI system, a Yes column per AI area (client labels) and criticality drop-downs.
-
-Either mode opens questionnaire.xlsx if it exists and replaces only its own sheet; the other sheet is never touched, so
-the two can be written (or re-written) in any order. The CSF sheet is always first.
+Each mode replaces only its own sheet, so the two can be written in any order. The CSF sheet always comes first.
 """
 import argparse
 import json

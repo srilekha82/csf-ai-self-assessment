@@ -1,38 +1,21 @@
 """
-Usage: .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>
-       .venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>
+Says whether the question banks and their sources are up to date. It reports only; it never rebuilds anything.
+
+Usage: .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>   (or --domain finance)
        .venv/bin/python ./scripts/check_freshness.py --ai-bank
+       .venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>   (or --domain D --certs C ...)
 
-Bank age, for a client run (--bank-age):
-    .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>   (or --domain finance)
+  --bank-age   for a client run (/generate-questions): is each bank the run uses there, and younger than its limit
+               (data/metadata.json "question_banks")? Reads only the build date in each bank, so it needs no source
+               files. Exit 1 names the bank to rebuild.
+  --ai-bank    for the maintainer (/build-ai-bank): one line per part of the AI RMF build (parsed sources, each bank,
+               impact notes, pilot, AI areas, mapping): current, stale, missing or incomplete. Current means built from
+               the source files as they are now (compared by fingerprint), complete, and approved where an approval is
+               needed. Needs the source PDFs.
+  --all        for the maintainer: the age of the CSF reference data, the CSF bank against CSET (it runs git fetch on
+               your CSET copy and says so if that fails), and the AI RMF lines above.
 
-Reads only the build date stored in each question bank the run uses (the CSF bank of its domain, the two AI RMF banks)
-and compares it with the limit in data/metadata.json "question_banks". Needs no source files, so it works on a fresh
-clone. Exit 0 = every bank exists and is within its limit; exit 1 = a bank is missing or too old: the maintainer
-rebuilds it (/build-csf-bank, /build-ai-bank) before the run goes on.
-
-AI RMF gate (--ai-bank):
-    .venv/bin/python ./scripts/check_freshness.py --ai-bank
-
-Compares the SHA-256 of the current source files (Playbook, the three CIS companion guides, the CIS -> CSF xlsx) with the
-hashes each output records about its own inputs, one line per stage: parse (ai_rmf_core.json, cis_ai_safeguards.json),
-each question bank (foundation, areas), notes, and pilot. A stage is `current` only if it exists and was built from
-these exact sources; a bank must also be complete (record_ai_bank.bank_freshness: the area bank has every subcategory
-with mapping rows, each written for the rows as they are now; the foundation bank every foundation subcategory). `mapping` is current when every AI area
-is drafted from the current sources, AI areas and rules, reviewed (no row needs_human_review, no sheet edit left
-unimported) and accepted as it is now (ai_pilot.py accept-mapping); it also says how many subcategories no area reaches. `pilot` is current when the user accepted the pilot (ai_pilot.py accept) for the current
-generator and evaluator prompts. `ai areas` is current when data/ai/ai_areas.json was imported from
-data/ai/authoring/ai_areas.xlsx as the spreadsheet is now (sheet_io.py import ai_areas). Exit 0 = every stage current (skip the rebuild); exit 1 = something is missing, stale
-or incomplete.
-
-Everything at the start of an engagement (CSF and AI together), --all. The domain and certifications come from the run's
-intake.json (--run), or are given directly with --domain and --certs when no run exists yet:
-    .venv/bin/python ./scripts/check_freshness.py --all --domain finance --certs iso27001 [--cset-path PATH]
-
-Prints the reference-data table (csf2_core.json plus the crosswalk of each certification held), the CSF question bank of the domain (missing; stale when the CSET SQL changed since the
-bank was built; else current) and the AI RMF stages above, then what needs work. It runs `git fetch` in the CSET clone
-to see upstream; if the fetch fails it says so and compares with the local commit instead. It only reports facts: the
-calling command decides what to rebuild. Exit 0 = all current; exit 1 = something needs work.
+Exit 0: everything checked is current. Exit 1: something needs work (listed).
 """
 import json, sys, argparse
 from datetime import date

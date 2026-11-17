@@ -1,8 +1,10 @@
-"""Shared facts, read once from the data files. Scripts import these names; none keeps its own copy.
+"""
+Shared lists every script uses: sectors (domains), certifications, intake menus, question types, the order of the
+framework functions, and the AI bank names. Not run directly.
 
-Domains, certifications, the intake menus and the question types come from data/common/intake_options.json. The function
-order of each framework comes from that track's scope_rules.json, the AI bank names from the AI scope_rules.json.
-Nothing here is decided in code: change a fact by editing the JSON."""
+They are read once from the data files (data/common/intake_options.json and each track's scope_rules.json). To change
+one, edit the JSON; never copy a list into a script.
+"""
 
 import json
 from pathlib import Path

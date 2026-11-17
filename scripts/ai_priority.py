@@ -1,14 +1,12 @@
 """
-Priority (High / Medium / Low) of each AI RMF subcategory for the AI RMF profile XLS (its Priority column).
+Works out the priority (High / Medium / Low) of each AI RMF subcategory, for the Priority column of the AI RMF profile.
+For Stage 2, which is not built yet: nothing calls this today. It writes no files.
 
-A helper for the Stage 2 writer (not a command): the rules live in data/ai/severity_rules.json, the criticality bands in
-data/ai/question_rules.json `ai_system_inventory`, the rows and foundation in the accepted mapping
-(record_ai_bank.question_context). Pure functions, no files written; the caller audits its own run.
+  system_level(system, rules)    one row of the client's AI systems sheet -> its criticality level
+  subcategory_priorities(...)    {subcategory: level} for the subcategories in the client's questionnaire
 
-  system_level(system)            one inventory row -> its criticality level
-  subcategory_priorities(...)     {subcategory: level} for the subcategories in the client's questionnaire
-
-An inventory system is {"name": ..., "areas": [ai area ids], "<criticality header>": "<band as written in the sheet>"}.
+Rules: data/ai/severity_rules.json. Criticality bands: data/ai/question_rules.json `ai_system_inventory`.
+An AI system is {"name": ..., "areas": [AI area ids], "<criticality column>": "<band as written in the sheet>"}.
 """
 
 import json

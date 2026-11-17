@@ -1,30 +1,20 @@
 """
+Collects every CSET question linked to a CSF 2.0 subcategory, from CISA's CSET SQL files. Run by /build-csf-bank
+(step 2). No judgement; the same for every sector.
+
 Usage: .venv/bin/python ./scripts/extract_cset_candidates.py [--cset-path PATH] [--output-dir DIR] [--force] [--no-pull]
 
-  --output-dir  default: data/csf/bank_build
+Reads:  the SQL migration files in your local CSET copy, in file order (later files change or delete earlier rows)
+Writes: data/csf/bank_build/cset_candidates.json, with
+          - CSET's own CSF 2.0 question for each subcategory (question set NCSF_V2)
+          - the maturity-model questions (ACET, CPG, SSG ...) CSET links to each subcategory: text, category, model
 
-Deterministic extraction of CSF 2.0 question candidates from the CSET SQL migration files
-(CSETWebApi/.../VersionUpgrader/SQL). Domain-independent: writes data/csf/bank_build/cset_candidates.json,
-which build_question_bank.py later routes per domain. No judgement happens here.
+It skips the work when CSET has not changed since the last run (same commit, or no SQL file changed). Each question
+gets flags for later steps: empty_text, truncated, not_answerable, statement_only (a practice with no question text,
+which an agent later rewrites as a question).
 
-What it reads (migration files processed in filename order):
-  MATURITY_REFERENCES  INSERT  (Gen_File_Id 692 = CSF 2.0)  question -> subcategory mappings
-  MATURITY_REFERENCES  DELETE                               mappings removed later (subtracted)
-  MATURITY_QUESTIONS   INSERT                               question text, category, source model
-  MATURITY_QUESTIONS   UPDATE                               later changes to Question_Text / Is_Answerable
-  MATURITY_QUESTIONS   DELETE                               questions removed entirely (dropped)
-  MATURITY_MODELS      INSERT                               model id -> name (e.g. 1 = ACET)
-  CSET's own CSF 2.0 standard (set NCSF_V2), written to `csf2_set` (subcategory -> its question):
-  REQUIREMENT_QUESTIONS_SETS  INSERT / UPDATE / DELETE      question -> requirement, for NCSF_V2
-  NEW_REQUIREMENT      INSERT / UPDATE / DELETE             requirement -> subcategory id (Requirement_Title)
-  NEW_QUESTION         INSERT / UPDATE / DELETE             question text (Simple_Question; "(ID.AM-01)" suffix dropped)
-
-Freshness: compares the CSET HEAD with the commit stored in the candidates file. Same -> exit.
-Different but no migration .sql file under SQL_SUBPATH changed -> patch the stored commit only. Otherwise re-extract.
-
-Each question carries deterministic `flags`: empty_text, truncated, not_answerable, statement_only.
-`statement_only` = no Question_Text but practice fields (SSG IT / CPG2 models); the content is kept
-under `practice` and an agent step later rewrites it as a question.
+SQL tables read: MATURITY_REFERENCES (Gen_File_Id 692 = CSF 2.0), MATURITY_QUESTIONS, MATURITY_MODELS, and for NCSF_V2
+REQUIREMENT_QUESTIONS_SETS, NEW_REQUIREMENT, NEW_QUESTION.
 """
 
 import argparse

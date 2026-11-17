@@ -1,27 +1,18 @@
 """
-Shared audit trail. Import this from any script; there is nothing to run.
+The run log. Every script and agent step adds one line to an audit.jsonl, so you can read back what happened, who did
+it (script, agent or person), with which files, and how it ended. Not run directly.
 
-Every script run and every agent step appends ONE line to an audit.jsonl, so a run can be read back
-as a timeline of what happened, who did it (script / agent / human), with what, and how it ended.
-Where the file lives:
-  runs/<Org>_<date>/audit.jsonl     an engagement run
-  data/csf/bank_build/audit.jsonl   question bank build (extract, build, judging)
-  data/audit.jsonl                  reference data refresh and freshness checks
+Where the log is: runs/<Org>_<date>/audit.jsonl (a client run), data/csf/bank_build/ and data/ai/bank_build/ (bank
+builds), data/audit.jsonl (data refreshes and freshness checks). None of them is committed.
 
-Usage in a script (log_path is one of the files above):
+In a script:
+    ev = audit.begin(log_path, "my_script", args={...})        # at the start
+    ev.finish(inputs=[...], outputs=[...], detail="one line")   # success
+    ev.fail("message")                                           # error: logs, prints, exits 1
+    ev.pending("what the agent must do", outputs=[...])          # needs an agent: logs, exits 2
 
-    ev = audit.begin(log_path, "my_script", args={...})       # at the start, once the arguments are known
-    ...
-    ev.finish(inputs=[...], outputs=[...], detail="one line")  # on success
-    ev.fail("message")                                          # error: logs, prints the message, exits 1
-    ev.pending("what the agent must do", outputs=[...])         # needs an agent: logs, exits 2
-
-If a script exits or crashes without calling finish, an "incomplete" line is still written (atexit), so
-a failed or aborted step never goes missing. Each line records files as {path, sha}; paths are relative
-to the log's folder, then to the repo root. Lines are only ever appended.
-
-Any new script or agent step should call begin/finish. Agent steps use `record_judgements.py log`,
-which does it for them (actor "agent").
+A script that crashes or exits without finish still leaves an "incomplete" line. Lines are only ever added. Agent
+output is stored with record_agent_output(), which also keeps a write-once copy in judgement_log/.
 """
 
 import atexit

@@ -1,30 +1,17 @@
 """
+Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) into the run folder.
+Run by /csf-questionnaire (step 2). It only copies what is there; anything it can't read for certain is left empty.
+
 Usage: .venv/bin/python ./scripts/parse_soa.py <run_dir> <soa_path>
 
-  run_dir    — the engagement's run folder (created by intake.py)
-  soa_path   — path to the SoA Excel file provided by the user
+Writes: <run_dir>/inputs/soa_original.<ext>   a copy of the file as given
+        <run_dir>/soa_parsed.json             one entry per control:
+          control_id (e.g. "Annex A Controls: 5.1"), control_id_raw (as written), applicable (true / false / null),
+          applicable_raw, exclusion_reason, implemented (true / false, or null when there is no such column or value)
 
-Copies the SoA file into the run folder's
-inputs/ subfolder as soa_original.<ext> (client-provided material lives in inputs/),
-parses from the copy, and writes soa_parsed.json to the run folder root.
-Prints one summary line. This script only extracts; it never assumes. Anything it cannot read
-with certainty is left null, and the agent / scope step deals with it.
-
-Output schema:
-  [{control_id, control_id_raw, applicable, applicable_raw, exclusion_reason, implemented}]
-
-  control_id       — normalized to match OLIR keys, e.g. "Annex A Controls: 5.1"
-  control_id_raw   — exactly as it appears in the SoA file, e.g. "5.1"
-  applicable       — True / False, or null if the cell holds a value outside the known yes/no words
-  applicable_raw   — the cell as written (so the agent can read an unrecognised value)
-  exclusion_reason — string if given, else null
-  implemented      — True / False if the SoA has an implementation column with a known value;
-                     null (unknown) if there is no such column, the cell is blank or unrecognised,
-                     or the control is not applicable
-
-Exits 1, writing nothing, if the layout cannot be read (no ID or no applicability column, or
-zero controls parsed; the message lists the headers it saw), or if a control id appears twice after parsing.
-Ids stored as numbers lose a trailing zero (5.10 -> 5.1); they are rebuilt from row order (control_id_text).
+Exit 1, writing nothing, if it can't find the control ID or applicability column (it lists the headers it saw), finds
+no controls, or finds a control twice. IDs stored as numbers lose a trailing zero (5.10 -> 5.1); they are rebuilt from
+row order.
 """
 
 import openpyxl, json, sys, shutil, re

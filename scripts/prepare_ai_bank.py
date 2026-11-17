@@ -1,26 +1,22 @@
 """
-Usage: .venv/bin/python ./scripts/prepare_ai_bank.py batch <areas|foundation> (--ids ID ... | --function MAP | --all)
+Prepares the small input file each AI agent reads in the AI RMF bank build, so agents never read the PDFs or whole
+banks. Run by /build-ai-bank. It decides and stores nothing (agent output goes through record_ai_bank.py).
+
+Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
+       .venv/bin/python ./scripts/prepare_ai_bank.py batch <areas|foundation> (--ids ID ... | --function MAP | --all)
                                                            [--missing] [--tag NAME]
-       .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
+       .venv/bin/python ./scripts/prepare_ai_bank.py evidence <areas|foundation>
 
-Writes the compact file an agent reads in the AI RMF bank build, so agents never read the PDFs. Script only: it decides
-nothing and records nothing (agent output goes through record_ai_bank.py).
-
-  batch areas     -> data/ai/bank_build/batch_areas_<tag>.json   (question generator / evaluator input)
-                     one item per subcategory with mapping rows (data/ai/mapping.json, which must be accepted as it is
-                     now): the outcome, the Playbook suggested actions, and every AI area's row on it (why, impact, CIS
-                     safeguards, folded subcategories), so rows that would get the same question can share one. The
-                     areas (name, applies to, roles a question may carry, covers) and the safeguards' texts are given
-                     once per batch. Definitions (roles, producer flags, impacts) come from data/ai/question_rules.json.
-  batch foundation -> data/ai/bank_build/batch_foundation_<tag>.json
-                     one item per foundation subcategory (GOVERN and mapping_rules.json foundation.subcategories), with
-                     the same definitions and the AI areas list (for questions that name them, e.g. the inventory).
-                     --missing keeps only subcategories not yet recorded in that bank.
-  mapping         -> data/ai/bank_build/mapping_input_<area>.json   (mapping drafter / evaluator input)
-                     one AI area (data/ai/ai_areas.json), the Playbook definition of all four AI RMF functions, the
-                     mapped functions (MAP, MEASURE, MANAGE; GOVERN is foundation, not mapped per area) with every
-                     subcategory's outcome and shortened suggested actions, the area's candidate CIS safeguards
-                     (data/ai/mapping_rules.json area_cis) and the required checks that apply to it
+  mapping --area ID   -> data/ai/bank_build/mapping_input_<area>.json, for the mapping drafter and evaluator: the AI
+                         area, the four AI RMF functions, every MAP / MEASURE / MANAGE subcategory with its suggested
+                         actions, and the area's candidate CIS safeguards.
+  batch areas         -> data/ai/bank_build/batch_areas_<tag>.json, for the question generator and evaluator: per
+                         subcategory, its outcome, suggested actions and every AI area's mapping row on it (so areas
+                         can share a question). Needs the mapping approved as it is now.
+  batch foundation    -> data/ai/bank_build/batch_foundation_<tag>.json: the subcategories asked once per
+                         organisation (GOVERN and the other foundation subcategories).
+  --missing           only subcategories not yet in that bank.
+  evidence            the questions in a bank that still have no evidence line, for the evidence writer.
 """
 
 import argparse

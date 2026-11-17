@@ -1,5 +1,8 @@
-"""Helpers shared by the AI RMF bank scripts (prepare_ai_bank.py, record_ai_bank.py, ai_pilot.py, build_ai_questions.py).
-Not a script."""
+"""
+Helpers shared by the AI RMF bank scripts (prepare_ai_bank, record_ai_bank, ai_pilot, build_ai_questions):
+loading the inputs, row ids, which roles an AI area allows, the foundation subcategories, and which prompt files each
+build step uses. Not run directly.
+"""
 
 import json
 import sys

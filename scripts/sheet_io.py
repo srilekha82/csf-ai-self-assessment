@@ -1,40 +1,28 @@
 """
-Usage: .venv/bin/python ./scripts/sheet_io.py import <sheet> [--xlsx PATH] [--json PATH]
-       .venv/bin/python ./scripts/sheet_io.py export <sheet> [--xlsx PATH] [--json PATH] [--force]
+Turns data into spreadsheets for you to review or edit, and reads your edits back. Used in /build-ai-bank.
 
-Converts a spreadsheet a person edits into the JSON scripts and agents read, and back. One script for every such sheet:
-the columns, required cells and allowed values of each <sheet> live in data/common/sheet_specs.json (today: ai_areas,
-mapping, area_questions, foundation_questions, impact_notes). Scripts never read the spreadsheet; they read the JSON.
+Usage: .venv/bin/python ./scripts/sheet_io.py export <sheet> [--xlsx PATH] [--json PATH] [--force]
+       .venv/bin/python ./scripts/sheet_io.py import <sheet> [--xlsx PATH] [--json PATH]
 
-  ai_areas  the spreadsheet is the decision (data/ai/authoring/ai_areas.xlsx -> data/ai/ai_areas.json).
-  mapping   data/ai/mapping.json is the decision; export writes it for review as one line per AI area x MAP, MEASURE or
-            MANAGE subcategory (mapped or not, with the Playbook outcome and safeguard titles) plus a Coverage sheet;
-            import checks every area with record_ai_bank.py's mapping validator and stores changed lines as
-            decided_by human.
-  area_questions, foundation_questions
-            the question banks (data/ai/banks/question_bank_ai_rmf_<areas|foundation>.json) are the decision; export
-            writes one line per question (areas covered, who it is asked of, producer flag, the question, Playbook
-            actions, safeguards, status); import checks the whole bank with record_ai_bank.py's questions validator
-            and stores changed subcategories as decided_by human. Lines may be edited, added (blank Q#) or deleted;
-            subcategories come from generation and cannot be added or dropped here.
-  impact_notes
-            data/csf/ai_impact_notes.json is the decision; export writes one line per CSF subcategory with notes
-            (exposure, the two use notes, status); import checks every line with record_ai_bank.py's notes rules and
-            stores changed subcategories as decided_by human.
+  export   JSON -> spreadsheet (in data/ai/authoring/), with drop-down lists and a "Read me" sheet.
+  import   spreadsheet -> JSON. Checks the whole sheet first; if anything is wrong it lists the problems, exits 1 and
+           changes nothing. Lines you changed are stored as decided by a person, and later agent runs do not
+           overwrite them.
 
-  import   XLSX -> JSON. Checks the WHOLE sheet (headers, required cells, allowed values, id format, duplicate ids);
-           if anything is wrong it lists the problems, exits 1 and writes nothing. Otherwise writes the JSON with the
-           spreadsheet's hash (`source_sha`), which is how the freshness check sees a sheet edited but not imported.
-           Columns marked "in_json": false stay in the spreadsheet only.
-  export   JSON -> XLSX, with a dropdown on every single-choice column and a "Read me" sheet, then imports the written
-           file so the JSON records its hash. Refuses to overwrite a spreadsheet whose edits were never imported (its
-           hash differs from the JSON's `source_sha`) unless --force. A spreadsheet that is itself the decision
-           (ai_areas) has columns the JSON does not keep, so export refuses to overwrite it at all unless --force.
+Sheets:
+  ai_areas                the list of AI areas. Here the spreadsheet is the decision; the JSON is made from it.
+  mapping                 which AI RMF subcategories apply to each AI area (data/ai/mapping.json): one line per
+                          area x subcategory, mapped or not, plus a Coverage sheet.
+  area_questions,         the two AI RMF question banks, one line per question. Lines may be edited, added or
+  foundation_questions    deleted; subcategories cannot be added or dropped here.
+  impact_notes            the CSF AI impact notes (data/csf/ai_impact_notes.json), one line per CSF subcategory.
 
-Column types: id (lowercase letters, digits, _), text, enum (one allowed value), list (one or more allowed values,
-comma-separated, lowercased), codes (comma-separated ids kept as written, e.g. MCP-8.2), bool (yes / no).
+Each sheet's columns and allowed values are in data/common/sheet_specs.json (column types: id, text, enum, list,
+codes, bool). Scripts never read the spreadsheets, only the JSON.
 
-sheet_status() is what check_freshness.py reports for a sheet.
+Safety: export refuses to overwrite a spreadsheet with edits that were never imported (and, for ai_areas, at all)
+unless --force. Each import stores the spreadsheet's fingerprint; that is how the freshness check spots a sheet edited
+but not imported (sheet_status()).
 """
 
 import argparse

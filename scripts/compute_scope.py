@@ -1,28 +1,23 @@
 """
+Decides how each CSF subcategory is asked for this organisation, from its certifications and ISO 27001 SoA.
+Run by /csf-questionnaire (step 3).
+
 Usage: .venv/bin/python ./scripts/compute_scope.py <run_dir>
 
-  run_dir   — run folder, e.g. runs/Acme_2026-07-28; its intake.json (intake.py) gives the domain and certifications
+Writes <run_dir>/csf_scope.json: one question type per subcategory, and why.
+  full_discovery  ask from scratch
+  gap             ask what goes beyond what the certification covers
+  confirmatory    ask for evidence that the certification covers it
+  skip            not asked
 
-Assigns each active CSF 2.0 subcategory a question_type (full_discovery / gap / confirmatory /
-skip) and writes <run_dir>/csf_scope.json. This script decides nothing. For each subcategory it works
-out a STATE (a fact), then looks the state up in data/csf/scope_rules.json (the policy):
+How: for each subcategory it works out the facts (GOVERN or not, certification held, mapped ISO controls, what the SoA
+says about them) and looks the answer up in data/csf/scope_rules.json; it never decides on its own. With several
+certifications or controls the most demanding type wins, and data/csf/domain_weights.json can raise it for the sector.
 
-  govern / no_cert / no_mapping / no_soa / not_in_soa      from the subcategory, the certs, the OLIR map
-  implemented / applicable_not_implemented /
-  implementation_unknown                                   from the SoA (soa_parsed.json)
-  covered_elsewhere / not_relevant / unclear               the AGENT's reading of an exclusion reason,
-                                                           from <run_dir>/soa_judgements.json
-
-With several certs or several mapped controls the most demanding type wins (severity_order in
-data/common/intake_options.json). The domain weights in data/csf/domain_weights.json then bump the type up
-domain_bump_steps levels. Withdrawn subcategories are left out.
-
-Agent step: if an ISO control mapped to a CSF subcategory is excluded in the SoA, or its
-applicability was unrecognised, and soa_judgements.json has no entry for it, the script writes
-<run_dir>/soa_pending.json and exits 2 without writing csf_scope.json. The agent fills
-soa_judgements.json (prompts/soa_exclusion_judge.md) and the script is run again:
-
-  {"Annex A Controls: 5.1": {"applicable": false,            # only needed if applicability was unrecognised
+Exit 2 when the SoA excludes a mapped control (or its applicability can't be read) and no one has judged it yet: it
+writes <run_dir>/soa_pending.json, an agent (prompts/soa_exclusion_judge.md) writes soa_judgements.json, and the
+script is run again. That file looks like:
+  {"Annex A Controls: 5.1": {"applicable": false,     # only if applicability was unreadable
                              "exclusion_class": "covered_elsewhere" | "not_relevant" | "unclear",
                              "reason": "one sentence"}}
 """

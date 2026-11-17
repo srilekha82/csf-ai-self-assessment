@@ -1,39 +1,31 @@
 """
+Picks the AI RMF questions for one organisation from the two AI RMF banks. Run by /ai-questionnaire (step 2).
+It decides nothing: it filters the banks by what the intake says.
+
 Usage: .venv/bin/python ./scripts/build_ai_questions.py <run_dir>
 
-Picks the AI RMF questions for one engagement from the two question banks. This script decides nothing: it reads
-<run_dir>/ai_usage.json and filters the banks (data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json) with the
-policy in data/ai/scope_rules.json. Writes, per bank:
+Reads:  <run_dir>/ai_usage.json, data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json, data/ai/scope_rules.json
+Writes: <run_dir>/ai_scope.json                      what was picked per subcategory, and why
+        <run_dir>/ai_questions_draft_<bank>.json     the picked questions (same layout as the CSF draft)
+        <run_dir>/ai_question_bank_used_<bank>.json  a copy of each bank used, so the run can be reproduced
 
-  <run_dir>/ai_scope.json                     the profile used, and per bank and subcategory what was picked and why
-  <run_dir>/ai_questions_draft_<bank>.json    entries in the same shape as csf_questions_draft.json (checked by
-                                              check_questionnaire.py, written by write_questionnaire.py)
-  <run_dir>/ai_question_bank_used_<bank>.json snapshot of the bank used, so the run stays reproducible
+A question is picked when all three hold:
+  role       it is for a role the organisation is asked as ("none" -> none; "unsure" -> none and consumer;
+             "both" -> consumer and producer; scope_rules.json client_roles)
+  producer   every producer detail it needs (built on an existing model, given to others) was answered yes
+  AI area    (area questions) it covers one of the organisation's AI areas
+A question shared by several of the organisation's areas says "This question covers: ...". A subcategory with no
+picked question is left out. Every AI question is full_discovery: it asks about AI, so certifications and the other
+engagement answers change nothing here. A bank entry still marked needs_human_review is flagged in the Confidence
+column.
 
 ai_usage.json (written by intake.py):
-{
-  "ai_in_use": "none" | "some" | "unsure",
-  "role": "consumer" | "producer" | "both" | null,           # asked when AI is in use
-  "producer": {"built_on_existing_model": bool, "given_to_others": bool} | null,   # for producer or both
-  "ai_areas": ["invisible_usage", "input", ...],             # the client's AI areas (data/ai/ai_areas.json ids)
-  "engagement_flags": {"csf_assessment_done": bool, "iso27001_held": bool, "iso42001_held": bool},
-  "captured_on": "YYYY-MM-DD"
-}
+  {"ai_in_use": "none" | "some" | "unsure", "role": "consumer" | "producer" | "both" | null,
+   "producer": {"built_on_existing_model": bool, "given_to_others": bool} | null,
+   "ai_areas": [AI area ids], "engagement_flags": {"csf_assessment_done", "iso27001_held", "iso42001_held": bool},
+   "captured_on": "YYYY-MM-DD"}
 
-A question is picked when
-  roles           one of its roles is a role the client is asked as (scope_rules.json client_roles: none -> none;
-                  unsure -> none, consumer; otherwise the role, both = consumer and producer)
-  producer_flags  every flag it carries is true in the client's producer answers
-  rows            (area questions) it covers a row of one of the client's AI areas
-Each picked area question carries the names of the client's areas it covers; a question shared by several areas shows
-them to the client as scope_rules.json covers_note. Areas are shown to the client by their labels
-(data/ai/area_client_labels.json). A subcategory with no picked question is left out (it does not
-apply to this client). Every question is full_discovery for every client: the questions are about AI (an AI area, or
-AI in the organisation), so they never repeat the general security the CSF sheet or ISO 27001 covers, and the
-engagement flags change nothing here. Entries whose bank record is needs_human_review carry
-the rules' review_flag as confidence_flag.
-
-Errors (bad profile, missing bank) exit 1 and write nothing. Requires the banks built by /build-ai-bank.
+Exit 1, writing nothing, if ai_usage.json breaks a rule or a bank is missing.
 """
 
 import argparse

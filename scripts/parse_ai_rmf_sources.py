@@ -1,20 +1,16 @@
 """
+Reads the AI RMF sources (PDFs you download into data/ai/source/) into data the other scripts use.
+Run by /build-ai-bank (step 2). No judgement.
+
 Usage: .venv/bin/python ./scripts/parse_ai_rmf_sources.py [--source-dir DIR] [--output-dir DIR]
 
-Parses the AI RMF sources into compact JSON. Script only, no judgement.
+Reads:  AI_RMF_Playbook.pdf and the three CIS v8.1 AI companion guides (LLM, MCP, Agents)
+Writes: data/ai/ai_rmf_core.json           the 4 functions and 72 subcategories, each with its suggested actions
+        data/ai/cis_ai_safeguards.json     every CIS safeguard with its text (stays on your machine, never committed)
+        data/ai/cis_ai_safeguard_ids.json  the same without the CIS text (committed)
 
-  AI_RMF_Playbook.pdf          -> data/ai/ai_rmf_core.json
-      functions[]: id (GOVERN ...), name, description (the Playbook's statement under the function heading),
-      subcategories[]: subcategory_id, function, category, outcome, actions_preamble, suggested_actions[]
-  3 CIS v8.1 companion guides  -> data/ai/cis_ai_safeguards.json
-      controls:   one per guide and CIS Control (applicability intro, hosting notes, additional considerations)
-      safeguards: one row per safeguard (id with guide prefix e.g. LLM-15.4, title, base text, IG levels, AI text)
-
-It does NOT extract an AI RMF -> CIS link (the guides carry none; see the crosswalk step).
-
-CIS safeguard IDs: the guides' tables lose the ID in about half the rows, so IDs are rebuilt from the control number
-(taken from each page's footer) and row order, and checked against any ID the table does show. Expected counts live
-in data/ai/parse_config.json; any mismatch fails the parse and nothing is written.
+Good to know: the guides' tables drop about half the safeguard IDs, so IDs are rebuilt from the control number and row
+order. Expected counts are in data/ai/parse_config.json; any mismatch stops the run and nothing is written.
 """
 
 import argparse

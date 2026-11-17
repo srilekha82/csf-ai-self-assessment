@@ -1,43 +1,22 @@
 """
+Checks and stores AI agent decisions on the CSF side. Nothing gets into the store without passing its checks.
+
 Usage: .venv/bin/python ./scripts/record_judgements.py <verdicts.json> [--pending PATH] [--model ID] [--session REF] [--cache-dir DIR]
+       .venv/bin/python ./scripts/record_judgements.py evidence prepare
+       .venv/bin/python ./scripts/record_judgements.py evidence <prompts.json> --review <verdicts.json> --model ID
        .venv/bin/python ./scripts/record_judgements.py log <run_dir> --step NAME --output FILE --model ID
                   [--prompt PATH] [--inputs FILE ...] [--session REF]
 
-The second form (log) is the audit trail for agent steps inside an engagement run (the SoA exclusion reading). It goes
-through audit.record_agent_output, like every other agent step: it writes
-runs/<Org>_<date>/judgement_log/<timestamp>_<step>.json with the model, prompt and input hashes and a snapshot of
-the output. Write-once. See log_run_step().
+  <verdicts.json>  /build-csf-bank step 4: the agent's decisions on the pending CSET questions (which sectors a
+                   question suits, a rewrite, whether it fits a subcategory), stored in
+                   data/csf/bank_build/cset_judgements.json. Format and checks: validate().
+  evidence         /build-csf-bank step 5: `prepare` writes the evidence writer's input; the second form stores the
+                   evidence lines the evaluator passed in data/csf/evidence_prompts.json.
+  log              /csf-questionnaire step 3: keeps a record of the agent's SoA reading in the run folder.
 
-       .venv/bin/python ./scripts/record_judgements.py evidence prepare
-       .venv/bin/python ./scripts/record_judgements.py evidence <prompts.json> --review <verdicts.json> --model ID
-The evidence form writes the CSF evidence writer's input (subcategories with no evidence prompt of their own, with
-NIST's implementation examples) and stores the prompts the evaluator passed in data/csf/evidence_prompts.json
-`by_subcategory` (prompts/csf_evidence_writer.md, prompts/csf_evidence_evaluator.md). See record_evidence().
-
-The first form, below, is for the question bank build.
-
-Validates agent verdicts for the question bank and merges them into data/csf/bank_build/cset_judgements.json.
-This is the only way verdicts get into the store, so a malformed agent answer fails here, loudly,
-instead of silently changing a bank.
-
-verdicts.json:
-{
-  "<qid>": {
-    "domains": ["finance", "other"],          # any of the six domains, or ["all"]  (optional)
-    "rewrite": "Question text ..." | null,    # for statement-only practices; null = cannot be asked  (optional)
-    "fit": {"GV.SC-04": {"verdict": "accept"|"reject", "reason": "..."}},          # (optional)
-    "reason": "one sentence"
-  }
-}
-
-Every recording run is also appended to judgement_log/ (next to the store) as a write-once record:
-timestamp, CSET commit, hashes of the judge prompt, the pending file the agent was shown and the verdicts file,
-the verdicts exactly as submitted, and the --model / --session the caller supplies. The store is the
-current-state lookup; the log is the audit trail and is never edited.
-
-Each stored verdict records a hash of the question text it was based on (see build_question_bank.py),
-so it is ignored automatically if CSET later changes that question. Exit code 1 if anything is invalid;
-nothing is written in that case.
+Each form checks the whole file and exits 1, storing nothing, if anything is wrong. Every recording also writes a
+write-once record to judgement_log/ (who decided, with which prompt and inputs, and what they said). A stored decision
+remembers the question text it was based on, so it is ignored if CSET later changes that question.
 """
 
 import argparse
@@ -60,6 +39,12 @@ VALID_DOMAINS = set(DOMAINS) | {"all"}
 
 
 def validate(verdicts: dict, candidates: dict, valid_subs: set[str]) -> list[str]:
+    """The agent's decisions on pending CSET questions (verdicts.json):
+        {"<qid>": {"domains": ["finance", "other"],          # any of the six sectors, or ["all"]   (optional)
+                   "rewrite": "Question text ..." | null,    # for statement-only practices; null = cannot be asked
+                   "fit": {"GV.SC-04": {"verdict": "accept" | "reject", "reason": "..."}},          (optional)
+                   "reason": "one sentence"}}
+    Returns the problems; an empty list means the file can be stored."""
     errors = []
     mapped = {}
     for m in candidates["mappings"]:

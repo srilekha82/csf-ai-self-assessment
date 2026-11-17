@@ -1,27 +1,24 @@
 """
+The intake: asks about the organisation as numbered menus and saves the answers in a new run folder.
+Run by /generate-questions (step 1).
+
 Usage: .venv/bin/python ./scripts/intake.py menu [KEY]
        .venv/bin/python ./scripts/intake.py write --org NAME --domain N --certs "N N" --ai-in-use N
               [--role N [--built-on-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
-              --csf-assessment-done N --iso42001-held N
-              [--date YYYY-MM-DD] [--runs-dir DIR] [--replace]
+              --csf-assessment-done N --iso42001-held N [--date YYYY-MM-DD] [--runs-dir DIR] [--replace]
 
-The engagement intake, as numbered choices (the menus live in data/common/intake_options.json).
+  menu    prints the menus (from data/common/intake_options.json), or one of them. Ask one question at a time.
+  write   turns the typed numbers into values and writes runs/<Org>_<date>/:
+            intake.json     organisation, date, sector, certifications
+            ai_usage.json   how the organisation uses AI (no name): AI in use, role, producer details, AI areas
 
-  menu   prints the numbered menus, or one of them. Ask the user one question at a time and take the number(s) typed.
-  write  turns the typed numbers into values (a lookup, nothing is interpreted), checks them, and writes in a new
-         run folder <runs>/<Org>_<date>/:
-           intake.json     org, date, domain, certs     read by compute_scope, build_questions and check_freshness
-           ai_usage.json   the AI usage profile (no org)  read by build_ai_questions
-         iso27001_held is derived from the certifications, so the two cannot disagree.
-         When AI in use is "some" (option 2): "Do you build AI, use AI, or both?" (role, required); for producer or both,
-         "built on an existing model?" and "given to others?"; then "How do you use AI?" (ai_usage) and "What does your
-         AI include?" (ai_components), which list AI area ids from data/ai/ai_areas.json and may be left blank. Giving
-         any of these when they are not asked is rejected. ai_areas() turns the answers into the client's AI areas,
-         adding the automatic ones from scope_rules.json ai_area_rules (the role adds the producer areas).
-         Exit 1 with the problems listed, writing nothing, if a number is not on its menu, a single-choice question gets
-         several, "None" is combined with a certification, the profile breaks a rule of
-         build_ai_questions.validate_profile, or the run folder already has an intake.json (same org and date):
-         --replace overwrites it, and the later files in that folder (scope, drafts) are then stale.
+Asked only when AI is in use (option 2): build / use / both; for builders the two producer details; then "How do you
+use AI?" and "What does your AI include?" (these give the AI areas; some areas are added automatically). Answers given
+when not asked are refused.
+
+Exit 1, writing nothing, if a number is not on its menu, a one-choice question gets several, "None" is combined with
+a certification, or the run folder already has an intake (--replace overwrites it; the folder's later files are then
+out of date).
 """
 
 import argparse

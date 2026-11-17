@@ -1,20 +1,19 @@
 """
-Usage: .venv/bin/python ./scripts/ai_pilot.py accept [--note TEXT]
-       .venv/bin/python ./scripts/ai_pilot.py accept-mapping [--note TEXT]
+Records your two approvals in the AI RMF bank build. Run by /build-ai-bank.
 
-The human gates of the AI RMF bank build.
+Usage: .venv/bin/python ./scripts/ai_pilot.py accept-mapping [--note TEXT]
+       .venv/bin/python ./scripts/ai_pilot.py accept [--note TEXT]
 
-  accept-mapping  the user's decision that the AI RMF mapping (data/ai/mapping.json) is good, after reviewing it in
-           data/ai/authoring/mapping.xlsx. Needs every AI area recorded, built from the current sources, AI areas and
-           mapping rules, no row still needs_human_review and no sheet edit left unimported. Subcategories no area
-           reaches are allowed and listed in the acceptance. Writes data/ai/bank_build/mapping_accepted.json with a hash
-           of the mapping's content; any later change to the mapping makes the acceptance stale.
+  accept-mapping  you reviewed the mapping (data/ai/authoring/mapping.xlsx) and it is good. Refused while an AI area
+                  is missing or out of date, a row still needs human review, or a sheet edit is not imported.
+                  Writes data/ai/bank_build/mapping_accepted.json with a fingerprint (hash) of the mapping.
+  accept          you reviewed the pilot questions and they are good. Needs at least one recorded subcategory in each
+                  bank. Writes data/ai/bank_build/pilot_accepted.json with fingerprints of the question generator and
+                  evaluator prompts.
 
-  accept   the user's decision that the pilot is good. Needs at least one recorded subcategory in each bank. Writes
-           data/ai/bank_build/pilot_accepted.json with the hashes of the generator and evaluator prompts. Editing either
-           prompt makes the acceptance stale: a new pilot is needed before the next rebuild.
-
-pilot_status() and mapping_status() are what check_freshness.py reads to report the `pilot` and `mapping` stages.
+An approval holds only while what it fingerprinted is unchanged: change the mapping and it must be approved again;
+change either question prompt and a new pilot is needed before the next rebuild. check_freshness.py reads both
+(pilot_status, mapping_status).
 """
 
 import argparse
