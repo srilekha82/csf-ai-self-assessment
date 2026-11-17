@@ -48,58 +48,82 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
   question (`record_judgements.py` rejects it). Evidence prompts are not questions: each subcategory gets one, written
   once from NIST's implementation examples and checked by an evaluator. The AI RMF track builds on CSF, not beside it.
 
-## AI RMF track: rules that outlast any design note
-- **Scope is how AI is used, not sector or certifications.** Sector never changes which questions are asked. It sets a
-  severity floor for the priority of findings (healthcare and manufacturing / OT: loss of life is possible) and
-  decorates the report. The model (AI areas -> attack areas -> AI RMF function -> subcategory) is in
-  `AI_RMF_Mapping_Sheet_Design.md`; the AI areas are decided by a person in `data/ai/authoring/ai_areas.xlsx`. The
-  usage profile is: AI in use (`none` / `some` / `unsure`), role (`consumer` / `producer` / `both`, asked), for a
-  producer whether the model is built on an existing model and given to others, the client's AI areas (ticked in two intake menus, plus
-  the automatic ones in `scope_rules.json` `ai_area_rules`), and engagement flags (CSF assessment done, ISO 27001 held,
-  ISO 42001 held). Captured once per engagement by
-  `intake.py` in `runs/<Org>_<date>/ai_usage.json` (with `intake.json` for org, domain and certifications); CSF steps, AI
-  RMF steps and the XLS writer all read those files. `iso27001_held` is derived from the certifications, never typed twice.
-- **One questionnaire for the client.** `/generate-questions` asks the intake once, runs the CSF track and the AI RMF
-  track from the same answers and writes ONE `questionnaire.xlsx` with two sheets (CSF, AI RMF). The two tracks are
-  internal; the client does not see a separate AI deliverable. In Stage 2 the answers from the two sheets become two
-  profile XLS files (CSF profile, AI RMF profile), which feed the two HTML reports.
-- **`unsure` is asked as a consumer and as an org with no AI** (`scope_rules.json` `client_roles`: the questions discover
-  what AI is used). **`none` gets only the questions tagged `none`** (AI policy, shadow-AI discovery) and the invisible
-  AI usage area. The AI RMF XLS is always the 72-subcategory schema.
-- **Two banks, foundation and areas, hold every possible question; selection is a filter.** The foundation bank holds
-  questions per foundation subcategory (GOVERN and `mapping_rules.json` `foundation.subcategories`), the area bank
-  questions per mapping row (a question may stand for several rows of the same subcategory, and then names no area).
-  Every question carries the roles it is asked of (`none` / `consumer` / `producer`) and any producer flags
-  (`question_rules.json`); `record_ai_bank.py questions` checks that every row is asked once (twice at most, when its why
-  holds two practices) per role its area allows. `build_ai_questions.py` picks a client's questions by role, producer flags and AI areas only; it never
-  ranks or rewrites. Area questions are asked once, proportionate to criticality, never per AI system. There is no
-  gap rule on the AI side (decided 2026-10-29): every AI question is about AI (an AI area, or AI in the organisation), so it never repeats the general security the CSF sheet or ISO 27001 assesses, whatever the
-  client's ISO 27001 SoA excludes; every AI question is `full_discovery` and the engagement flags change nothing. The
-  client may cite a general control as evidence; the assessor checks whether it reaches the AI. ISO 42001 coverage is
-  not used until its crosswalk is verified.
-- **Question content:** practice-revealing (how, who, how often, what evidence), never checkbox ("do you have a policy").
-  The Playbook's suggested actions are the source of what good looks like. CIS companion guides give the safeguards a
-  question may cite as evidence, never question text. A policy is asked as practice: where it is kept and how people
-  come to know it. Fairness, bias and explainability come from the Playbook only.
-- **Sources for the banks:** the Playbook and the three CIS companion guides only. The CIS to CSF mapping is used only for
-  the CSF AI impact notes. OWASP LLM Top 10 is not a source.
-- **CIS safeguard ids are read as text.** The CIS xlsx files store them as numbers, so 4.10, 8.10 and 16.10 collapse into
-  4.1, 8.1 and 16.1. The guide tables also drop IDs: rebuild from control number and row order.
-- **Rebuild only when a source changed.** A bank (CSF or AI) is rebuilt only if it is missing or incomplete, or a source file
-  it was built from changed (CSF: the CSET migration SQL; AI: the Playbook, the CIS guides, the CIS to CSF mapping). Editing a
-  prompt or `question_rules.json` never starts a rebuild by itself; it only marks the stage stale in the report.
-- **Freshness gate:** `check_freshness.py --ai-bank` compares the SHA-256 of the current AI source files with the hashes
-  each output records about its own inputs (parse, banks, notes); a bank must also be complete (the area bank written
-  for the mapping rows as they are now). A stage is current only if it
-  exists, was built from these exact sources and is complete; if every stage is current, skip regeneration. There is no
-  separate stamp to update. The pilot is the one human gate: `ai_pilot.py accept` stores the hashes of the generator
-  and evaluator prompts, and only while they match may a missing or incomplete bank be rebuilt without asking. At the
-  start of an engagement `check_freshness.py --all` reports CSF and AI together (the CSF bank is stale when the CSET
-  migration SQL changed upstream; it runs `git fetch` and reports a failure instead of hiding it); it states facts and the
+## AI RMF track
+
+In one line: **how an organisation uses AI decides which AI RMF questions it gets.** The questions come from two
+pre-built banks; a script filters them for each client. The full model (AI areas → attack areas → AI RMF function →
+subcategory) is in `AI_RMF_Mapping_Sheet_Design.md`.
+
+### What decides the questions
+- **How AI is used, not sector or certifications.** Sector never changes which questions are asked. It only sets a
+  minimum priority for findings (healthcare and manufacturing / OT, where loss of life is possible) and appears in the
+  report.
+- **The intake asks it once.** `intake.py` writes it to `runs/<Org>_<date>/ai_usage.json` (with `intake.json` for org,
+  domain and certifications). Every later step (CSF, AI RMF, the XLS writer) reads these files. It holds:
+  - AI in use: `none`, `some` or `unsure`
+  - role: `consumer`, `producer` or `both`; for a producer, whether the model is built on an existing model and whether
+    it is given to others
+  - the client's **AI areas**: ticked in two intake menus, plus automatic ones (`scope_rules.json` `ai_area_rules`). The
+    list of AI areas is decided by a person in `data/ai/authoring/ai_areas.xlsx`.
+  - engagement flags: CSF assessment done, ISO 27001 held (worked out from the certifications, never asked twice), ISO
+    42001 held
+- **What each answer to "AI in use" gets:**
+
+  | AI in use | Asked as |
+  |---|---|
+  | `some` | the role(s) they gave, filtered by their AI areas |
+  | `unsure` | a consumer and an org with no AI: the questions find out what AI is used (`scope_rules.json` `client_roles`) |
+  | `none` | only questions tagged `none` (AI policy, shadow-AI discovery) and the "invisible AI usage" area |
+
+  The AI RMF profile XLS always has all 72 subcategories, whatever is asked.
+- **One questionnaire.** `/generate-questions` asks the intake once and writes one `questionnaire.xlsx` with a CSF sheet
+  and an AI RMF sheet. The client never sees a separate AI deliverable. In Stage 2 the two sheets become two profile XLS
+  files.
+
+### The two banks
+- **Foundation bank:** questions asked once for the whole organisation: GOVERN, plus the subcategories listed in
+  `mapping_rules.json` `foundation.subcategories`.
+- **Areas bank:** questions per mapping row (one AI area × one MAP, MEASURE or MANAGE subcategory). One question may
+  cover several rows of the same subcategory; it then names no single area.
+- **Each question is tagged** with the roles it is asked of (`none` / `consumer` / `producer`) and any producer flags
+  (`question_rules.json`). `record_ai_bank.py questions` checks every row is asked once per role its area allows (twice
+  at most, when the row covers two practices).
+- **Selection only filters.** `build_ai_questions.py` picks by role, producer flags and AI areas. It never ranks or
+  rewrites. Area questions are asked once, scaled to the most critical systems, never once per AI system.
+- **Every AI question is `full_discovery`; there is no gap rule** (decided 2026-10-29). Each question is about AI, so it
+  never repeats what the CSF sheet or ISO 27001 covers, and the SoA and engagement flags change nothing. A client may
+  cite a general control as evidence; the assessor checks that it actually reaches the AI. ISO 42001 is not used until
+  its crosswalk is verified.
+
+### Writing questions
+- **Ask about practice, not boxes.** How, who, how often, what evidence; never "do you have a policy". A policy is asked
+  as practice: where it is kept and how people learn about it.
+- **Sources:** the AI RMF Playbook says what good looks like (including fairness, bias and explainability, which come
+  from the Playbook only). The three CIS companion guides give safeguards a question may cite as evidence, never
+  question text. The CIS → CSF mapping is used only for the AI impact notes. OWASP LLM Top 10 is not a source.
+- **Read CIS safeguard IDs as text.** The CIS xlsx files store them as numbers, so 4.10 becomes 4.1. The guide tables
+  also drop IDs: rebuild them from the control number and row order.
+
+### Rebuilding the banks
+- **Rebuild only when something it was built from changed:** a bank is missing or incomplete, or a source file changed
+  (CSF: the CSET migration SQL; AI: the Playbook, the CIS guides, the CIS → CSF mapping). Editing a prompt or
+  `question_rules.json` only marks the stage stale; it never starts a rebuild.
+- **How staleness is checked:** each output records the SHA-256 of the files it was built from. `check_freshness.py
+  --ai-bank` compares them with the files on disk. A stage is current only if it exists, matches the sources and is
+  complete (the areas bank covers the mapping rows as they are now). There is no separate stamp to update.
+- **The pilot is the one human gate.** `ai_pilot.py accept` stores the hashes of the generator and evaluator prompts.
+  Only while those match may a missing or incomplete bank be rebuilt without asking.
+- **At the start of a run**, `check_freshness.py --all` reports CSF and AI together. The CSF bank is stale when the CSET
+  SQL changed upstream (it runs `git fetch` and reports a failure rather than hiding it). It only states facts; the
   calling command decides what to rebuild.
-- **AI impact notes** (`data/csf/ai_impact_notes.json`, keyed per CSF subcategory) have two layers: `exposure`, shown to
-  every org, and `use`, shown only when AI is in use (`mcp_agentic` when the client has MCP / tools or agents, else `base_rag`). Notes are written only
-  for CSF subcategories that have a mapped CIS safeguard; unmapped ones are listed, never invented. They are written to
-  the CSF profile's Considerations column by the Stage 2 XLS writer (not built yet).
+
+### Other
+- **AI impact notes** (`data/csf/ai_impact_notes.json`, one per CSF subcategory) add AI context to the CSF profile, in
+  two layers:
+  - `exposure`: shown to every organisation
+  - `use`: shown only when AI is in use (`mcp_agentic` when the client has MCP / tools or agents, else `base_rag`)
+
+  Notes are written only for CSF subcategories with a mapped CIS safeguard; the rest are listed, never invented. The
+  Stage 2 XLS writer puts them in the CSF profile's Considerations column (not built yet).
 - **Profile XLS schemas are fixed by the Stage 2 writer** (AI RMF: 11 columns; CSF: 19 columns on "Current and Target
   Profile"); reporting reads them as they are.
