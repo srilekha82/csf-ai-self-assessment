@@ -8,3 +8,7 @@ data/ai/source/*.pdf
 data/ai/source/*.xlsx
 # CIS safeguard text (CC BY-NC-ND 4.0): made locally by parse_ai_rmf_sources.py; the ids-only file is committed
 data/ai/cis_ai_safeguards.json
+
+# run logs: written by the scripts on every run, not part of the code
+audit.jsonl
+judgement_log/
