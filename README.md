@@ -40,6 +40,10 @@ own the controls.
 
 ## Sources
 
-Built on NIST CSF 2.0 and the NIST AI RMF 1.0 Playbook (NIST), CSF questions from [CSET](https://github.com/cisagov/cset)
-(CISA), and CIS Controls v8.1 safeguard IDs (Center for Internet Security, CC BY-NC-ND 4.0; no CIS text is included, see
-`data/ai/source/README.md`). Not endorsed by NIST, CISA or CIS.
+This tool uses free, public material from:
+- **NIST:** the Cybersecurity Framework (CSF) 2.0 and the AI Risk Management Framework (AI RMF) 1.0 Playbook.
+- **CISA:** the cybersecurity questions, from its free assessment tool [CSET](https://github.com/cisagov/cset).
+- **CIS (Center for Internet Security):** the ID numbers of its safeguards. CIS's own text is not included; its licence
+  (CC BY-NC-ND 4.0) does not allow that.
+
+NIST, CISA and CIS do not endorse this tool.
