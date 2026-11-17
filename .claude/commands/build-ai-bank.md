@@ -120,7 +120,7 @@ not yet recorded, one AI RMF function per batch).
 Propose about 6 subcategories and show them to the user before running (wait for confirmation):
 - two foundation: one GOVERN policy subcategory (e.g. GOVERN 1.2) and GOVERN 1.6 (the AI system inventory)
 - one area subcategory with many areas (e.g. MEASURE 2.8, the audit trail: tests sharing)
-- one with producer-only areas and a producer flag (e.g. a MANAGE row on model_building about releases)
+- one with producer-only areas and a producer detail (e.g. a MANAGE row on model_building about releases)
 - one with a folded subcategory (e.g. MAP 3.2 on internal_process folds MAP 5.1)
 - one MAP subcategory on usage areas (e.g. MAP 1.4)
 

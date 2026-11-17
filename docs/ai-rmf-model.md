@@ -52,7 +52,7 @@ The intake asks only what the org has (capability); every control is assessed by
   others?" (turns on the release questions: clients, partners, an API, devices, open weights).
 - "How do you use AI?" (pick all): internal process, code generation, customer-facing application, vendor AI.
 - "What does your AI include?" (pick all): RAG / knowledge graph, MCP / tools, agents, a model you host.
-- Engagement flags (CSF assessment done, ISO 42001); ISO 27001 from the certifications.
+- Whether a CSF assessment is part of the engagement and ISO 42001 is held; ISO 27001 comes from the certifications.
 
 `intake.py` writes the client's areas to `ai_usage.json` (`ai_areas`): the ones ticked, plus the automatic ones in
 `data/ai/scope_rules.json` `ai_area_rules`:
@@ -79,7 +79,7 @@ access-granting safeguard, GOVERN 6.2 citing a containment procedure). The Playb
 - **Foundation (GOVERN, all 19 subcategories):** asked once for the organisation, not through an AI area. Everything
   is org-wide; the difference is that a GOVERN question does not depend on which AI areas the client has. Its
   questions are written per subcategory in the bank build and picked at engagement time by the intake role: none,
-  consumer, producer (both = consumer and producer; a producer flag where needed, e.g. GOVERN 6.1 when built on an
+  consumer, producer (both = consumer and producer; a producer detail where needed, e.g. GOVERN 6.1 when built on an
   existing model). `foundation` in `data/ai/mapping_rules.json`.
 - **Foundation subcategories outside GOVERN (decided 2026-10-23):** some MAP, MEASURE and MANAGE subcategories are
   about how the organisation runs AI risk management, not about one AI area, so every area would get the same answer.
@@ -213,7 +213,7 @@ mapping rows changed is shown incomplete by the freshness check).
 - **The bank is every possible question, not a questionnaire.** `question_bank_ai_rmf_foundation.json`: per foundation
   subcategory (GOVERN and the 12), 1 to 4 questions from the Playbook. `question_bank_ai_rmf_areas.json`: per
   subcategory with mapping rows, the questions for those rows. Every question carries `roles` (`none`, `consumer`,
-  `producer`) and `producer_flags` (`built_on_existing_model`, `given_to_others`), defined in
+  `producer`) and producer details (`producer_flags` in the data: `built_on_existing_model`, `given_to_others`), defined in
   `data/ai/question_rules.json`. This replaced the producer and consumer banks.
 - **Area questions.** Each mapping row is asked by one question per role its area allows (the area's applies to, plus
   `none` for invisible AI usage, which every client gets), or by two when its why holds two different practices
@@ -248,7 +248,7 @@ mapping rows changed is shown incomplete by the freshness check).
   area entry stores the hash of the rows it was written for and each row's area and impact (for the covers note and
   the evidence prompt).
 - **Selection** (`build_ai_questions.py`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,
-  consumer; consumer; producer; both -> consumer and producer), producer flags from the intake, and for area questions
+  consumer; consumer; producer; both -> consumer and producer), producer details from the intake, and for area questions
   the client's AI areas. Nothing is ranked, capped or rewritten.
 - **Scoring** (several areas on one subcategory) is decided in Stage 2; every question keeps its subcategory and rows.
 - **No gap rule** (decided 2026-10-29). Every question asks how something is done for AI: for the area ("for your AI
@@ -275,7 +275,7 @@ mapping rows changed is shown incomplete by the freshness check).
 - **No per-run review** (decided 2026-11-17, replacing the per-run reviewer of 2026-10-31): questions are reviewed
   once, when a bank is built. A client run only picks them from the banks, and `check_questionnaire.py` (a script, no
   agent) checks the picks against the intake and the banks before the sheet is written: every question from the bank,
-  for a role, producer flags and AI areas the org has, nothing missing. Each AI draft question still records its
+  for a role, producer details and AI areas the org has, nothing missing. Each AI draft question still records its
   `criticality_frame` (`required`, `optional` for the areas in `criticality_frame_optional`, `none` for foundation),
   and the CSF draft its `client` (sector and certifications).
 ## Code review findings from the same review (all fixed 2026-11-02, tests in `tests/test_csf_scripts.py`)

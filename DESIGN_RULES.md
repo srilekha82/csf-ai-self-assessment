@@ -39,7 +39,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    `intake.json` and `ai_usage.json` in the run folder; later steps read those files and never ask or pass the answers
    again. The intake is asked as numbered choices; the script, not the agent, turns numbers into values.
 10. **Prompts and docs stand alone.** A prompt carries its own rules; it does not point to a design document. Shared
-    definitions (AI areas in `data/ai/ai_areas.json`; roles, producer flags and impacts in `data/ai/question_rules.json`)
+    definitions (AI areas in `data/ai/ai_areas.json`; roles, producer details and impacts in `data/ai/question_rules.json`)
     reach agents through the files scripts prepare.
 
 ## CSF track
@@ -54,7 +54,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 How it works, with a small example (AI area → AI RMF statement → question): `docs/index.md`; the full model:
 `docs/ai-rmf-model.md`. The rules:
 - **Scope comes from how AI is used, never sector or certifications.** Sector only sets the minimum priority of findings.
-- **Selection only filters** (role, producer flags, AI areas). `build_ai_questions.py` never ranks or rewrites.
+- **Selection only filters** (role, producer details, AI areas). `build_ai_questions.py` never ranks or rewrites.
 - **Every AI question is `full_discovery`; there is no gap rule** (decided 2026-10-29). AI questions never repeat what the
   CSF sheet or ISO 27001 covers.
 - **Ask about practice, not checkboxes** (how, who, how often, what evidence). A policy is asked as practice: where it

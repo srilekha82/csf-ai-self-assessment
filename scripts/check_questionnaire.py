@@ -15,7 +15,7 @@ CSF (csf_questions_draft.json, against csf_scope.json, intake.json and csf_quest
 
 AI RMF (ai_questions_draft_<bank>.json, against ai_usage.json and ai_question_bank_used_<bank>.json):
   - every question is in the bank under its subcategory, every question is full_discovery
-  - it is asked of a role the client is asked as, needs only producer flags the client has, and (area questions)
+  - it is asked of a role the client is asked as, needs only producer details the client has, and (area questions)
     covers only rows of the client's own AI areas
   - nothing is missing: each subcategory holds exactly the questions the bank gives this client
 
@@ -33,6 +33,7 @@ from build_ai_questions import client_roles, pick  # noqa: E402
 import audit  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
+DETAIL_WORDS = {"built_on_existing_model": "built on an existing model", "given_to_others": "given to others"}
 
 
 def load(path: Path):
@@ -130,7 +131,9 @@ def check_ai(run_dir: Path) -> list[str]:
                 if not set(b["roles"]) & set(roles):
                     problems.append(f"AI {name} {sid}: question for {b['roles']}, client is asked as {roles}")
                 if not set(b["producer_flags"]) <= set(flags):
-                    problems.append(f"AI {name} {sid}: question needs producer flags {b['producer_flags']}")
+                    problems.append(f"AI {name} {sid}: question is for a producer whose model is "
+                                    f"{' and '.join(DETAIL_WORDS.get(f, f) for f in b['producer_flags'])}, "
+                                    "which this organisation did not say")
                 rows = q.get("rows") or []
                 if name == "areas":
                     foreign = [r for r in rows if r not in b.get("rows", []) or rec["rows"][r]["area"] not in areas]
