@@ -49,7 +49,8 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
   once from NIST's implementation examples and checked by an evaluator. The AI RMF track builds on CSF, not beside it.
 
 ## AI RMF track
-How it works (AI areas, mapping, the two banks, intake): `docs/ai-rmf-model.md`. The rules:
+How it works, with a small example (AI area → AI RMF statement → question): `docs/index.md`; the full model:
+`docs/ai-rmf-model.md`. The rules:
 - **Scope comes from how AI is used, never sector or certifications.** Sector only sets the minimum priority of findings.
 - **Selection only filters** (role, producer flags, AI areas). `build_ai_questions.py` never ranks or rewrites.
 - **Every AI question is `full_discovery`; there is no gap rule** (decided 2026-10-29). AI questions never repeat what the

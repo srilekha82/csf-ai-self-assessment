@@ -32,6 +32,7 @@ own the controls.
 
 ## More
 
+- [Docs home](docs/index.md): the idea, a small example, and where each part lives.
 - [Guide](docs/guide.md): every command, script and data file, and a glossary.
 - [Architecture](docs/architecture.md): how the stages fit together.
 - [AI RMF model](docs/ai-rmf-model.md): AI areas, mapping, severity and the question banks.
