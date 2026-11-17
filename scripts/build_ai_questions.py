@@ -6,8 +6,8 @@ Picks the AI RMF questions for one engagement from the two question banks. This 
 policy in data/ai/scope_rules.json. Writes, per bank:
 
   <run_dir>/ai_scope.json                     the profile used, and per bank and subcategory what was picked and why
-  <run_dir>/ai_questions_draft_<bank>.json    entries in the same shape as csf_questions_draft.json, so the assessor
-                                              patch merge (record_judgements.py log --base --patch) works unchanged
+  <run_dir>/ai_questions_draft_<bank>.json    entries in the same shape as csf_questions_draft.json (checked by
+                                              check_questionnaire.py, written by write_questionnaire.py)
   <run_dir>/ai_question_bank_used_<bank>.json snapshot of the bank used, so the run stays reproducible
 
 ai_usage.json (written by intake.py):
@@ -113,9 +113,9 @@ def evidence_for(bank: str, rec: dict, rows: list, evidence: dict, impact_order:
 
 def build_entry(bank: str, sid: str, rec: dict, picked: list, outcome: str, names: dict, rules: dict,
                 evidence: dict, impact_order: list, note: str, optional: set = frozenset()) -> dict:
-    """One draft entry. `criticality_frame` per question tells the reviewer whether "for your highest-criticality AI
-    systems" is required (an area the org runs systems in) or optional (question_rules.json criticality_frame_optional;
-    none for foundation questions)."""
+    """One draft entry. `criticality_frame` per question records whether "for your highest-criticality AI systems" is
+    required (an area the org runs systems in) or optional (question_rules.json criticality_frame_optional; none for
+    foundation questions)."""
     questions = []
     for q, rows in picked:
         client_areas = [names[rec["rows"][r]["area"]] for r in rows]
@@ -137,7 +137,6 @@ def build_entry(bank: str, sid: str, rec: dict, picked: list, outcome: str, name
         "evidence_prompt": questions[0]["evidence_prompt"],
         "scope_reason": "", "usage_note": note,
         "confidence_flag": rules["review_flag"] if rec["status"] == "needs_human_review" else "",
-        "assessor_note": None,
     }
 
 

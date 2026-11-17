@@ -1,8 +1,8 @@
-# /csf-questionnaire — CSF 2.0 draft questions for an engagement
+# /csf-questionnaire — CSF 2.0 questions for an engagement
 
 Argument: the run folder (`runs/<Org>_<date>`, created by `/generate-questions` or `scripts/intake.py`). Reads its
-`intake.json`; writes `csf_scope.json` and `csf_questions_draft.json`. It does not review the draft or write the workbook:
-`/assess-questionnaire` does both. Needs the CSF bank for the domain (`/build-csf-bank`).
+`intake.json`; writes `csf_scope.json`, `csf_questions_draft.json` and the CSF sheet of `questionnaire.xlsx`. Uses the
+CSF bank for the domain in the repo (built by `/build-csf-bank`).
 
 Tools: Bash, Read, Write. Working directory: repo root. Say little: the script's summary line, and anything you need
 from the user.
@@ -44,6 +44,17 @@ read it or re-apply it by hand.
 Picks candidates from `data/csf/banks/question_bank_<domain>.json` per subcategory and writes `csf_questions_draft.json` and
 a snapshot `csf_question_bank_used.json`.
 
+## 5 — Check and write the CSF sheet
+`.venv/bin/python ./scripts/check_questionnaire.py <run_dir> --framework csf`
+
+It checks the picked questions against the scope and the bank (nothing missing, right question types and flags, every
+question from the bank, none worded for a certification the org does not hold). Exit 1 lists the problems: show them
+to the user and stop; never edit the draft by hand. Exit 0:
+
+`.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/csf_questions_draft.json <run_dir>/questionnaire.xlsx`
+
+It writes or replaces only the CSF sheet.
+
 ## Done
 Tell the user: the run folder, the counts by type and how many subcategories used the generic fallback question (no bank
-candidate). Next: `/assess-questionnaire <run_dir>`.
+candidate).

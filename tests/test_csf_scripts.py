@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import compute_scope as CS  # noqa: E402
 import extract_cset_candidates as EX  # noqa: E402
-import record_judgements as RJ  # noqa: E402
 
 
 def soa_file(rows, headers=("Control", "Control title", "Applicable", "Justification")) -> Path:
@@ -94,17 +93,6 @@ class SoaJudgements(unittest.TestCase):
               "B": {"reason": "r", "applicable": False, "exclusion_class": "unclear"},
               "C": {"reason": "r"}}
         self.assertEqual(CS.validate_judgements(ok, self.soa, self.rules), [])
-
-
-class ReviewerFacts(unittest.TestCase):
-    def test_scope_reason_and_usage_note_cannot_change(self):
-        entry = {"subcategory_id": "GOVERN 1.1", "function": "GOVERN", "outcome": "o", "bank": "foundation",
-                 "question_type": "full_discovery", "questions": [{"question_text": "How?"}], "evidence_prompt": "e",
-                 "scope_reason": "foundation", "usage_note": "AI in use", "confidence_flag": "", "assessor_note": None}
-        patch = [dict(entry, scope_reason="changed", usage_note="changed", assessor_note="n")]
-        errs = RJ.validate_patch([entry], patch)
-        self.assertTrue(any("scope_reason must not change" in e for e in errs))
-        self.assertTrue(any("usage_note must not change" in e for e in errs))
 
 
 class IntakeDate(unittest.TestCase):

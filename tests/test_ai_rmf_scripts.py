@@ -536,20 +536,8 @@ class Scope(unittest.TestCase):
         scope = json.loads((self.run / "ai_scope.json").read_text())
         self.assertEqual(scope["roles_asked_as"], ["none", "consumer"])
 
-    def test_ai_draft_goes_through_the_existing_assessor_patch_merge(self):
-        import record_judgements as RJ
+    def test_the_ai_drafts_go_into_one_workbook_with_the_csf_sheet(self):
         self.assertEqual(self.go(self.profile()), 0)
-        draft = json.loads((self.run / "ai_questions_draft_areas.json").read_text())
-        changed = json.loads(json.dumps(draft[0]))
-        changed["questions"][0]["question_text"] += " Who signs off?"
-        changed["assessor_note"] = "Added an ownership prompt."
-        (self.run / "patch.json").write_text(json.dumps([changed]))
-        RJ.log_run_step([str(self.run), "--step", "ai_assessor_areas", "--base", "ai_questions_draft_areas.json",
-                         "--patch", "patch.json", "--output", "ai_questions_assessed_areas.json", "--model", "test"])
-        merged = json.loads((self.run / "ai_questions_assessed_areas.json").read_text())
-        self.assertEqual(len(merged), len(draft))
-        self.assertEqual(merged[0]["assessor_note"], "Added an ownership prompt.")
-        self.assertTrue(list((self.run / "judgement_log").glob("*ai_assessor_areas.json")))
         # one workbook for the client: the CSF sheet first, then one AI sheet holding both banks with an Area column
         import openpyxl
         import write_questionnaire as WQ

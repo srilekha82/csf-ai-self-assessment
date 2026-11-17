@@ -10,7 +10,7 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
 
 ## What to run
 - **Generate questions:** `/generate-questions` (one numbered intake, CSF + AI RMF, one `questionnaire.xlsx`). Parts on an
-  existing run folder: `/csf-questionnaire`, `/ai-questionnaire`, `/assess-questionnaire`.
+  existing run folder: `/csf-questionnaire` (CSF sheet), `/ai-questionnaire` (AI RMF sheet).
 - **Build or refresh the AI RMF banks:** `/build-ai-bank` (pilot first). CSF banks: `/build-csf-bank`.
 - **Questions about how something works or what a term means:** answer from `docs/guide.md` (it has an "I want to…" table
   and a glossary).

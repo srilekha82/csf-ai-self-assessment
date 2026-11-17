@@ -5,8 +5,8 @@ Reads question files (nested format: one entry per subcategory, questions[] arra
 XLSX, one row per question; subcategory fields repeat. The last path is the output. One workbook holds the whole
 questionnaire, one sheet per framework:
 
-  csf (default)  csf_questions_assessed.json -> questionnaire.xlsx, sheet "CSF Questionnaire".
-  ai             ai_questions_assessed_<bank>.json (one or two files: foundation, areas) -> the same questionnaire.xlsx,
+  csf (default)  csf_questions_draft.json -> questionnaire.xlsx, sheet "CSF Questionnaire".
+  ai             ai_questions_draft_<bank>.json (one or two files: foundation, areas) -> the same questionnaire.xlsx,
                  sheet "AI RMF Questionnaire", with an Area column ("Whole organisation" for a foundation question, the
                  client's AI area, or "This question covers: ..." for a question shared by several areas) and a
                  per-question evidence prompt. When the questions include the AI system inventory

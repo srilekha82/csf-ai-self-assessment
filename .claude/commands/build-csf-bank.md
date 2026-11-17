@@ -59,7 +59,7 @@ are redone only for questions CSET has changed. Each recording also writes a wri
 
 ## 5 — Evidence prompts (agents; once, only subcategories without one)
 Each CSF subcategory gets its own evidence prompt once (domain-independent, stored in `data/csf/evidence_prompts.json`
-`by_subcategory`), so an engagement's reviewer does not rewrite a generic category line on every entry (decided
+`by_subcategory`), so every client gets a specific line rather than the generic category line (decided
 2026-11-02). The questions stay CSET's; only the evidence line is written.
 
 1. `.venv/bin/python ./scripts/record_judgements.py evidence prepare` writes `data/csf/bank_build/evidence_input.json`
@@ -71,7 +71,7 @@ Each CSF subcategory gets its own evidence prompt once (domain-independent, stor
    `prompts/csf_evidence_evaluator.md` with the input and one writer's file; write `work/evidence_<part>_eval.json`.
 4. Record each part: `.venv/bin/python ./scripts/record_judgements.py evidence data/csf/bank_build/work/evidence_<part>.json
    --review data/csf/bank_build/work/evidence_<part>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
-   A failed prompt is not stored (the subcategory keeps its category line, which the engagement's reviewer sharpens);
+   A failed prompt is not stored (the subcategory keeps its category line);
    one pass, no revision turn. Delete the work and input files.
 
 ## 6 — Report

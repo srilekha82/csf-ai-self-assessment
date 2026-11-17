@@ -1,20 +1,12 @@
 """
 Usage: .venv/bin/python ./scripts/record_judgements.py <verdicts.json> [--pending PATH] [--model ID] [--session REF] [--cache-dir DIR]
        .venv/bin/python ./scripts/record_judgements.py log <run_dir> --step NAME --output FILE --model ID
-                  [--prompt PATH] [--inputs FILE ...] [--base FILE --patch FILE [--check FILE
-                  [--prev-patch FILE --prev-check FILE]]] [--session REF]
+                  [--prompt PATH] [--inputs FILE ...] [--session REF]
 
-The second form (log) is the audit trail for agent steps inside an engagement run (SoA exclusion
-reading, assessor). It goes through audit.record_agent_output, like every other agent step: it writes
+The second form (log) is the audit trail for agent steps inside an engagement run (the SoA exclusion reading). It goes
+through audit.record_agent_output, like every other agent step: it writes
 runs/<Org>_<date>/judgement_log/<timestamp>_<step>.json with the model, prompt and input hashes and a snapshot of
 the output. Write-once. See log_run_step().
-With --base and --patch (the assessor) the agent returns only the entries it changed; the patch is
-validated against the base (same fields, no added or removed entries, a new assessor_note on each),
-merged, and the merged list is written to --output. Exits 1, writing nothing, if the patch is invalid.
-With --check (the rewrite checker's verdicts, prompts/assessor_rewrite_checker.md, logged as its own step first) there
-must be exactly one verdict per patch entry; an entry it fails keeps the rewrite but gets data/common/assessor_check.json
-`flag` as confidence_flag and the reason appended to its assessor_note. With --prev-patch and --prev-check (round 2),
-an entry identical to the earlier patch that passed then must pass now.
 
        .venv/bin/python ./scripts/record_judgements.py evidence prepare
        .venv/bin/python ./scripts/record_judgements.py evidence <prompts.json> --review <verdicts.json> --model ID
@@ -56,8 +48,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_question_bank import REWRITE_FLAGS, text_hash  # noqa: E402
-from options import DOMAINS, QUESTION_TYPES  # noqa: E402
-from paths import ASSESSOR_CHECK, BANK_BUILD, CSF_CORE, EVIDENCE_PROMPTS, REPO_ROOT  # noqa: E402
+from options import DOMAINS  # noqa: E402
+from paths import BANK_BUILD, CSF_CORE, EVIDENCE_PROMPTS, REPO_ROOT  # noqa: E402
 import audit  # noqa: E402
 from audit import sha, run_log  # noqa: E402
 
@@ -102,72 +94,6 @@ def validate(verdicts: dict, candidates: dict, valid_subs: set[str]) -> list[str
     return errors
 
 
-def validate_patch(base: list, patch: list) -> list[str]:
-    """Check an agent's list of changed entries against the full list it reviewed."""
-    if not isinstance(base, list) or not isinstance(patch, list):
-        return ["base and patch must both be JSON lists of entries"]
-    by_id = {e["subcategory_id"]: e for e in base}
-    errors, seen = [], set()
-    for e in patch:
-        sid = e.get("subcategory_id") if isinstance(e, dict) else None
-        if sid not in by_id:
-            errors.append(f"{sid!r}: not an entry in the reviewed list (entries cannot be added)")
-            continue
-        if sid in seen:
-            errors.append(f"{sid}: appears twice in the patch")
-        seen.add(sid)
-        old = by_id[sid]
-        if set(e) != set(old):
-            errors.append(f"{sid}: must be the complete entry with the same fields (diff: {sorted(set(e) ^ set(old))})")
-            continue
-        for k in ("function", "outcome", "client", "bank", "scope_reason", "usage_note"):   # facts, not judgement
-            if k in old and e[k] != old[k]:
-                errors.append(f"{sid}: {k} must not change")
-        if "bank" in old:   # AI RMF: the questions stay the same questions (what each answer counts for)
-            if not isinstance(e["questions"], list) or len(e["questions"]) != len(old["questions"]):
-                errors.append(f"{sid}: AI RMF questions may be reworded, not added or removed")
-            else:
-                for n, (q, o) in enumerate(zip(e["questions"], old["questions"]), 1):
-                    changed = [k for k in ("applies_to", "rows", "criticality_frame") if k in o and q.get(k) != o[k]]
-                    if changed:
-                        errors.append(f"{sid} question {n}: {', '.join(changed)} must not change")
-        else:   # CSF: every question comes from CSET; the reviewer rewords or removes, never adds
-            errors.extend(csf_question_errors(sid, e["questions"], old["questions"]))
-        if e["question_type"] not in QUESTION_TYPES:
-            errors.append(f"{sid}: question_type must be one of {sorted(QUESTION_TYPES)}")
-        if not isinstance(e["questions"], list) or not e["questions"] or not all(
-                isinstance(q, dict) and str(q.get("question_text", "")).strip() for q in e["questions"]):
-            errors.append(f"{sid}: questions must be a non-empty list of non-blank questions")
-        note = e.get("assessor_note")
-        if not isinstance(note, str) or not note.strip() or note == old.get("assessor_note"):
-            errors.append(f"{sid}: a changed entry needs a new assessor_note saying what changed")
-        elif old.get("assessor_note") and not note.startswith(old["assessor_note"]):
-            errors.append(f"{sid}: the existing assessor_note must be kept; append yours after ' | '")
-        if e == old:
-            errors.append(f"{sid}: identical to the reviewed entry; leave unchanged entries out of the patch")
-    return errors
-
-
-CSF2_SOURCE = "CSET NCSF_V2"   # build_questions.py source_reference of CSET's own CSF 2.0 question
-
-
-def csf_question_errors(sid: str, new: list, old: list) -> list[str]:
-    """A CSF reviewer's questions: each one of the draft's (same source_reference and cset_question_id, wording may
-    change), none twice, and the CSF 2.0 set question kept."""
-    if not isinstance(new, list) or not all(isinstance(q, dict) for q in new):
-        return []   # reported by the non-empty-list check
-    key = lambda q: (q.get("source_reference"), q.get("cset_question_id"))  # noqa: E731
-    allowed = [key(q) for q in old]
-    got = [key(q) for q in new]
-    errors = [f"{sid}: question {n} is not one of the draft's (source {k[0]!r}); questions may be reworded or "
-              f"removed, never added or re-sourced" for n, k in enumerate(got, 1) if k not in allowed]
-    if len(set(got)) != len(got):
-        errors.append(f"{sid}: a draft question appears twice")
-    errors += [f"{sid}: the CSF 2.0 question ({k[0]}) must stay" for k in allowed
-               if str(k[0] or "").startswith(CSF2_SOURCE) and k not in got]
-    return errors
-
-
 def validate_check(patch: list, check, prev: tuple[list, list] | None = None) -> list[str]:
     """The checker's verdicts on a patch: one per patch entry, pass or fail (a fail with a reason); in round 2 an entry
     identical to the earlier patch that passed then must pass now."""
@@ -192,15 +118,6 @@ def validate_check(patch: list, check, prev: tuple[list, list] | None = None) ->
     return errors
 
 
-def apply_check(entry: dict, verdict: dict, rule: dict) -> dict:
-    """A rewrite the checker failed: kept, flagged for the consultant, with the checker's reason on its note."""
-    if verdict["verdict"] == "pass":
-        return entry
-    note = f"{rule['note_prefix']}{verdict['reason'].strip()}"
-    return dict(entry, confidence_flag=rule["flag"],
-                assessor_note=f"{entry['assessor_note']} | {note}" if entry.get("assessor_note") else note)
-
-
 def load_list(path: Path) -> list:
     try:
         return json.loads(path.read_text())
@@ -209,21 +126,14 @@ def load_list(path: Path) -> list:
 
 
 def log_run_step(argv: list[str]) -> None:
-    """Record an agent step inside an engagement run (SoA reading, assessor ...) through the shared recording contract."""
+    """Record an agent step inside an engagement run (the SoA reading) through the shared recording contract."""
     parser = argparse.ArgumentParser(prog="record_judgements.py log")
     parser.add_argument("run_dir")
-    parser.add_argument("--step", required=True, help="e.g. soa_exclusions, assessor")
-    parser.add_argument("--output", required=True,
-                        help="the file the agent wrote (relative to run_dir); with --patch, the merged file to write")
+    parser.add_argument("--step", required=True, help="e.g. soa_exclusions")
+    parser.add_argument("--output", required=True, help="the file the agent wrote (relative to run_dir)")
     parser.add_argument("--model", required=True, help="model id of the agent that made the judgements")
     parser.add_argument("--prompt", help="prompt file the agent followed, relative to the repo root")
     parser.add_argument("--inputs", nargs="*", default=[], help="files the agent was shown (relative to run_dir)")
-    parser.add_argument("--base", help="with --patch: the full list of entries the agent reviewed")
-    parser.add_argument("--patch", help="the agent's list of changed entries only; validated and merged into "
-                                        "--base, written to --output")
-    parser.add_argument("--check", help="with --patch: the rewrite checker's verdicts (one per patch entry)")
-    parser.add_argument("--prev-patch", help="with --check, round 2: the reviewer's earlier patch")
-    parser.add_argument("--prev-check", help="with --check, round 2: the checker's earlier verdicts")
     parser.add_argument("--session", help="session / run reference of the agent")
     a = parser.parse_args(argv)
 
@@ -238,42 +148,9 @@ def log_run_step(argv: list[str]) -> None:
     out = rp(a.output)
     extra_inputs = [rp(p) for p in a.inputs]
     extra_record = {"inputs": [{"path": p, "sha": sha(rp(p))} for p in a.inputs], "output": {"path": a.output}}
-    if a.patch:
-        if not a.base:
-            sys.exit("[record_judgements] ERROR: --patch needs --base")
-        try:
-            base = json.loads(rp(a.base).read_text())
-        except (OSError, ValueError) as e:
-            sys.exit(f"[record_judgements] ERROR: cannot read {rp(a.base)} as JSON: {e}")
-        extra_inputs.insert(0, rp(a.base))
-        extra_record["base"] = {"path": a.base, "sha": sha(rp(a.base))}
-        check, prev = None, None
-        if a.check:
-            check = load_list(rp(a.check))
-            if bool(a.prev_patch) != bool(a.prev_check):
-                sys.exit("[record_judgements] ERROR: --prev-patch and --prev-check go together")
-            prev = (load_list(rp(a.prev_patch)), load_list(rp(a.prev_check))) if a.prev_patch else None
-            extra_inputs.append(rp(a.check))
-            extra_record["check"] = {"path": a.check, "sha": sha(rp(a.check))}
-        rule = json.loads(ASSESSOR_CHECK.read_text())
-
-        def store(patch):  # the patch is the agent's whole answer; the merge is mechanical
-            verdicts = {v["subcategory_id"]: v for v in check or []}
-            changed = {e["subcategory_id"]: apply_check(e, verdicts[e["subcategory_id"]], rule) if check else e
-                       for e in patch}
-            out.write_text(json.dumps([changed.get(e["subcategory_id"], e) for e in base], indent=2, ensure_ascii=False))
-            failed = sum(1 for v in verdicts.values() if v["verdict"] == "fail")
-            return out, (f"logged step '{a.step}', {len(changed)} entries changed"
-                         + (f", {failed} not confirmed by the checker (flagged)" if check else ""))
-
-        def validate(patch):
-            errors = validate_patch(base, patch)
-            return errors or (validate_check(patch, check, prev) if check is not None else [])
-
-        file = rp(a.patch)
-    else:  # an output another script validates on its next run (soa_judgements.json): recorded as submitted
-        file, validate = out, lambda data: []
-        store = lambda data: (out, f"logged step '{a.step}'")  # noqa: E731
+    # an output another script validates on its next run (soa_judgements.json): recorded as submitted
+    file, validate = out, lambda data: []
+    store = lambda data: (out, f"logged step '{a.step}'")  # noqa: E731
 
     audit.record_agent_output(
         log_path=run_log(run_dir), log_dir=run_dir / "judgement_log", step=a.step, args={"prompt": a.prompt},
