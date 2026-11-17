@@ -23,7 +23,7 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `ai_us
 ## 2 — Scope and questions
 `.venv/bin/python ./scripts/build_ai_questions.py <run_dir>`
 
-Picks the client's questions from the banks by their role, producer flags and AI areas (policy in
+Picks the client's questions from the banks by their role, producer details and AI areas (policy in
 `data/ai/scope_rules.json`: do not read it or re-apply it by hand) and writes `ai_scope.json`,
 `ai_questions_draft_<bank>.json` and a snapshot `ai_question_bank_used_<bank>.json`. A question shared by several of
 the client's areas carries a note naming them. Subcategories with no question for this client are left out (they do

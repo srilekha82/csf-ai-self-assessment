@@ -18,7 +18,7 @@ from the user.
 then each menu one at a time, in order, and take the number(s) typed. Ask "Do you build AI, use AI, or both?", "How do
 you use AI?" and "What does your AI include?" only if AI in use is option 2, and the two producer follow-ups only if the
 role is Build or Both (the menu says so); the two "How / What" menus may be left blank. If the user asks what an option means, answer from `data/ai/ai_areas.json`
-(each AI area's name and what it covers) and `data/ai/question_rules.json` (roles and producer flags). Then:
+(each AI area's name and what it covers) and `data/ai/question_rules.json` (roles, and `producer_flags` for the two producer details). Then:
 
 ```bash
 .venv/bin/python ./scripts/intake.py write --org "<name>" --domain N --certs "N N" --ai-in-use N \
