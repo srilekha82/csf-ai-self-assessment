@@ -26,6 +26,21 @@ Then, in Claude Code from the repo root:
 It asks the intake as numbered choices and writes `runs/<Org>_<date>/questionnaire.xlsx`. Send that to the people who
 own the controls.
 
+## What's in each folder
+
+| Folder | What's in it |
+|---|---|
+| `scripts/` | The Python programs that do the work: intake, picking questions, writing the spreadsheet |
+| `.claude/commands/` | The commands you run in Claude Code, such as `/generate-questions`. Each lists the scripts to run, in order. |
+| `prompts/` | Instructions for the AI agents, used when they judge or write something a script can't decide |
+| `data/` | The prepared content: the frameworks, the question banks, and the rules for tailoring. Split into `csf/`, `ai/` and `common/`. |
+| `templates/` | The empty CSF and AI RMF profile spreadsheets (for Stage 2) |
+| `runs/` | One folder per assessment: intake answers and the finished `questionnaire.xlsx`. Created when you run the tool. Holds your data, so it's never committed. |
+| `tests/` | Checks for the scripts |
+| `docs/` | The detailed documentation |
+
+File by file: the "What is where" section of the [guide](docs/guide.md).
+
 ## Keep private
 
 `runs/` holds your organisation's answers and is never committed (`.gitignore`).
