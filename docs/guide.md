@@ -107,18 +107,24 @@ a run stops, and the rounded boxes are the files they read or write.
 
 ```mermaid
 flowchart TD
-    GQ["/generate-questions"]:::cmd --> IN[intake.py]:::script --> IJ([intake.json, ai_usage.json]):::file
-    IJ --> AGE["check_freshness.py --bank-age"]:::script
+    GQ["/generate-questions"]:::cmd --> IN[intake.py]:::script
+    IN --> INT([intake.json]):::file
+    IN --> USE([ai_usage.json]):::file
+    INT --> AGE["check_freshness.py --bank-age<br/><small>also reads: the banks' build dates</small>"]:::script
     AGE -- "a bank is missing or too old" --> STOP["stop: run /build-csf-bank or /build-ai-bank first"]:::stop
     AGE -- ok --> CQ["/csf-questionnaire"]:::cmd
     AGE -- ok --> AQ["/ai-questionnaire"]:::cmd
 
-    CQ -- "ISO 27001 held" --> SOA[parse_soa.py]:::script --> SOAJ([soa_parsed.json]):::file --> SC
-    CQ --> SC[compute_scope.py]:::script
+    CQ -- "ISO 27001 held" --> SOA["parse_soa.py<br/><small>reads: the SoA Excel file</small>"]:::script --> SOAJ([soa_parsed.json]):::file
+    SOAJ --> SC["compute_scope.py<br/><small>also reads: intake.json</small>"]:::script
+    CQ --> SC
     SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent --> RJ[record_judgements.py log]:::script --> SC
-    SC --> SCJ([csf_scope.json]):::file --> BQ[build_questions.py]:::script --> CD([csf_questions_draft.json]):::file
+    SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: intake.json, the CSF bank</small>"]:::script
+    BQ --> CD([csf_questions_draft.json]):::file
 
-    AQ --> BAQ[build_ai_questions.py]:::script --> AD([ai_questions_draft_*.json]):::file
+    AQ --> BAQ["build_ai_questions.py<br/><small>also reads: the AI RMF banks</small>"]:::script
+    USE --> BAQ
+    BAQ --> AD([ai_questions_draft_*.json]):::file
 
     CD --> CHK[check_questionnaire.py]:::script
     AD --> CHK
@@ -127,6 +133,7 @@ flowchart TD
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
     classDef script fill:#dbeafe,stroke:#2563eb,color:#111
     classDef agent fill:#ffedd5,stroke:#ea580c,color:#111
+    classDef you fill:#dcfce7,stroke:#16a34a,color:#111
     classDef file fill:#f9fafb,stroke:#9ca3af,color:#111
     classDef stop fill:#fee2e2,stroke:#dc2626,color:#111
 ```
@@ -135,16 +142,21 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    B["/build-csf-bank"]:::cmd --> PC["parse_crosswalk.py<br/>(only when NIST's file is refreshed)"]:::script --> CORE([csf2_core.json, crosswalks]):::file
-    B --> EX[extract_cset_candidates.py]:::script --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
+    B["/build-csf-bank"]:::cmd --> PC["parse_crosswalk.py<br/>(only when NIST's file is refreshed)"]:::script
+    NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
+    B --> EX[extract_cset_candidates.py]:::script
+    SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
     BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_judgements.py]:::script --> JS([cset_judgements.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
-    B --> EP["record_judgements.py evidence prepare"]:::script --> EW["agents: evidence writer + checker"]:::agent --> RE["record_judgements.py evidence"]:::script --> EVP([evidence_prompts.json]):::file
+    B --> EP["record_judgements.py evidence prepare"]:::script
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_judgements.py evidence"]:::script --> EVP([evidence_prompts.json]):::file
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
     classDef script fill:#dbeafe,stroke:#2563eb,color:#111
     classDef agent fill:#ffedd5,stroke:#ea580c,color:#111
+    classDef you fill:#dcfce7,stroke:#16a34a,color:#111
     classDef file fill:#f9fafb,stroke:#9ca3af,color:#111
+    classDef stop fill:#fee2e2,stroke:#dc2626,color:#111
 ```
 
 **Building the AI RMF banks** (`/build-ai-bank`, maintainer)
@@ -152,23 +164,29 @@ flowchart TD
 ```mermaid
 flowchart TD
     B["/build-ai-bank"]:::cmd --> CF["check_freshness.py --ai-bank<br/>(what needs redoing)"]:::script
-    CF --> PS[parse_ai_rmf_sources.py]:::script --> CORE([ai_rmf_core.json, cis_ai_safeguard_ids.json]):::file
+    SRC([data/ai/source/: Playbook, CIS guides, CIS to CSF mapping]):::file --> CF
+    CF --> PS[parse_ai_rmf_sources.py]:::script
+    SRC --> PS --> CORE([ai_rmf_core.json, cis_ai_safeguards.json, cis_ai_safeguard_ids.json]):::file
 
     CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_ai_bank.py mapping"]:::script --> MAP([mapping.json]):::file
     MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then ai_pilot.py accept-mapping"]:::you
 
-    U1 --> PB["prepare_ai_bank.py batch"]:::script --> AQ["agents: question generator + checker"]:::agent --> RQ["record_ai_bank.py assemble + questions"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
-    BANKS --> SQ["sheet_io.py export questions"]:::script --> U2["you: review the pilot, then ai_pilot.py accept"]:::you
+    U1 --> PB["prepare_ai_bank.py batch"]:::script
+    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_ai_bank.py assemble + questions"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
+    BANKS --> SQ["sheet_io.py export area_questions, foundation_questions"]:::script --> U2["you: review the pilot, then ai_pilot.py accept"]:::you
 
     BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_ai_bank.py evidence"]:::script --> BANKS
 
-    CORE --> BI[build_ai_impact_inputs.py]:::script --> AN["agents: notes writer + checker"]:::agent --> RN["record_ai_bank.py notes + notes-review"]:::script --> NOTES([ai_impact_notes.json]):::file
+    SRC --> BI[build_ai_impact_inputs.py]:::script
+    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_ai_bank.py notes + notes-review"]:::script --> NOTES([ai_impact_notes.json]):::file
+    NOTES --> SN["sheet_io.py export impact_notes"]:::script --> U3["you: review"]:::you
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
     classDef script fill:#dbeafe,stroke:#2563eb,color:#111
     classDef agent fill:#ffedd5,stroke:#ea580c,color:#111
     classDef you fill:#dcfce7,stroke:#16a34a,color:#111
     classDef file fill:#f9fafb,stroke:#9ca3af,color:#111
+    classDef stop fill:#fee2e2,stroke:#dc2626,color:#111
 ```
 
 `sheet_io.py import` takes your edits from any review spreadsheet back into the data (lines you change are never
