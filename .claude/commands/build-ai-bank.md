@@ -1,13 +1,19 @@
-# /build-ai-bank — build the AI RMF 1.0 mapping and question banks
+# /build-ai-bank
 
-Builds the AI RMF mapping (AI area x subcategory, `data/ai/mapping.json`), then the two question banks,
-`data/ai/banks/question_bank_ai_rmf_foundation.json` (asked once for the organisation) and
-`question_bank_ai_rmf_areas.json` (per mapping row), from the AI RMF Playbook and the three CIS AI companion guides, then
-the CSF AI impact notes (`data/csf/ai_impact_notes.json`). The banks hold every possible question, each tagged with the
-roles it is asked of and any producer flags; `/ai-questionnaire` picks a client's questions from them.
-Run quarterly, or when a source file changes. Scripts parse, prepare, validate, record and decide nothing; agents judge,
-and hand every result in through `scripts/record_ai_bank.py`, which rejects a whole file if anything is wrong. The judging rules are
-in the prompts named in each step. Do not re-implement any parsing or validation inline.
+Builds or refreshes the AI RMF mapping, the two AI RMF question banks and the CSF AI impact notes.
+
+- **Who runs it:** the maintainer, quarterly, when a bank is too old, or when a source file changes. Not part of a
+  client run.
+- **Reads:** the AI RMF Playbook and the three CIS AI companion guides (downloaded into `data/ai/source/`), the AI
+  areas (`data/ai/ai_areas.json`) and the rules in `data/ai/`.
+- **Writes:** the mapping (`data/ai/mapping.json`: which AI RMF subcategories apply to each AI area), the two banks
+  (`data/ai/banks/question_bank_ai_rmf_foundation.json`, asked once per organisation, and
+  `question_bank_ai_rmf_areas.json`, per AI area), and the CSF AI impact notes (`data/csf/ai_impact_notes.json`).
+- **Files explained:** `docs/guide.md`, sections "AI RMF track" and "Data"; the model is in `docs/ai-rmf-model.md`.
+
+Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
+`scripts/record_ai_bank.py`, which rejects a whole file if anything is wrong. The judging rules are in the prompts
+named in each step. Do not re-implement any parsing or validation inline.
 
 Use your tools (Bash, Read, Write, Agent). Working directory: repo root.
 

@@ -1,12 +1,17 @@
-# /build-csf-bank — build a domain's CSF 2.0 question bank from the CSET SQL
+# /build-csf-bank
 
-Argument: the domain (`finance`, `healthcare`, `manufacturing_ot`, `saas_cloud`, `consulting`, `other`) or `all`.
-Builds `data/csf/banks/question_bank_<domain>.json` from the CSET SQL migration files, several candidates per
-subcategory: CSET's own CSF 2.0 question first (set `NCSF_V2`, every subcategory), then the maturity-model questions
-CSET maps to CSF 2.0. Scripts do everything the CSET schema decides; an agent step (Step 3) judges only what the schema cannot
-(domain of generic questions, rewording statement-only practices as questions, loose subcategory mappings).
-`build_questions.py` later picks the right number per engagement. Do not re-implement any parsing or routing inline.
-The banks are shared across clients: build or refresh one when it is missing or CSET changed, not per engagement.
+Builds or refreshes the CSF 2.0 question bank for one sector from CISA's CSET.
+
+- **Who runs it:** the maintainer, when a bank is missing or too old, or when CSET changes. Not part of a client run.
+- **Argument:** the sector (`finance`, `healthcare`, `manufacturing_ot`, `saas_cloud`, `consulting`, `other`) or `all`.
+- **Reads:** a local copy of the CSET repository (its SQL files) and `data/csf/csf2_core.json`.
+- **Writes:** `data/csf/banks/question_bank_<sector>.json`: per CSF subcategory, CSET's own CSF 2.0 question first,
+  then the maturity-model questions CSET maps to it. Working files go to `data/csf/bank_build/`.
+- **Files explained:** `docs/guide.md`, sections "Building a bank" and "Data".
+
+Scripts do everything the CSET schema decides; an agent step (Step 4) judges only what the schema cannot (the sector
+of generic questions, rewording statement-only practices as questions, loose subcategory mappings). Do not
+re-implement any parsing or routing inline.
 
 Tools: Bash, Read, Write, Agent. Working directory: repo root. Say little: the script summary lines and the final report.
 

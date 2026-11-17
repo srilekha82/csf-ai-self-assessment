@@ -1,13 +1,14 @@
-# /generate-questions — one questionnaire (CSF sheet + AI RMF sheet) for a client
+# /generate-questions
 
-The whole pipeline from one intake. This command does only the shared steps (intake, bank age check) and then runs
-the other commands in order, each of which also works on its own for a run folder:
+Makes one questionnaire (`questionnaire.xlsx`, a CSF sheet and an AI RMF sheet) for one organisation.
 
-  intake → bank age check → `/csf-questionnaire` (CSF sheet) → `/ai-questionnaire` (AI RMF sheet)
+- **Who runs it:** anyone assessing an organisation.
+- **Reads:** the intake answers you give, and the question banks already in the repo.
+- **Writes:** a run folder `runs/<Org>_<date>/` with the intake, the picked questions and `questionnaire.xlsx`.
+- **Files explained:** `docs/guide.md`, section "Runs".
 
-The client sees one `questionnaire.xlsx` with two sheets; the two tracks are internal. This command only uses the
-question banks already in the repo; it never builds them. Building and refreshing banks is the maintainer's job:
-`/build-csf-bank` and `/build-ai-bank`.
+Steps: intake → check the banks are recent enough (stops and names the bank to rebuild if not) → `/csf-questionnaire`
+(CSF sheet) → `/ai-questionnaire` (AI RMF sheet). It never builds a bank: that is `/build-csf-bank` and `/build-ai-bank`.
 
 Tools: Bash, Read, Skill. Working directory: repo root. Say little: the script summary lines, and anything you need
 from the user.
