@@ -3,8 +3,8 @@
 Argument: the run folder (`runs/<Org>_<date>`, created by `/generate-questions` or `scripts/intake.py`). Reads its
 `ai_usage.json` (how the org uses AI); writes `ai_scope.json` and `ai_questions_draft_<bank>.json` for the two banks
 (foundation, areas). It does not
-review the draft or write the workbook: `/assess-questionnaire` does both. Needs the AI RMF banks
-(`/build-ai-bank`). Scripts decide everything here; there is no agent judgement in this command.
+review the draft or write the workbook: `/assess-questionnaire` does both. Uses the AI RMF banks in the repo
+(built by `/build-ai-bank`). Scripts decide everything here; there is no agent judgement in this command.
 
 Tools: Bash, Read. Working directory: repo root. Say little: the script's summary line, and anything you need from the
 user.
@@ -14,12 +14,10 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `ai_us
 `/generate-questions` (or `scripts/intake.py`) first and stop.
 
 ## 2 — Check the banks
-`.venv/bin/python ./scripts/check_freshness.py --ai-bank`
+`.venv/bin/python ./scripts/check_freshness.py --bank-age --run <run_dir>`
 
-Read only `bank foundation`, `bank areas` and `pilot` (every client needs both banks). Ignore the exit code and the
-other stages.
-- A needed bank `missing`, or `pilot` not accepted: tell the user to run `/build-ai-bank` (pilot first) and stop.
-- A needed bank `stale` or `incomplete`: say so and ask whether to continue anyway.
+Read only the two `AI bank` lines (every client needs both). If either is missing or too old: tell the user to run
+`/build-ai-bank` first, and stop. Never build or rebuild a bank yourself here.
 
 ## 3 — Scope and questions
 `.venv/bin/python ./scripts/build_ai_questions.py <run_dir>`

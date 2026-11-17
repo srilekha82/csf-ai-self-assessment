@@ -1,6 +1,15 @@
 """
-Usage: .venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>
+Usage: .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>
+       .venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>
        .venv/bin/python ./scripts/check_freshness.py --ai-bank
+
+Bank age, for a client run (--bank-age):
+    .venv/bin/python ./scripts/check_freshness.py --bank-age --run runs/<Org>_<date>   (or --domain finance)
+
+Reads only the build date stored in each question bank the run uses (the CSF bank of its domain, the two AI RMF banks)
+and compares it with the limit in data/metadata.json "question_banks". Needs no source files, so it works on a fresh
+clone. Exit 0 = every bank exists and is within its limit; exit 1 = a bank is missing or too old: the maintainer
+rebuilds it (/build-csf-bank, /build-ai-bank) before the run goes on.
 
 AI RMF gate (--ai-bank):
     .venv/bin/python ./scripts/check_freshness.py --ai-bank
@@ -108,6 +117,44 @@ def check_ai_bank() -> None:
         sys.exit(1)
     print("\nAll AI RMF stages are current: nothing to rebuild.")
     ev.finish(detail="all AI RMF stages current")
+    sys.exit(0)
+
+
+def bank_age_stages(domain: str, today: date | None = None, limits: dict | None = None,
+                    csf_file: Path | None = None, ai_dir: Path | None = None) -> list[tuple[str, bool, str]]:
+    """(stage, ok?, text) per bank a client run uses: missing, too old (built_on older than its limit) or ok."""
+    today = today or date.today()
+    limits = limits or json.loads(METADATA.read_text())["question_banks"]
+    ai_dir = ai_dir or AI_BANKS
+    banks = [(f"CSF bank {domain}", csf_file or bank_path(domain), limits["csf_max_age_days"], "/build-csf-bank " + domain)]
+    banks += [(f"AI bank {b}", ai_dir / f"question_bank_ai_rmf_{b}.json", limits["ai_max_age_days"], "/build-ai-bank")
+              for b in AI_QUESTION_BANKS]
+    stages = []
+    for stage, path, limit, command in banks:
+        built = (load(path) or {}).get("built_on")
+        if built is None:
+            stages.append((stage, False, f"missing (run {command})"))
+            continue
+        age = (today - date.fromisoformat(built)).days
+        if age > limit:
+            stages.append((stage, False, f"too old: built {built}, {age} days ago, limit {limit} (run {command})"))
+        else:
+            stages.append((stage, True, f"ok: built {built}, {age} days ago, limit {limit}"))
+    return stages
+
+
+def check_bank_age(domain: str) -> None:
+    ev = audit.begin(DATA_AUDIT, "check_freshness_bank_age", {"domain": domain})
+    stages = bank_age_stages(domain)
+    for stage, ok, text in stages:
+        print(f"{stage + ':':<24}{text}")
+    todo = [stage for stage, ok, _ in stages if not ok]
+    if todo:
+        print(f"\nRebuild first: {', '.join(todo)}")
+        ev.finish("stale", detail=f"rebuild first: {', '.join(todo)}", stages={s: t for s, _, t in stages})
+        sys.exit(1)
+    print("\nAll question banks are within their age limit.")
+    ev.finish(detail="all banks within age limit")
     sys.exit(0)
 
 
@@ -224,20 +271,24 @@ def main():
     parser.add_argument("--certs", nargs="*", default=[], choices=list(CERT_FILES), help="with --all and no --run")
     parser.add_argument("--run", help="with --all: the run folder; domain and certs come from its intake.json")
     parser.add_argument("--ai-bank", action="store_true", help="SHA-256 gate for the AI RMF build (see the docstring)")
+    parser.add_argument("--bank-age", action="store_true",
+                        help="client run: age of the banks it uses (needs --run, or --domain)")
     parser.add_argument("--all", action="store_true", help="CSF and AI freshness together (needs --run, or --domain)")
-    parser.add_argument("--domain", choices=DOMAINS, help="with --all and no --run: the CSF domain of this engagement")
+    parser.add_argument("--domain", choices=DOMAINS, help="with --bank-age or --all and no --run: the CSF domain")
     parser.add_argument("--cset-path", default=DEFAULT_CSET_PATH, help="with --all: local CSET clone")
     args = parser.parse_args()
 
     if args.ai_bank:
         check_ai_bank()
-    if not args.all:
-        parser.error("give --ai-bank, or --all with --run (or --domain)")
+    if not (args.all or args.bank_age):
+        parser.error("give --bank-age or --all with --run (or --domain), or --ai-bank")
     if args.run:
         intake = load_intake(args.run)
         args.domain, args.certs = intake["domain"], intake["certs"]
     elif not args.domain:
-        parser.error("--all needs --run, or --domain")
+        parser.error("--bank-age and --all need --run, or --domain")
+    if args.bank_age:
+        check_bank_age(args.domain)
     check_all(args)
 
 if __name__ == "__main__":

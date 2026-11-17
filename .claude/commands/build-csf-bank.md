@@ -16,6 +16,14 @@ and use that domain's value. The CSET repo is `~/workstuff/cset` unless the user
 If that folder does not exist, clone the public repo there (only the SQL folder, with full history; tell the user):
 `mkdir -p ~/workstuff && git clone --filter=blob:none --sparse https://github.com/cisagov/cset.git ~/workstuff/cset && git -C ~/workstuff/cset sparse-checkout set CSETWebApi/CSETWeb_Api/CSETWebCore.UpgradeLibrary/VersionUpgrader/SQL`
 
+## 1b — Reference data (NIST CSF and crosswalks)
+`.venv/bin/python ./scripts/check_freshness.py --all --domain <domain>` prints the reference data table first. If a file is
+flagged stale or seed, ask the user whether to refresh it before building. NIST blocks automated downloads, so they
+download it: go to https://www.nist.gov/cyberframework/csf-20-informative-references, click "Download English (xlsx)",
+save as `data/csf/source/csf2.xlsx`, and tell you. Then run `.venv/bin/python ./scripts/parse_crosswalk.py --output ./data`;
+it also records the refresh in `data/metadata.json`. If they decline, note it and continue. Ignore the other lines of
+that report here.
+
 ## 2 — Extract candidates (deterministic)
 `.venv/bin/python ./scripts/extract_cset_candidates.py --cset-path <cset_path>`
 

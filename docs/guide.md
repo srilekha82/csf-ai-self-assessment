@@ -14,7 +14,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 
 | I want to… | Do this |
 |---|---|
-| Generate a questionnaire for a client | `/generate-questions`. It asks the intake once (numbered choices), checks freshness, rebuilds missing banks, then runs the CSF and AI commands and the review, and writes one `questionnaire.xlsx` (CSF sheet + AI RMF sheet). |
+| Generate a questionnaire for a client | `/generate-questions`. It asks the intake once (numbered choices), checks the banks are recent enough (it stops if one is missing or too old, and never rebuilds), then runs the CSF and AI commands and the review, and writes one `questionnaire.xlsx` (CSF sheet + AI RMF sheet). |
 | Generate only the CSF part, or only the AI part | On an existing run folder: `/csf-questionnaire` or `/ai-questionnaire`, then `/assess-questionnaire` (it writes the sheet; either sheet can be written in any order). |
 | Have an independent review of a draft | `/assess-questionnaire <run folder>`: one fresh reviewer per draft (CSF and each AI bank), then the sheets are written. |
 | See what is stale or missing | `.venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>` (CSF and AI together; `--domain <d> --certs <c>` instead of `--run` before a run exists). |
@@ -54,7 +54,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 
 | Command | What it does |
 |---|---|
-| `/generate-questions` | The whole flow: intake (numbered choices) → freshness for CSF and AI together (missing banks are rebuilt, stale ones after asking) → `/csf-questionnaire` → `/ai-questionnaire` → `/assess-questionnaire` → one `questionnaire.xlsx`. Stops at the SoA question. Send the XLSX to control owners. |
+| `/generate-questions` | The whole flow: intake (numbered choices) → bank age check (stops if a bank is missing or too old) → `/csf-questionnaire` → `/ai-questionnaire` → `/assess-questionnaire` → one `questionnaire.xlsx`. Stops at the SoA question. Send the XLSX to control owners. |
 | `/csf-questionnaire` | CSF drafts for a run folder: SoA question, scope, questions from the bank. Writes `csf_scope.json`, `csf_questions_draft.json`. |
 | `/ai-questionnaire` | AI RMF drafts for a run folder: checks the banks, picks the client's questions by role, producer flags and AI areas from `ai_usage.json`. Writes `ai_scope.json`, `ai_questions_draft_<foundation|areas>.json`. |
 | `/assess-questionnaire` | Independent review of every draft in a run folder (one fresh subagent each, in parallel), merges the changes, writes the sheets of `questionnaire.xlsx`. |
@@ -79,7 +79,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 ### Running an engagement (`/generate-questions`)
 
 1. `intake.py` asks once, as numbered choices: org, domain, certs, the AI usage profile (AI in use none / some / unsure, then "How do you use AI?" and "What does your AI include?", which give the client's AI areas) and the engagement flags. It writes `intake.json` and `ai_usage.json`; every later step, including the AI RMF track, reads them.
-2. `check_freshness.py --all --run <run>` reports reference data, the CSF bank of the domain (stale when the CSET SQL changed upstream; it runs `git fetch` and says so if that fails) and every AI RMF stage. A missing CSF bank is built at once, a stale one after asking. AI banks are rebuilt the same way once a pilot has been accepted (`ai_pilot.py accept`); before that the AI sheet waits for `/build-ai-bank`.
+2. `check_freshness.py --bank-age --run <run>` checks the build date of the CSF bank of the domain and the two AI RMF banks against the limits in `data/metadata.json` (`question_banks`: CSF 365 days, AI 90). If a bank is missing or too old the run stops and names the command to rebuild it (`/build-csf-bank`, `/build-ai-bank`); a client run never rebuilds a bank. It needs no source files.
 3. `/csf-questionnaire`: `parse_soa.py <run> <soa>` extracts the SoA. If any excluded control needs reading, `compute_scope.py` exits 2 and the agent classifies it with `prompts/soa_exclusion_judge.md`. `compute_scope.py` gives each subcategory a type: `full_discovery`, `gap` (cert covers it, ask what goes beyond), `confirmatory` (cert should cover it, ask for evidence) or `skip`; policy is in `data/csf/scope_rules.json`. `build_questions.py` picks questions from the bank and words them for the certs held, producing `csf_questions_draft.json`.
 4. `/ai-questionnaire`: see below.
 5. `/assess-questionnaire`: a fresh assessor subagent per draft (`prompts/questionnaire_assessor.md`, `prompts/ai_rmf_questionnaire_assessor.md`) reads only its draft and returns only the entries it changed. `record_judgements.py log` validates and merges them, then `write_questionnaire.py` writes each framework's sheet of `questionnaire.xlsx` (each replaces only its own sheet).
@@ -106,7 +106,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 | `intake.py` | The numbered intake: `menu` prints the choices, `write` maps the typed numbers to values and writes `intake.json` and `ai_usage.json` in a new run folder. |
 | `audit.py` | Shared helper (not run directly). Every script calls it to append to `audit.jsonl`; a step that crashes or is aborted still leaves an `incomplete` line. |
 | `parse_crosswalk.py` | `data/csf/source/csf2.xlsx` (NIST download) → `csf2_core.json` and the crosswalks; records the refresh in `data/metadata.json`. |
-| `check_freshness.py` | Reports stale data files from `data/metadata.json`; `--ai-bank` reports each stage of the AI RMF build as current, stale, missing or incomplete; `--all --run <run>` reports CSF and AI together for the start of an engagement. |
+| `check_freshness.py` | Reports stale data files from `data/metadata.json`; `--ai-bank` reports each stage of the AI RMF build as current, stale, missing or incomplete; `--all --run <run>` reports CSF and AI together (maintainer); `--bank-age --run <run>` checks only the build date of the banks a client run uses. |
 | `extract_cset_candidates.py` | CSET SQL → `cset_candidates.json`. |
 | `build_question_bank.py` | Routes questions for a domain; writes the bank or a pending file. |
 | `record_judgements.py` | Validates and logs agent judgements (bank build, and `log` mode for engagement steps). |

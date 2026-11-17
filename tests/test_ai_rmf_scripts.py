@@ -1076,3 +1076,51 @@ class CsfBankRecording(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BankAge(unittest.TestCase):
+    """check_freshness.bank_age_stages: a client run checks only each bank's build date against its limit."""
+
+    def setUp(self):
+        from datetime import date
+        self.today = date(2026, 11, 17)
+        self.tmp = Path(tempfile.mkdtemp())
+        self.csf = self.tmp / "csf.json"
+        self.limits = {"csf_max_age_days": 365, "ai_max_age_days": 90}
+
+    def write(self, path, built_on):
+        path.write_text(json.dumps({"built_on": built_on}))
+
+    def stages(self):
+        return {s: (ok, text) for s, ok, text in CF.bank_age_stages(
+            "finance", today=self.today, limits=self.limits, csf_file=self.csf, ai_dir=self.tmp)}
+
+    def write_all(self, csf, ai):
+        self.write(self.csf, csf)
+        for bank in CF.AI_QUESTION_BANKS:
+            self.write(self.tmp / f"question_bank_ai_rmf_{bank}.json", ai)
+
+    def test_banks_within_their_limit_are_ok(self):
+        self.write_all("2026-01-01", "2026-09-01")
+        self.assertTrue(all(ok for ok, _ in self.stages().values()), self.stages())
+
+    def test_a_bank_older_than_its_limit_is_too_old_and_names_the_command(self):
+        self.write_all("2026-01-01", "2026-08-01")   # AI: 108 days, limit 90
+        s = self.stages()
+        self.assertTrue(s["CSF bank finance"][0])
+        self.assertFalse(s["AI bank foundation"][0])
+        self.assertIn("too old", s["AI bank foundation"][1])
+        self.assertIn("/build-ai-bank", s["AI bank foundation"][1])
+
+    def test_a_missing_bank_is_reported_with_the_command_to_build_it(self):
+        s = self.stages()
+        self.assertFalse(s["CSF bank finance"][0])
+        self.assertIn("missing (run /build-csf-bank finance)", s["CSF bank finance"][1])
+
+    def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
+        from paths import METADATA, bank_path
+        limits = json.loads(METADATA.read_text())["question_banks"]
+        for stage, ok, text in CF.bank_age_stages("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
+                                                  csf_file=bank_path("finance")):
+            self.assertTrue(ok, (stage, text))
+        self.assertTrue({"csf_max_age_days", "ai_max_age_days"} <= set(limits))
