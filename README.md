@@ -61,4 +61,3 @@ This tool uses free, public material from:
 - **CIS (Center for Internet Security):** the ID numbers of its safeguards. CIS's own text is not included; its licence
   (CC BY-NC-ND 4.0) does not allow that.
 
-NIST, CISA and CIS do not endorse this tool.
