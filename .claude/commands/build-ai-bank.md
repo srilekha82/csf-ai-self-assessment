@@ -215,7 +215,7 @@ Per bank (`foundation`, then `areas`):
 Notes for orgs reached by external agents or AI-enabled attackers, and where AI use changes the reading.
 
 ```bash
-.venv/bin/python ./scripts/build_ai_impact_inputs.py
+.venv/bin/python ./scripts/prepare_ai_notes.py
 ```
 
 It joins the CIS → CSF 2.0 mapping to the MCP and agents guide safeguards and writes

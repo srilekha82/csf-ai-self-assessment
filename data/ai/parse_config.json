@@ -11,7 +11,7 @@
     "10": 7, "11": 5, "12": 8, "13": 11, "14": 9, "15": 7, "16": 14, "17": 9, "18": 5
   },
   "impact_notes_max_ai_text": {
-    "description": "build_ai_impact_inputs.py shortens each safeguard's AI text to this many characters (ending with an ellipsis) before the impact notes writer sees it, to keep the agent's input small.",
+    "description": "prepare_ai_notes.py shortens each safeguard's AI text to this many characters (ending with an ellipsis) before the impact notes writer sees it, to keep the agent's input small.",
     "value": 700
   }
 }

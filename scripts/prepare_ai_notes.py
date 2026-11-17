@@ -6,7 +6,7 @@ Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json, da
            text length)
 Output:    data/ai/bank_build/impact_pending.json
 
-Usage: .venv/bin/python ./scripts/build_ai_impact_inputs.py [--xlsx PATH] [--output PATH]
+Usage: .venv/bin/python ./scripts/prepare_ai_notes.py [--xlsx PATH] [--output PATH]
 
 Links CIS's official CIS -> CSF 2.0 mapping (xlsx) to the AI text of the MCP and Agents guide safeguards, so each CSF
 subcategory gets the AI text of the safeguards mapped to it. Writes data/ai/bank_build/impact_pending.json:
@@ -80,11 +80,11 @@ def main():
     parser.add_argument("--output", default=str(AI_BUILD / "impact_pending.json"))
     args = parser.parse_args()
 
-    ev = audit.begin(AI_BUILD / "audit.jsonl", "build_ai_impact_inputs", {"xlsx": args.xlsx, "output": args.output})
+    ev = audit.begin(AI_BUILD / "audit.jsonl", "prepare_ai_notes", {"xlsx": args.xlsx, "output": args.output})
     inputs = [Path(args.xlsx), AI_SAFEGUARDS, CSF_CORE, AI_PARSE_CONFIG]
     for p in inputs:
         if not p.is_file():
-            ev.fail(f"[build_ai_impact_inputs] ERROR: {p} not found (see data/ai/source/README.md; "
+            ev.fail(f"[prepare_ai_notes] ERROR: {p} not found (see data/ai/source/README.md; "
                     f"run parse_ai_rmf_sources.py for {AI_SAFEGUARDS.name})", inputs)
 
     cfg = json.loads(AI_PARSE_CONFIG.read_text())
@@ -94,7 +94,7 @@ def main():
     try:
         rows, sheet_unmapped = read_mapping(Path(args.xlsx), cfg["cis_v81_safeguards_per_control"])
     except ValueError as e:
-        ev.fail(f"[build_ai_impact_inputs] ERROR: {e}", inputs)
+        ev.fail(f"[prepare_ai_notes] ERROR: {e}", inputs)
 
     errors = []
     by_guide: dict[str, dict[str, dict]] = {g: {} for g in NOTE_GUIDES}
@@ -113,7 +113,7 @@ def main():
     if errors:
         for e in sorted(set(errors))[:20]:
             print(f"  - {e}", file=sys.stderr)
-        ev.fail(f"[build_ai_impact_inputs] {len(set(errors))} problems, nothing written: {sorted(set(errors))[:2]}", inputs)
+        ev.fail(f"[prepare_ai_notes] {len(set(errors))} problems, nothing written: {sorted(set(errors))[:2]}", inputs)
 
     mapped_rows: dict[str, list[dict]] = {}
     for x in rows:
@@ -121,7 +121,7 @@ def main():
             mapped_rows.setdefault(x["csf_id"], []).append(x)
     found_unmapped = set(csf) - set(mapped_rows)
     if found_unmapped != sheet_unmapped:
-        ev.fail("[build_ai_impact_inputs] ERROR: CSF subcategories without a mapping differ from the workbook's own "
+        ev.fail("[prepare_ai_notes] ERROR: CSF subcategories without a mapping differ from the workbook's own "
                 f"'Unmapped CSF' sheet: only here {sorted(found_unmapped - sheet_unmapped)}, "
                 f"only in the sheet {sorted(sheet_unmapped - found_unmapped)}", inputs)
 
@@ -148,7 +148,7 @@ def main():
     out.write_text(json.dumps({"guides": list(NOTE_GUIDES), "items": items, "unmapped": unmapped},
                               indent=2, ensure_ascii=False))
     n_no_map = sum(1 for u in unmapped if u["reason"] == "no_cis_mapping")
-    print(f"[build_ai_impact_inputs] {len(items)} CSF subcategories with AI safeguard text → {out.name}; "
+    print(f"[prepare_ai_notes] {len(items)} CSF subcategories with AI safeguard text → {out.name}; "
           f"unmapped: {n_no_map} no CIS mapping, {len(unmapped) - n_no_map} mapped but no AI text")
     ev.finish(inputs=inputs, outputs=[out],
               detail=f"{len(items)} items, {len(unmapped)} unmapped ({n_no_map} no CIS mapping)")
