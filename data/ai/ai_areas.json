@@ -1,5 +1,5 @@
 {
-  "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
+  "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: AI_RMF_Mapping_Sheet_Design.md.",
   "source": "data/ai/authoring/ai_areas.xlsx",
   "source_sha": "c7e0a52359dc576e",
   "generated_by": "scripts/sheet_io.py import ai_areas",

@@ -3168,6 +3168,6 @@
       ]
     }
   },
-  "description": "AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by record_ai_bank.py mapping, reviewed by a person. Model: docs/ai-rmf-model.md.",
+  "description": "AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by record_ai_bank.py mapping, reviewed by a person. Model: AI_RMF_Mapping_Sheet_Design.md.",
   "source_sha": "9dbce1f3a4015bfa"
 }
