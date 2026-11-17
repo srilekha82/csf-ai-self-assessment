@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import ai_pilot as PL  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
-import record_ai_bank as R  # noqa: E402
+from ai_bank_modules import R  # noqa: E402
 from ai_bank_common import DEFAULT_PROMPTS, core_subcategories  # noqa: E402
 from paths import AI_AREAS, AI_CORE, AI_MAPPING, AI_SAFEGUARDS, REPO_ROOT  # noqa: E402
 

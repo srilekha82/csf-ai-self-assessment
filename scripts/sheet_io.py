@@ -180,24 +180,25 @@ def import_sheet(spec: dict, xlsx: Path, json_path: Path, log: Path) -> str:
 
 
 def mapping_context():
-    """record_ai_bank.py (the mapping's converter and validator) with the reference data it needs. Imported only for the
+    """ai_mapping.py (the mapping's converter and validator) with the reference data it needs. Imported only for the
     mapping sheet, so ai_areas works without the AI RMF build files."""
-    import record_ai_bank as R
-    inp = R.load_inputs()
-    return R, inp, R.mapping_inputs(inp)
+    import ai_mapping as M
+    from ai_bank_common import load_inputs
+    inp = load_inputs()
+    return M, inp, M.mapping_inputs(inp)
 
 
 def import_mapping(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
         ev.fail(f"[sheet_io] ERROR: {json_path} not found; draft an area first (/build-ai-bank, Mapping)")
-    R, inp, m = mapping_context()
-    doc, problems, changed = R.mapping_from_sheet(rows, json.loads(json_path.read_text()), inp, m)
+    M, inp, m = mapping_context()
+    doc, problems, changed = M.mapping_from_sheet(rows, json.loads(json_path.read_text()), inp, m)
     if problems:
         ev.reject(problems, xlsx.name, [xlsx], status="rejected")
     doc["source_sha"] = audit.sha(xlsx)
     json_path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
     line = (f"{len(rows)} lines from {xlsx.name}, {changed} changed (decided_by human) -> {_rel(json_path)}; "
-            f"{len(R.mapping_coverage(doc, inp, m['rules'])[1])} subcategories not reached yet")
+            f"{len(M.mapping_coverage(doc, inp, m['rules'])[1])} subcategories not reached yet")
     print(f"[sheet_io] {line}")
     ev.finish(inputs=[xlsx], outputs=[json_path], detail=line)
     return line
@@ -206,9 +207,9 @@ def import_mapping(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]
 def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
         ev.fail(f"[sheet_io] ERROR: {json_path} not found; record questions first (/build-ai-bank, Step 5)")
-    import record_ai_bank as R
-    inp = R.load_inputs()
-    doc, problems, changed = R.questions_from_sheet(spec["bank"], rows, json.loads(json_path.read_text()), inp)
+    from ai_bank_common import load_inputs
+    from ai_questions import questions_from_sheet
+    doc, problems, changed = questions_from_sheet(spec["bank"], rows, json.loads(json_path.read_text()), load_inputs())
     if problems:
         ev.reject(problems, xlsx.name, [xlsx], status="rejected")
     doc["source_sha"] = audit.sha(xlsx)
@@ -223,8 +224,8 @@ def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dic
 def import_notes(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
         ev.fail(f"[sheet_io] ERROR: {json_path} not found; record notes first (/build-ai-bank, Step 7)")
-    import record_ai_bank as R
-    doc, problems, changed = R.notes_from_sheet(rows, json.loads(json_path.read_text()))
+    from ai_notes import notes_from_sheet
+    doc, problems, changed = notes_from_sheet(rows, json.loads(json_path.read_text()))
     if problems:
         ev.reject(problems, xlsx.name, [xlsx], status="rejected")
     doc["source_sha"] = audit.sha(xlsx)
@@ -311,16 +312,17 @@ def export_sheet(spec: dict, xlsx: Path, json_path: Path, log: Path, force: bool
             ev.fail(f"[sheet_io] ERROR: {xlsx} is the decision and holds columns the JSON does not keep; exporting "
                     "would blank them. Edit the spreadsheet instead, or pass --force to rebuild it from the JSON.")
     if spec.get("shape") == "mapping":
-        R, inp, m = mapping_context()
-        rows, coverage = R.mapping_sheet_rows(doc, inp, m)
+        M, inp, m = mapping_context()
+        rows, coverage = M.mapping_sheet_rows(doc, inp, m)
         write_xlsx(spec, rows, xlsx, {"Coverage": coverage})
     elif spec.get("shape") == "questions":
-        import record_ai_bank as R
-        rows = R.question_sheet_rows(spec["bank"], doc, R.load_inputs())
+        from ai_bank_common import load_inputs
+        from ai_questions import question_sheet_rows
+        rows = question_sheet_rows(spec["bank"], doc, load_inputs())
         write_xlsx(spec, rows, xlsx)
     elif spec.get("shape") == "notes":
-        import record_ai_bank as R
-        rows = R.notes_sheet_rows(doc)
+        from ai_notes import notes_sheet_rows
+        rows = notes_sheet_rows(doc)
         write_xlsx(spec, rows, xlsx)
     else:
         rows = doc[spec["list_key"]]

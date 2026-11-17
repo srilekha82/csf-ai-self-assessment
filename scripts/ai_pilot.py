@@ -73,15 +73,16 @@ def mapping_problems(doc: dict | None) -> tuple[list[str], list[str]]:
         return ["missing (draft the areas: /build-ai-bank, Mapping)"], []
     if not (AI_CORE.is_file() and (AI_SAFEGUARDS.is_file() or AI_SAFEGUARD_IDS.is_file())):
         return ["cannot check (run parse_ai_rmf_sources.py first)"], []
-    import record_ai_bank as R
+    import ai_mapping as M
+    from ai_bank_common import load_inputs
     from sheet_io import sheet_status
-    inp = R.load_inputs()
-    m = R.mapping_inputs(inp)
+    inp = load_inputs()
+    m = M.mapping_inputs(inp)
     problems = []
     missing = [a for a in m["areas"] if a not in doc["areas"]]
     if missing:
         problems.append(f"incomplete ({len(doc['areas'])} of {len(m['areas'])} AI areas; missing: {', '.join(missing)})")
-    state = {a: R.mapping_freshness(e, a, inp) for a, e in doc["areas"].items()}
+    state = {a: M.mapping_freshness(e, a, inp) for a, e in doc["areas"].items()}
     redraft = [a for a, s in state.items() if s == "redraft"]
     recheck = [a for a, s in state.items() if s == "recheck"]
     if redraft:
@@ -99,7 +100,7 @@ def mapping_problems(doc: dict | None) -> tuple[list[str], list[str]]:
                         f"{AI_MAPPING_XLSX.name}: map them, or set Status to pass)")
     if AI_MAPPING_XLSX.is_file() and not sheet_status("mapping", AI_MAPPING_XLSX, AI_MAPPING)[0]:
         problems.append(f"{AI_MAPPING_XLSX.name} edited but not imported (sheet_io.py import mapping)")
-    return problems, R.mapping_coverage(doc, inp, m["rules"])[1]
+    return problems, M.mapping_coverage(doc, inp, m["rules"])[1]
 
 
 def mapping_status(mapping_file: Path | None = None, accepted_file: Path | None = None) -> tuple[bool, str]:

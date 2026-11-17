@@ -249,7 +249,7 @@ class MappingSheet(unittest.TestCase):
         self.assertEqual(len(entry["notes"]), 1)
 
     def test_a_redraft_keeps_what_the_person_decided(self):
-        import record_ai_bank as R
+        from ai_bank_modules import R  # noqa: E402
         self.edit("MEASURE 2.10", Mapped="yes", Impact="access", **{"Why (comment)": "Personal data a tool can reach is checked."})
         self.edit("MAP 2.2", Mapped="no")
         self.assertEqual(self.do_import(), 0)
@@ -385,7 +385,7 @@ class QuestionSheets(unittest.TestCase):
     """The question review sheets: a bank -> one line per question -> back, checked like agent output."""
 
     def setUp(self):
-        import record_ai_bank as R
+        from ai_bank_modules import R  # noqa: E402
         from paths import AI_MAPPING
         self.R = R
         real = R.AI_MAPPING
