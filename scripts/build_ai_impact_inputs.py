@@ -2,7 +2,8 @@
 Prepares the input for the AI impact notes on the CSF side. No judgement.
 
 Called by: /build-ai-bank (step 7)
-Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json
+Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json, data/ai/parse_config.json (the AI
+           text length)
 Output:    data/ai/bank_build/impact_pending.json
 
 Usage: .venv/bin/python ./scripts/build_ai_impact_inputs.py [--xlsx PATH] [--output PATH]
@@ -31,7 +32,7 @@ import audit  # noqa: E402
 SHEET, UNMAPPED_SHEET = "All CIS Controls & Safeguards", "Unmapped CSF"
 NOTE_GUIDES = ("MCP", "AGENT")  # the guides whose AI text feeds the notes
 CSF_ID_RE = re.compile(r"^[A-Z]{2}\.[A-Z]{2}-\d{2}$")
-MAX_AI_TEXT = 700
+MAX_AI_TEXT = json.loads(AI_PARSE_CONFIG.read_text())["impact_notes_max_ai_text"]["value"]   # data/ai/parse_config.json
 
 
 def norm_title(t: str) -> str:

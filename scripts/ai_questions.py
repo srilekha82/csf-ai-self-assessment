@@ -35,7 +35,8 @@ BANK_DESCRIPTION = {
                    "it is asked of (none, consumer, producer) and any producer flags. Recorded by record_ai_bank.py "
                    "questions."),
 }
-MIN_QUESTION_CHARS = 30
+TEXT_LIMITS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]   # data/ai/question_rules.json
+MIN_QUESTION_CHARS = TEXT_LIMITS["min_chars"]
 PLAYBOOK_REF = re.compile(r"^((?:GOVERN|MAP|MEASURE|MANAGE) \d+\.\d+) [—–-] suggested action (\d+)$")
 REASON_PART = re.compile(r"(?:^|; )Q(\d+): ")    # assemble joins failures as "Q<n>: reason; Q<m>: reason"
 WHOLE = "Whole subcategory: "                      # how a question_number 0 failure shows on every line of the sheet
@@ -209,7 +210,7 @@ def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
     return errors
 
 
-EVIDENCE_MAX_CHARS = 400
+EVIDENCE_MAX_CHARS = TEXT_LIMITS["evidence_max_chars"]
 
 
 def evidence_targets(bank: str) -> dict[tuple[str, int], dict]:

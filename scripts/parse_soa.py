@@ -3,10 +3,15 @@ Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) in
 copies what is there; anything it can't read for certain is left empty.
 
 Called by: /csf-questionnaire (step 2), when ISO 27001 is held
-Input:     the SoA Excel file the user gives
+Input:     the SoA Excel file the user gives; the words for finding its sheet and columns (data/csf/scope_rules.json
+           soa_reading)
 Output:    <run_dir>/inputs/soa_original.<ext> (a copy) and <run_dir>/soa_parsed.json
 
-Usage: .venv/bin/python ./scripts/parse_soa.py <run_dir> <soa_path>
+Usage: .venv/bin/python ./scripts/parse_soa.py <run_dir> <soa_path> [--sheet NAME] [--id-col HEADER]
+             [--applicable-col HEADER] [--reason-col HEADER] [--implemented-col HEADER]
+
+It prints the sheet, header row and columns it picked, for the user to confirm. A pick that is wrong is corrected by
+naming the sheet or the column's header text with the options above.
 
 soa_parsed.json has one entry per control: control_id (e.g. "Annex A Controls: 5.1"), control_id_raw (as written),
 applicable (true / false / null), applicable_raw, exclusion_reason, implemented (true / false, or null when there is
@@ -17,20 +22,28 @@ no controls, or finds a control twice. IDs stored as numbers lose a trailing zer
 row order.
 """
 
-import openpyxl, json, sys, shutil, re
+import argparse
+import json
+import re
+import shutil
+import sys
 from pathlib import Path
 
+import openpyxl
+
 sys.path.insert(0, str(Path(__file__).parent))
+from paths import SCOPE_RULES  # noqa: E402
 import audit  # noqa: E402
+
+RULES = json.loads(SCOPE_RULES.read_text())["soa_reading"]   # the words used to find sheet, header row and columns
+COLUMNS = ("id", "applicable", "reason", "implemented")
 
 
 ANNEX_A_RANGE = re.compile(r"^([5-9]|[1-9]\d)\.\d")   # 5.x – 99.x → Annex A
 MANDATORY_CLAUSE_RANGE = re.compile(r"^([4])\.")        # 4.x → Mandatory Clause
 
-APPLICABLE_YES = {"yes", "y", "applicable", "true", "1", "x"}
-APPLICABLE_NO = {"no", "n", "not applicable", "non-applicable", "n/a", "na", "false", "0"}
-IMPLEMENTED_YES = {"yes", "y", "implemented", "complete", "completed", "true", "1", "x"}
-IMPLEMENTED_NO = {"no", "n", "not implemented", "not started", "false", "0"}
+APPLICABLE_YES, APPLICABLE_NO = set(RULES["applicable_yes"]), set(RULES["applicable_no"])
+IMPLEMENTED_YES, IMPLEMENTED_NO = set(RULES["implemented_yes"]), set(RULES["implemented_no"])
 
 
 def normalize_control_id(raw: str) -> str:
@@ -44,25 +57,22 @@ def normalize_control_id(raw: str) -> str:
 
 
 def find_controls_sheet(wb):
-    """Return the sheet that contains Annex A / SoA controls data."""
-    # Strongest signal: sheet name explicitly contains annex or controls
+    """The sheet that holds the controls: the first whose name has a sheet_name_words word, else the first without a
+    skip_sheet_words word, else the active sheet (soa_reading in data/csf/scope_rules.json)."""
     for name in wb.sheetnames:
-        lower = name.lower()
-        if "annex" in lower or "controls" in lower:
+        if any(w in name.lower() for w in RULES["sheet_name_words"]):
             return wb[name]
-    # Second pass: avoid overview/summary sheets and take first remaining
-    skip = ["overview", "revision", "instruction", "cover", "summary"]
     for name in wb.sheetnames:
-        if not any(s in name.lower() for s in skip):
+        if not any(s in name.lower() for s in RULES["skip_sheet_words"]):
             return wb[name]
     return wb.active
 
 
-def find_header_row(rows, max_scan=10):
-    """Return index of the row containing column headers."""
-    for i, row in enumerate(rows[:max_scan]):
+def find_header_row(rows):
+    """Index of the first of the top header_scan_rows rows with a header_row_words word in a cell, else 0."""
+    for i, row in enumerate(rows[:RULES["header_scan_rows"]]):
         norm = [str(c).strip().lower().replace("\n", " ") if c else "" for c in row]
-        if any("applicable" in c or "clause" in c or "annex" in c for c in norm):
+        if any(w in c for c in norm for w in RULES["header_row_words"]):
             return i
     return 0
 
@@ -81,7 +91,6 @@ def col_index(headers, candidates, avoid=()):
     return None
 
 
-ID_COLUMN_AVOID = ("title", "name", "description", "objective", "guidance", "text", "owner")
 DOTTED = re.compile(r"^(\d+)\.(\d+)$")
 
 
@@ -109,14 +118,36 @@ def read_flag(cell, yes: set, no: set):
     return None
 
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: parse_soa.py <run_dir> <soa_path>", file=sys.stderr)
-        sys.exit(1)
+def pick_columns(headers: list[str], given: dict) -> tuple[dict, list[str]]:
+    """{role: column index or None} for id, applicable, reason, implemented. A column named on the command line is
+    found by its header (exact, any case); otherwise by the soa_reading words. Returns the problems with named ones."""
+    picked, problems = {}, []
+    for role in COLUMNS:
+        if given.get(role):
+            want = given[role].strip().lower().replace("\n", " ")
+            picked[role] = headers.index(want) if want in headers else None
+            if picked[role] is None:
+                problems.append(f"--{role}-col '{given[role]}' is not a header")
+        else:
+            spec = RULES["columns"][role]
+            picked[role] = col_index(headers, spec["match"], avoid=spec.get("avoid", ()))
+    return picked, problems
 
-    run_dir = Path(sys.argv[1])
-    soa_path = Path(sys.argv[2])
-    ev = audit.begin(audit.run_log(run_dir), "parse_soa", {"soa": str(soa_path)})
+
+def main():
+    ap = argparse.ArgumentParser(description="Read an ISO 27001 SoA spreadsheet into the run folder.")
+    ap.add_argument("run_dir")
+    ap.add_argument("soa_path")
+    ap.add_argument("--sheet", help="the sheet with the controls, by name (default: found by its name)")
+    for role in COLUMNS:
+        ap.add_argument(f"--{role}-col", help=f"the {role} column, by its header text (default: found by words)")
+    args = ap.parse_args()
+
+    run_dir = Path(args.run_dir)
+    soa_path = Path(args.soa_path)
+    given = {role: getattr(args, f"{role}_col") for role in COLUMNS}
+    ev = audit.begin(audit.run_log(run_dir), "parse_soa",
+                     {"soa": str(soa_path), "sheet": args.sheet, **{f"{r}_col": v for r, v in given.items() if v}})
     inputs_dir = run_dir / "inputs"
     inputs_dir.mkdir(parents=True, exist_ok=True)
 
@@ -124,22 +155,24 @@ def main():
     shutil.copy2(soa_path, copied)
 
     wb = openpyxl.load_workbook(copied, data_only=True)
-    ws = find_controls_sheet(wb)
+    if args.sheet and args.sheet not in wb.sheetnames:
+        ev.fail(f"[parse_soa] ERROR: --sheet '{args.sheet}' not found; sheets: {wb.sheetnames}. Nothing written.",
+                inputs=[copied])
+    ws = wb[args.sheet] if args.sheet else find_controls_sheet(wb)
 
     rows = list(ws.iter_rows(values_only=True))
     header_idx = find_header_row(rows)
     headers = [str(c).strip().lower().replace("\n", " ") if c else "" for c in rows[header_idx]]
 
-    ci = col_index(headers, ["iso/iec 27001", "control id", "control", "clause", "annex"], avoid=ID_COLUMN_AVOID)
-    ca = col_index(headers, ["applicable", "applicab", "in scope"])
-    # non-applicability reason must come before generic "reason" to avoid matching col 4
-    cr = col_index(headers, ["non-applicab", "not applicable", "reason for non", "exclusion", "justification"])
-    cs = col_index(headers, ["implemented", "status", "implementation"])
-
-    if ci is None or ca is None:
-        ev.fail(f"[parse_soa] ERROR: could not find the {'control ID' if ci is None else 'applicability'} "
-                f"column. Sheet '{ws.title}', header row {header_idx}, headers seen: "
-                f"{[h for h in headers if h]}. Nothing written.", inputs=[copied])
+    picked, problems = pick_columns(headers, given)
+    if picked["id"] is None and not given["id"]:
+        problems.append("could not find the control ID column (give it with --id-col)")
+    if picked["applicable"] is None and not given["applicable"]:
+        problems.append("could not find the applicability column (give it with --applicable-col)")
+    if problems:
+        ev.fail(f"[parse_soa] ERROR: {'; '.join(problems)}. Sheet '{ws.title}', header row {header_idx}, headers "
+                f"seen: {[h for h in headers if h]}. Nothing written.", inputs=[copied])
+    ci, ca, cr, cs = (picked[r] for r in COLUMNS)
 
     result, prev = [], None
     for row in rows[header_idx + 1:]:
@@ -159,8 +192,8 @@ def main():
         applicable = read_flag(row[ca], APPLICABLE_YES, APPLICABLE_NO)
 
         reason = str(row[cr]).strip() if cr is not None and row[cr] else ""
-        # Ignore boilerplate "refer to column E" filler text
-        if reason.lower().startswith("refer to column"):
+        # Ignore filler text such as "refer to column E" (soa_reading ignore_reason_starting)
+        if reason.lower().startswith(tuple(RULES["ignore_reason_starting"])):
             reason = ""
 
         implemented = None
@@ -197,12 +230,14 @@ def main():
     n_excl = sum(1 for r in result if r["applicable"] is False)
     n_unk = sum(1 for r in result if r["applicable"] is None)
     n_impl = sum(1 for r in result if r["applicable"] and r["implemented"] is not None)
-    impl_col = f"'{headers[cs]}'" if cs is not None else "none"
-    summary = (f"[parse_soa] sheet '{ws.title}', id col '{headers[ci]}', applicable col '{headers[ca]}', "
-               f"implemented col {impl_col} | {n} controls: {n_app} applicable "
-               f"({n_impl} with known implementation), {n_excl} excluded, {n_unk} unrecognised "
-               f"applicability → {parsed_path}")
+    col = lambda i: f"'{headers[i]}'" if i is not None else "none"   # noqa: E731
+    picks = (f"sheet '{ws.title}' (header row {header_idx + 1}); control ID column {col(ci)}, applicable column "
+             f"{col(ca)}, reason column {col(cr)}, implemented column {col(cs)}")
+    summary = (f"[parse_soa] {picks} | {n} controls: {n_app} applicable ({n_impl} with known implementation), "
+               f"{n_excl} excluded, {n_unk} unrecognised applicability → {parsed_path}")
     print(summary)
+    print("[parse_soa] Check these picks with the user. If one is wrong, run again with --sheet, --id-col, "
+          "--applicable-col, --reason-col or --implemented-col (the header text).")
     ev.finish(inputs=[copied], outputs=[parsed_path], detail=summary)
 
 

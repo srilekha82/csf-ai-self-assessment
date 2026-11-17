@@ -3,7 +3,8 @@ The CSF AI impact notes: a short note per CSF subcategory on what AI changes the
 checker's findings before they are stored, and converts the notes to and from their review spreadsheet.
 
 Called by: record_ai_bank.py (notes, notes-review), sheet_io.py (the impact notes sheet)
-Input:     data/csf/ai_impact_notes.json, data/csf/csf2_core.json, the CIS safeguard data
+Input:     data/csf/ai_impact_notes.json, data/csf/csf2_core.json, the CIS safeguard data; the note length limit
+           (data/ai/question_rules.json text_limits)
 Output:    data/csf/ai_impact_notes.json
 
 Terms (impact, needs human review, decided by a person): see docs/guide.md, Glossary.
@@ -15,12 +16,12 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_BUILD, AI_CIS_CSF_XLSX, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
+from paths import AI_BUILD, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
 from ai_bank_common import load_json  # noqa: E402
 import audit  # noqa: E402
 
 
-NOTE_MIN_CHARS = 30
+NOTE_MIN_CHARS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]["note_min_chars"]
 NOTE_KEYS = ("exposure", "base_rag", "mcp_agentic")   # the notes of one CSF subcategory; "use" = its use layer as a whole
 
 

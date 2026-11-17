@@ -30,9 +30,9 @@ def soa_file(rows, headers=("Control", "Control title", "Applicable", "Justifica
     return path
 
 
-def parse(path: Path) -> tuple[int, list | None, str]:
+def parse(path: Path, *extra: str) -> tuple[int, list | None, str]:
     run = Path(tempfile.mkdtemp())
-    p = subprocess.run([sys.executable, str(ROOT / "scripts" / "parse_soa.py"), str(run), str(path)],
+    p = subprocess.run([sys.executable, str(ROOT / "scripts" / "parse_soa.py"), str(run), str(path), *extra],
                        capture_output=True, text=True)
     out = run / "soa_parsed.json"
     return p.returncode, json.loads(out.read_text()) if out.exists() else None, p.stdout + p.stderr
@@ -55,6 +55,26 @@ class ParseSoa(unittest.TestCase):
         path = soa_file([("Policies", "5.1", "Yes", None)], headers=("Control title", "Control", "Applicable", "Notes"))
         code, parsed, _ = parse(path)
         self.assertEqual((code, parsed[0]["control_id_raw"]), (0, "5.1"))
+
+    def test_every_pick_is_printed_for_the_user_to_confirm(self):
+        code, _, out = parse(soa_file([("5.1", "Policies", "No", "Not used")]))
+        self.assertEqual(code, 0)
+        for part in ("sheet 'Annex A controls'", "control ID column 'control'", "applicable column 'applicable'",
+                     "reason column 'justification'", "implemented column none", "--id-col"):
+            self.assertIn(part, out)
+
+    def test_a_wrong_pick_is_corrected_by_naming_the_column(self):
+        # two id-like columns: the words pick "Control"; the user says the id is in "Ref"
+        path = soa_file([("A", "5.1", "Yes", None)], headers=("Control", "Ref", "Applicable", "Notes"))
+        code, parsed, _ = parse(path)
+        self.assertEqual((code, parsed[0]["control_id_raw"]), (0, "A"))
+        code, parsed, _ = parse(path, "--id-col", "Ref")
+        self.assertEqual((code, parsed[0]["control_id_raw"]), (0, "5.1"))
+
+    def test_a_named_column_that_does_not_exist_fails_and_writes_nothing(self):
+        code, parsed, out = parse(soa_file([("5.1", "a", "Yes", None)]), "--reason-col", "Why")
+        self.assertEqual((code, parsed), (1, None))
+        self.assertIn("--reason-col 'Why' is not a header", out)
 
 
 class CsetReplay(unittest.TestCase):
