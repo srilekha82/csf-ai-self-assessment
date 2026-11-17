@@ -26,6 +26,9 @@ Modes with no agent output:
                                 An area whose own sources or AI area row changed must be re-drafted instead.
 
 Related: prepare_ai_bank.py writes the agents' input; ai_pilot.py records your approvals.
+
+Terms (AI area, mapping row, foundation, impact, folded subcategory, required check, needs human review): see
+docs/guide.md, Glossary. The full model: docs/ai-rmf-model.md.
 """
 
 import argparse

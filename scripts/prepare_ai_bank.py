@@ -17,6 +17,9 @@ Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
                          organisation (GOVERN and the other foundation subcategories).
   --missing           only subcategories not yet in that bank.
   evidence            the questions in a bank that still have no evidence line, for the evidence writer.
+
+Terms (AI area, mapping row, foundation, impact, folded subcategory, required check, needs human review): see
+docs/guide.md, Glossary. The full model: docs/ai-rmf-model.md.
 """
 
 import argparse
