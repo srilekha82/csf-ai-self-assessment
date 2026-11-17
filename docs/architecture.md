@@ -1,11 +1,11 @@
 # Architecture
 
 How the parts fit together, for both frameworks. The tool runs in three stages, preceded by a bank-building step that
-runs only when its sources change. Stage 1 is built; Stage 2 is being designed; Stage 3 comes after it.
+runs only when its sources change. Stage 1 is built; Stages 2 and 3 come later.
 
 ```
 Bank building (occasional)  →  Stage 1: questionnaire  →  Stage 2: answers and scores  →  Stage 3: reports
-built, reused by every run     built                       being designed                   later
+built, reused by every run     built                       later                            later
 ```
 
 ## Bank building
@@ -45,23 +45,11 @@ One intake, two tailored sheets in one workbook.
 drafts (`/assess-questionnaire`), then `write_questionnaire.py` writes `runs/<Org>_<date>/questionnaire.xlsx`. The run
 folder holds client data and is never committed.
 
-## Stage 2: answers and scores (being designed)
+## Stage 2 and Stage 3 (later)
 
-Turns the questionnaire into two filled profile spreadsheets (`templates/`): one for CSF, one for AI RMF.
-
-- **Three inputs:** the ISO 27001 Statement of Applicability, the organisation's documents (policies, AI governance
-  document, operating records), and the answers of a knowledgeable person. Documents say what should happen; a person
-  knows what does.
-- **Answer flow:** read the documents, find what each question needs, record claims that cite their source, draft the
-  answer or record "no evidence found", have a second agent check it, then let the control owner confirm or correct it.
-- **Scoring:** the 1–4 scale of the profile templates. The kind of evidence caps the score: a policy alone supports at
-  most level 2; dated operating records level 3; metrics reviewed over time level 4.
-- **Testing:** fictitious companies with a known true answer, never data from a real organisation.
-
-## Stage 3: reports (later)
-
-One report per profile spreadsheet (CSF, AI RMF) and a page linking both. CIS safeguards appear as the "how to fix it"
-layer, with a roadmap built from each organisation's gaps.
+Stage 2 will turn the answered questionnaire into two filled profile spreadsheets (`templates/`), one for CSF and
+one for AI RMF, with maturity scores. Stage 3 will build reports from them. Both will be described here once they are
+built.
 
 ## Key design principles
 
