@@ -27,10 +27,12 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    questions, notes, mapping rows. The same loop everywhere: a verdict on every item, fail when unsure; one revision
    turn on the failures; round 2 judges only what changed (an unchanged item keeps its pass, and the recording script
    enforces it); two turns at most; what still fails goes to a person (a review sheet), whose decisions are never
-   overwritten. An evaluator is never the same conversation that generated the draft. (Decided 2026-10-31.)
+   overwritten. An evaluator is never the same conversation that generated the draft.
    **Questions are reviewed once, when a bank is built, never per client run.** A client run only picks from the banks;
    `check_questionnaire.py` then checks the picks against the intake and the banks (a script, no agent), and the
-   workbook is written only if it passes. (Decided 2026-11-17.)
+   workbook is written only if it passes.
+   **A client run never builds or rebuilds a bank.** It checks only the banks' age (`check_freshness.py --bank-age`,
+   limits in `data/metadata.json`) and stops if one is missing or too old, naming the build command to run.
 8. **Few scripts, small files, one job each.** Reuse by importing a shared helper when the logic is the same; do not
    copy it, and do not merge scripts that do different jobs. Add a script only for a genuinely new deterministic job, and
    do not split one job across scripts unless a step can pause for an agent. Add a command only for a repeated step.
@@ -43,7 +45,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
     reach agents through the files scripts prepare.
 
 ## CSF track
-- **CSF questions come from CSET only; they are never generated** (decided 2026-11-02). CSF is a mature practice: the
+- **CSF questions come from CSET only; they are never generated.** CSF is a mature practice: the
   bank holds CSET's own CSF 2.0 set (`NCSF_V2`, one question per subcategory, first) and the maturity-model questions
   CSET maps to CSF 2.0 (practice detail). A gap is closed by reading more of CSET, not by writing questions. A
   client run never rewords them; CSET's own CSF 2.0 question is always kept (`check_questionnaire.py` checks it).
@@ -55,7 +57,7 @@ How it works, with a small example (AI area → AI RMF statement → question): 
 `docs/ai-rmf-model.md`. The rules:
 - **Scope comes from how AI is used, never sector or certifications.** Sector only sets the minimum priority of findings.
 - **Selection only filters** (role, producer details, AI areas). `build_ai_questions.py` never ranks or rewrites.
-- **Every AI question is `full_discovery`; there is no gap rule** (decided 2026-10-29). AI questions never repeat what the
+- **Every AI question is `full_discovery`; there is no gap rule.** AI questions never repeat what the
   CSF sheet or ISO 27001 covers.
 - **Ask about practice, not checkboxes** (how, who, how often, what evidence). A policy is asked as practice: where it
   is kept and how people learn about it.
@@ -64,7 +66,7 @@ How it works, with a small example (AI area → AI RMF statement → question): 
   is not a source.
 - **Read CIS safeguard IDs as text.** The CIS xlsx stores them as numbers, so 4.10 becomes 4.1. The guide tables drop
   IDs: rebuild them from the control number and row order.
-- **Rebuild a bank only when a source it was built from changed.** Editing a prompt only marks it stale. The pilot
-  (`ai_pilot.py accept`) is the one human gate.
+- **The maintainer rebuilds a bank when a source it was built from changed, or when it passes its age limit.** Editing a
+  prompt only marks it stale. The pilot (`ai_pilot.py accept`) is the one human gate.
 - **AI impact notes only for CSF subcategories with a mapped CIS safeguard;** never invented.
 - **Profile XLS schemas are fixed by the Stage 2 writer;** reporting reads them as they are.

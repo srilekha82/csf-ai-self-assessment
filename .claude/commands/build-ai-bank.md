@@ -88,7 +88,7 @@ After each area is recorded, refresh the review sheet: `.venv/bin/python ./scrip
 `data/ai/authoring/mapping.xlsx`; it refuses if the sheet has edits not yet imported: ask the user to import them first
 with `sheet_io.py import mapping`).
 
-After the pilot areas (the user names them; for the 2026-10-26 re-run: `mcp_tools`, `agent`, `model`): stop. Show the user the recorded rows (function, subcategory, safeguards, impact, why), what the
+After the pilot areas (the user names them): stop. Show the user the recorded rows (function, subcategory, safeguards, impact, why), what the
 evaluator failed, the missing rows and notes, the subcategories still unreached, and token use if you can see it, and point them to the review
 sheet. The user reviews before any other area is drafted.
 
@@ -112,8 +112,8 @@ Two banks, built the same way: **foundation** (GOVERN and the 12 foundation subc
 none, consumer, producer) and **areas** (one item per subcategory with every AI area's mapping row on it; each row is
 asked once per role its area allows, or twice when its check holds two practices, and rows that would get the same
 question share one). Use Sonnet
-(`model: "sonnet"`) for the generator and Opus (`model: "opus"`) for the evaluator (decided 2026-10-29: two Sonnet
-evaluators agreed on style but each missed different wrong citations and duplicates).
+(`model: "sonnet"`) for the generator and Opus (`model: "opus"`) for the evaluator (a Sonnet evaluator misses wrong
+citations and duplicates).
 
 Ask the user: **pilot** (a few subcategories the user agrees to, then stop for review) or **full** (all subcategories
 not yet recorded, one AI RMF function per batch).
@@ -194,8 +194,8 @@ subcategories whose mapping rows changed after their questions were written: go 
 `--ids` for the changed ones).
 
 ### Step 6b — Evidence prompts (agents; only questions without one)
-Each bank question gets its own evidence prompt once, so every client gets a specific line rather than a generic one
-(decided 2026-10-31). Per bank (`foundation`, then `areas`):
+Each bank question gets its own evidence prompt once, so every client gets a specific line rather than a generic one.
+Per bank (`foundation`, then `areas`):
 
 1. `.venv/bin/python ./scripts/prepare_ai_bank.py evidence <bank>` writes
    `data/ai/bank_build/evidence_input_<bank>.json` (only questions with no evidence prompt; it says how many).

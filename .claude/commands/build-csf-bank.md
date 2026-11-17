@@ -64,8 +64,7 @@ are redone only for questions CSET has changed. Each recording also writes a wri
 
 ## 5 — Evidence prompts (agents; once, only subcategories without one)
 Each CSF subcategory gets its own evidence prompt once (domain-independent, stored in `data/csf/evidence_prompts.json`
-`by_subcategory`), so every client gets a specific line rather than the generic category line (decided
-2026-11-02). The questions stay CSET's; only the evidence line is written.
+`by_subcategory`), so every client gets a specific line rather than the generic category line. The questions stay CSET's; only the evidence line is written.
 
 1. `.venv/bin/python ./scripts/record_judgements.py evidence prepare` writes `data/csf/bank_build/evidence_input.json`
    (subcategories with no prompt of their own, with NIST's implementation examples; it says how many). Nothing to do
