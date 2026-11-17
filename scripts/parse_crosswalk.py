@@ -1,14 +1,15 @@
 """
 Reads NIST's CSF 2.0 download into the CSF subcategory list and the certification crosswalks.
-Run by /build-csf-bank (step 1b), when the NIST file is refreshed.
+
+Called by: /build-csf-bank (step 1b), when the NIST file is refreshed
+Input:     data/csf/source/csf2.xlsx (NIST's "Download English (xlsx)")
+Output:    data/csf/csf2_core.json, data/csf/crosswalks/olir_iso27001.json and olir_pcidss.json; the
+           refresh date in data/metadata.json
 
 Usage: .venv/bin/python ./scripts/parse_crosswalk.py [--input data/csf/source/csf2.xlsx] [--output ./data]
 
-Reads:  csf2.xlsx, from https://www.nist.gov/cyberframework/csf-20-informative-references ("Download English (xlsx)")
-Writes: data/csf/csf2_core.json                 the CSF 2.0 subcategories with NIST's implementation examples
-        data/csf/crosswalks/olir_iso27001.json  which ISO 27001 controls map to each subcategory
-        data/csf/crosswalks/olir_pcidss.json    which PCI DSS requirements map to each subcategory
-and records today's date for these files in data/metadata.json (what the freshness check reads).
+csf2_core.json holds the CSF 2.0 subcategories with NIST's implementation examples; each crosswalk says which ISO
+27001 controls or PCI DSS requirements map to each subcategory. The refresh date is what the freshness check reads.
 """
 
 import json

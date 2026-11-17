@@ -1,13 +1,16 @@
 """
-Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) into the run folder.
-Run by /csf-questionnaire (step 2). It only copies what is there; anything it can't read for certain is left empty.
+Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) into the run folder. It only
+copies what is there; anything it can't read for certain is left empty.
+
+Called by: /csf-questionnaire (step 2), when ISO 27001 is held
+Input:     the SoA Excel file the user gives
+Output:    <run_dir>/inputs/soa_original.<ext> (a copy) and <run_dir>/soa_parsed.json
 
 Usage: .venv/bin/python ./scripts/parse_soa.py <run_dir> <soa_path>
 
-Writes: <run_dir>/inputs/soa_original.<ext>   a copy of the file as given
-        <run_dir>/soa_parsed.json             one entry per control:
-          control_id (e.g. "Annex A Controls: 5.1"), control_id_raw (as written), applicable (true / false / null),
-          applicable_raw, exclusion_reason, implemented (true / false, or null when there is no such column or value)
+soa_parsed.json has one entry per control: control_id (e.g. "Annex A Controls: 5.1"), control_id_raw (as written),
+applicable (true / false / null), applicable_raw, exclusion_reason, implemented (true / false, or null when there is
+no such column or value).
 
 Exit 1, writing nothing, if it can't find the control ID or applicability column (it lists the headers it saw), finds
 no controls, or finds a control twice. IDs stored as numbers lose a trailing zero (5.10 -> 5.1); they are rebuilt from

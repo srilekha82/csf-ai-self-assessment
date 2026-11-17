@@ -1,11 +1,12 @@
 """
-Builds the CSF question bank for one sector from the collected CSET questions. Run by /build-csf-bank (step 3).
+Builds the CSF question bank for one sector from the collected CSET questions.
+
+Called by: /build-csf-bank (step 3)
+Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions)
+Output:    data/csf/banks/question_bank_<sector>.json, or pending_judgements_<sector>.json (exit 2)
 
 Usage: .venv/bin/python ./scripts/build_question_bank.py --domain <sector|all> [--fanout-threshold N]
                                                  [--allow-pending] [--output-dir DIR] [--cache-dir DIR]
-
-Reads:  data/csf/bank_build/cset_candidates.json, and the agent's earlier decisions (cset_judgements.json)
-Writes: data/csf/banks/question_bank_<sector>.json
 
 Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each other CSET question is then:
   rejected   not answerable, empty, or already judged unfit or not for this sector

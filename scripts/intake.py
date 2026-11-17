@@ -1,6 +1,10 @@
 """
 The intake: asks about the organisation as numbered menus and saves the answers in a new run folder.
-Run by /generate-questions (step 1).
+
+Called by: /generate-questions (step 1)
+Input:     your answers, typed as menu numbers
+Output:    runs/<Org>_<date>/intake.json (organisation, date, sector, certifications) and ai_usage.json (how it
+           uses AI)
 
 Usage: .venv/bin/python ./scripts/intake.py menu [KEY]
        .venv/bin/python ./scripts/intake.py write --org NAME --domain N --certs "N N" --ai-in-use N

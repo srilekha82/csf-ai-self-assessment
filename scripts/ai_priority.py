@@ -1,6 +1,10 @@
 """
-Works out the priority (High / Medium / Low) of each AI RMF subcategory, for the Priority column of the AI RMF profile.
-For Stage 2, which is not built yet: nothing calls this today. It writes no files.
+Works out the priority (High / Medium / Low) of each AI RMF subcategory, for the Priority column of the AI
+RMF profile. For Stage 2, which is not built yet.
+
+Called by: nothing yet (the Stage 2 writer will)
+Input:     the client's AI systems sheet, data/ai/severity_rules.json, data/ai/question_rules.json
+Output:    priorities returned to the caller; no files written
 
   system_level(system, rules)    one row of the client's AI systems sheet -> its criticality level
   subcategory_priorities(...)    {subcategory: level} for the subcategories in the client's questionnaire

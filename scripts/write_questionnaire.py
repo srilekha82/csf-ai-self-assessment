@@ -1,6 +1,9 @@
 """
-Writes the picked questions into the questionnaire workbook (questionnaire.xlsx), one row per question.
-Run by /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes.
+Writes the picked questions into the questionnaire workbook, one row per question.
+
+Called by: /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes
+Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files
+Output:    <run_dir>/questionnaire.xlsx (its CSF sheet, or its AI RMF and AI systems sheets)
 
 Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai] [--sheet NAME]
 

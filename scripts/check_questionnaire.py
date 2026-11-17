@@ -1,7 +1,10 @@
 """
-Checks the questions picked for a run are the right ones for this organisation, before the workbook is written.
-Run by /csf-questionnaire and /ai-questionnaire. It does not judge wording: questions were reviewed when the banks
-were built.
+Checks the questions picked for a run are the right ones for this organisation, before the workbook is
+written. It does not judge wording: questions were reviewed when the banks were built.
+
+Called by: /csf-questionnaire (step 5) and /ai-questionnaire (step 3)
+Input:     the run folder's drafts, intake and copies of the banks used
+Output:    a list of problems on screen (exit 1), or nothing (exit 0)
 
 Usage: .venv/bin/python ./scripts/check_questionnaire.py <run_dir> [--framework csf|ai]
 

@@ -1,12 +1,11 @@
 """
-Picks the CSF questions for one organisation from the CSF bank for its sector. Run by /csf-questionnaire (step 4).
+Picks the CSF questions for one organisation from the CSF bank for its sector.
+
+Called by: /csf-questionnaire (step 4)
+Input:     <run_dir>/intake.json, <run_dir>/csf_scope.json, data/csf/banks/question_bank_<sector>.json
+Output:    <run_dir>/csf_questions_draft.json and csf_question_bank_used.json (a copy of the bank used)
 
 Usage: .venv/bin/python ./scripts/build_questions.py <run_dir>
-
-Reads:  <run_dir>/intake.json (sector and certifications), <run_dir>/csf_scope.json (how to ask each subcategory),
-        data/csf/banks/question_bank_<sector>.json, data/csf/csf2_core.json
-Writes: <run_dir>/csf_questions_draft.json      the picked questions
-        <run_dir>/csf_question_bank_used.json   a copy of the bank used, so the run can be reproduced later
 
 Per subcategory it takes the first few bank questions (how many depends on the question type: scope_rules.json
 max_questions) and words them for the certifications held. A subcategory with no bank question gets one generic

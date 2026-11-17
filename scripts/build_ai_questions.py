@@ -1,13 +1,12 @@
 """
-Picks the AI RMF questions for one organisation from the two AI RMF banks. Run by /ai-questionnaire (step 2).
-It decides nothing: it filters the banks by what the intake says.
+Picks the AI RMF questions for one organisation from the two AI RMF banks. It decides nothing: it filters
+the banks by what the intake says.
+
+Called by: /ai-questionnaire (step 2)
+Input:     <run_dir>/ai_usage.json, data/ai/banks/ (both banks), data/ai/scope_rules.json
+Output:    <run_dir>/ai_scope.json, ai_questions_draft_<bank>.json and ai_question_bank_used_<bank>.json
 
 Usage: .venv/bin/python ./scripts/build_ai_questions.py <run_dir>
-
-Reads:  <run_dir>/ai_usage.json, data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json, data/ai/scope_rules.json
-Writes: <run_dir>/ai_scope.json                      what was picked per subcategory, and why
-        <run_dir>/ai_questions_draft_<bank>.json     the picked questions (same layout as the CSF draft)
-        <run_dir>/ai_question_bank_used_<bank>.json  a copy of each bank used, so the run can be reproduced
 
 A question is picked when all three hold:
   role       it is for a role the organisation is asked as ("none" -> none; "unsure" -> none and consumer;

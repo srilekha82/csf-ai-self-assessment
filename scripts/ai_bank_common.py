@@ -1,7 +1,10 @@
 """
-Helpers shared by the AI RMF bank scripts (prepare_ai_bank, record_ai_bank, ai_pilot, build_ai_questions):
-loading the inputs, row ids, which roles an AI area allows, the foundation subcategories, and which prompt files each
-build step uses. Not run directly.
+Helpers shared by the AI RMF bank scripts: loading the inputs, row ids, which roles an AI area allows, the
+foundation subcategories, and which prompt files each build step uses.
+
+Called by: prepare_ai_bank, record_ai_bank, ai_pilot, build_ai_questions (imported, never run)
+Input:     data/ai/ (AI RMF core, CIS safeguards, AI areas, rules)
+Output:    -
 """
 
 import json

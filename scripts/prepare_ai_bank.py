@@ -1,6 +1,10 @@
 """
-Prepares the small input file each AI agent reads in the AI RMF bank build, so agents never read the PDFs or whole
-banks. Run by /build-ai-bank. It decides and stores nothing (agent output goes through record_ai_bank.py).
+Prepares the small input file each AI agent reads in the AI RMF bank build, so agents never read the PDFs
+or whole banks. It decides and stores nothing.
+
+Called by: /build-ai-bank (steps 3-4 mapping, 5 questions, 6b evidence)
+Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks)
+Output:    data/ai/bank_build/mapping_input_<area>.json or batch_<bank>_<tag>.json
 
 Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
        .venv/bin/python ./scripts/prepare_ai_bank.py batch <areas|foundation> (--ids ID ... | --function MAP | --all)

@@ -1,6 +1,10 @@
 """
-The run log. Every script and agent step adds one line to an audit.jsonl, so you can read back what happened, who did
-it (script, agent or person), with which files, and how it ended. Not run directly.
+The run log. Every script and agent step adds one line to an audit.jsonl, so you can read back what
+happened, who did it (script, agent or person), with which files, and how it ended.
+
+Called by: every script (imported, never run)
+Input:     -
+Output:    audit.jsonl lines; judgement_log/ copies of agent output
 
 Where the log is: runs/<Org>_<date>/audit.jsonl (a client run), data/csf/bank_build/ and data/ai/bank_build/ (bank
 builds), data/audit.jsonl (data refreshes and freshness checks). None of them is committed.

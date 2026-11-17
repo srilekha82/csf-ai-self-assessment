@@ -1,13 +1,15 @@
 """
-Reads the AI RMF sources (PDFs you download into data/ai/source/) into data the other scripts use.
-Run by /build-ai-bank (step 2). No judgement.
+Reads the AI RMF sources (PDFs you download) into data the other scripts use. No judgement.
+
+Called by: /build-ai-bank (step 2)
+Input:     data/ai/source/: the AI RMF Playbook and the three CIS v8.1 AI companion guides
+Output:    data/ai/ai_rmf_core.json, cis_ai_safeguards.json (local only) and cis_ai_safeguard_ids.json
 
 Usage: .venv/bin/python ./scripts/parse_ai_rmf_sources.py [--source-dir DIR] [--output-dir DIR]
 
-Reads:  AI_RMF_Playbook.pdf and the three CIS v8.1 AI companion guides (LLM, MCP, Agents)
-Writes: data/ai/ai_rmf_core.json           the 4 functions and 72 subcategories, each with its suggested actions
-        data/ai/cis_ai_safeguards.json     every CIS safeguard with its text (stays on your machine, never committed)
-        data/ai/cis_ai_safeguard_ids.json  the same without the CIS text (committed)
+ai_rmf_core.json holds the 4 functions and 72 subcategories, each with its suggested actions. cis_ai_safeguards.json
+holds every CIS safeguard with its text and stays on your machine (never committed); cis_ai_safeguard_ids.json is the
+same without the CIS text, and is committed.
 
 Good to know: the guides' tables drop about half the safeguard IDs, so IDs are rebuilt from the control number and row
 order. Expected counts are in data/ai/parse_config.json; any mismatch stops the run and nothing is written.

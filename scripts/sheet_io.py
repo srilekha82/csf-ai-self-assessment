@@ -1,5 +1,10 @@
 """
-Turns data into spreadsheets for you to review or edit, and reads your edits back. Used in /build-ai-bank.
+Lets you review and edit the AI bank data in Excel instead of JSON files: it turns the data into
+spreadsheets, and reads your edits back after checking them.
+
+Called by: /build-ai-bank (after each step that a person reviews)
+Input:     export: data/ai/ JSON (AI areas, mapping, both banks, impact notes); import: your edited spreadsheet
+Output:    export: spreadsheets in data/ai/authoring/; import: the updated JSON
 
 Usage: .venv/bin/python ./scripts/sheet_io.py export <sheet> [--xlsx PATH] [--json PATH] [--force]
        .venv/bin/python ./scripts/sheet_io.py import <sheet> [--xlsx PATH] [--json PATH]
