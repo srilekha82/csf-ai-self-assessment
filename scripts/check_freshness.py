@@ -45,9 +45,10 @@ AI_QUESTIONS_XLSX = {"areas": (AI_QUESTIONS_AREAS_XLSX, "area_questions"),      
 
 
 def bank_completeness(bank: str, doc: dict) -> tuple[bool, str]:
-    """Whether a question bank holds what it must now (record_ai_bank.bank_freshness)."""
-    import record_ai_bank as R
-    return R.bank_freshness(bank, doc, R.load_inputs())
+    """Whether a question bank holds what it must now (ai_questions.bank_freshness)."""
+    from ai_bank_common import load_inputs
+    from ai_questions import bank_freshness
+    return bank_freshness(bank, doc, load_inputs())
 
 
 def ai_stages() -> list[tuple[str, bool, str]]:

@@ -285,7 +285,7 @@ mapping rows changed is shown incomplete by the freshness check).
    It recovered 13 mappings and 7 questions, all rejected by the schema (not answerable), so no bank question changed.
 3. `compute_scope.py validate_judgements`: an excluded control now needs an `exclusion_class`, and a control whose SoA
    applicability is unreadable needs `applicable`.
-4. `check_freshness.py` bank completeness: already compared sets of subcategories (`record_ai_bank.bank_freshness`).
+4. `check_freshness.py` bank completeness: already compared sets of subcategories (`ai_questions.bank_freshness`).
 5. CSF bank freshness: each bank records `inputs_sha` (`cset_judgements.json`, `csf2_core.json`); a change makes it
    stale.
 6. `extract_cset_candidates.freshness`: an unknown stored commit now means extract again.

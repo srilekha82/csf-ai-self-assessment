@@ -67,7 +67,7 @@ class Priority(unittest.TestCase):
         self.assertEqual((fin["MAP 3.3"], hc["MAP 3.3"]), ("Low", "Low"))   # a process row stays as it was
 
     def test_the_accepted_mapping_gives_every_questionnaire_subcategory_a_level(self):
-        import record_ai_bank as R
+        from ai_bank_modules import R  # noqa: E402
         ctx = R.question_context(R.load_inputs())
         subs = sorted(set(ctx["rows"]) | set(ctx["foundation"]))
         got = AP.subcategory_priorities(subs, [system("Chatbot", ["customer_facing", "output"], rep="Local")],
