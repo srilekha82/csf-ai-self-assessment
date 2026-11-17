@@ -18,5 +18,7 @@ CSF and AI RMF banks built; `/generate-questions` writes one `questionnaire.xlsx
 One report per profile XLS (CSF, AI RMF) and a page linking both, built from scratch.
 
 ## Parked
-- `validate_questions.py`
-- Tests for `compute_scope.py` and `build_questions.py`
+- Unit tests for each `compute_scope.py` state (today it is tested end to end, through `check_questionnaire.py`'s
+  tests, and for its SoA judgement checks).
+- With the prompt review: store review reasons in the AI banks as a list per question instead of one joined text
+  (removes about 40 lines of splitting and joining in `ai_questions.py`).
