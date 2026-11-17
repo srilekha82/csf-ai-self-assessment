@@ -18,5 +18,6 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
 
 ## Never
 - Commit `runs/` or copy it into `data/`: it holds client data.
-- Commit or publish CIS text: `data/ai/source/` (the guides) or `data/ai/cis_ai_safeguards.json` (parsed text). CIS
-  material is CC BY-NC-ND 4.0; only `cis_ai_safeguard_ids.json` (no text) is committed.
+- Commit CIS text. The CIS guide PDFs (`data/ai/source/`) and the text parsed from them
+  (`data/ai/cis_ai_safeguards.json`) stay on your machine; the CIS licence does not allow sharing them. The repo keeps
+  only `cis_ai_safeguard_ids.json` (IDs, no text).
