@@ -2,7 +2,8 @@
 Builds the CSF question bank for one sector from the collected CSET questions.
 
 Called by: /build-csf-bank (step 3)
-Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions)
+Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions); the routing
+           rules in data/csf/bank_rules.json
 Output:    data/csf/banks/question_bank_<sector>.json, or pending_judgements_<sector>.json (exit 2)
 
 Usage: .venv/bin/python ./scripts/build_question_bank.py --domain <sector|all> [--fanout-threshold N]
@@ -12,7 +13,7 @@ Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each ot
   rejected   not answerable, empty, or already judged unfit or not for this sector
   accepted   its source model is for this sector (e.g. ACET for finance), or an earlier decision covers it
   pending    needs an agent: sector unclear, text to (re)write, or linked to many subcategories
-             (--fanout-threshold, default 4)
+             (--fanout-threshold; default in data/csf/bank_rules.json)
 
 Exit 2 if anything is pending: it writes pending_judgements_<sector>.json and no bank. An agent decides them
 (prompts/question_bank_judge.md), record_judgements.py stores the decisions, then run it again. Decisions are tied to
@@ -29,19 +30,19 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import BANK_BUILD, CSF_BANKS, CSF_CORE, CROSSWALK_DIRS, bank_path  # noqa: E402
+from paths import BANK_BUILD, CSF_BANK_RULES, CSF_BANKS, CSF_CORE, CROSSWALK_DIRS, bank_path  # noqa: E402
 from options import CSF_FUNCTION_ORDER, DOMAINS  # noqa: E402
 import audit  # noqa: E402
 
-REJECT_FLAGS = {"not_answerable", "empty_text"}
+BANK_RULES = json.loads(CSF_BANK_RULES.read_text())   # the routing policy: data/csf/bank_rules.json
+REJECT_FLAGS = set(BANK_RULES["reject_flags"])
 CSF2_SET = "NCSF_V2"  # CSET's CSF 2.0 standard (cset_candidates.json `csf2_set`), first candidate everywhere
 # Questions whose text must be (re)written by the agent: a practice statement with no question,
 # or a question CSET left cut off mid-sentence.
-REWRITE_FLAGS = {"statement_only", "truncated"}
+REWRITE_FLAGS = set(BANK_RULES["rewrite_flags"])
 
 # Source models that are specific to one sector. Everything else is treated as generic.
-SECTOR_BY_MODEL = {"ACET": "finance", "SSG Chemical": "manufacturing_ot",
-                   "CYOTE": "manufacturing_ot", "HYDRO": "manufacturing_ot"}
+SECTOR_BY_MODEL = {k: v for k, v in BANK_RULES["sector_by_model"].items() if k != "description"}
 
 
 def text_hash(q: dict) -> str:
@@ -234,7 +235,7 @@ def build_bank(domain: str, routed: list[dict], candidates: dict, active: dict[s
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--domain", required=True, choices=DOMAINS + ["all"])
-    parser.add_argument("--fanout-threshold", type=int, default=4)
+    parser.add_argument("--fanout-threshold", type=int, default=BANK_RULES["fanout_threshold"]["value"])
     parser.add_argument("--allow-pending", action="store_true")
     parser.add_argument("--output-dir", default=str(CSF_BANKS))
     parser.add_argument("--cache-dir", default=str(BANK_BUILD))

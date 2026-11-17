@@ -56,5 +56,24 @@
       "type": "full_discovery", "confidence": "high",
       "reason": "{control} excluded in SoA, reason unclear — assessor to check whether the outcome still applies"
     }
+  },
+  "soa_reading": {
+    "description": "How parse_soa.py reads an ISO 27001 SoA spreadsheet. It picks the sheet, the header row and each column by these words, prints what it picked so the user can confirm, and takes --sheet / --id-col / --applicable-col / --reason-col / --implemented-col to correct a pick. A cell whose word is in neither list is read as unknown (null), never guessed.",
+    "sheet_name_words": ["annex", "controls"],
+    "skip_sheet_words": ["overview", "revision", "instruction", "cover", "summary"],
+    "header_row_words": ["applicable", "clause", "annex"],
+    "header_scan_rows": 10,
+    "columns": {
+      "id": {"match": ["iso/iec 27001", "control id", "control", "clause", "annex"],
+             "avoid": ["title", "name", "description", "objective", "guidance", "text", "owner"]},
+      "applicable": {"match": ["applicable", "applicab", "in scope"]},
+      "reason": {"match": ["non-applicab", "not applicable", "reason for non", "exclusion", "justification"]},
+      "implemented": {"match": ["implemented", "status", "implementation"]}
+    },
+    "applicable_yes": ["yes", "y", "applicable", "true", "1", "x"],
+    "applicable_no": ["no", "n", "not applicable", "non-applicable", "n/a", "na", "false", "0"],
+    "implemented_yes": ["yes", "y", "implemented", "complete", "completed", "true", "1", "x"],
+    "implemented_no": ["no", "n", "not implemented", "not started", "false", "0"],
+    "ignore_reason_starting": ["refer to column"]
   }
 }

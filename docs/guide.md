@@ -215,7 +215,10 @@ data/
 ├── csf/
 │   ├── source/csf2.xlsx     NIST CPRT export (refreshed about yearly)
 │   ├── csf2_core.json       CSF 2.0 subcategories and examples
-│   ├── scope_rules.json     state → question type, max questions per type, domain bump, function order
+│   ├── scope_rules.json     state → question type, max questions per type, domain bump, function order; how
+│   │                        the SoA spreadsheet is read (soa_reading)
+│   ├── bank_rules.json      how CSET questions are flagged and routed when a CSF bank is built: sector of each
+│   │                        question set, reject and rewrite flags, the fan-out threshold
 │   ├── domain_weights.json  per-sector priorities
 │   ├── evidence_prompts.json  evidence hint per CSF category
 │   ├── crosswalks/          ISO 27001 and PCI DSS mappings
@@ -224,11 +227,12 @@ data/
 ├── audit.jsonl              data refresh and freshness checks (created on first run)
 └── ai/
     ├── source/                 AI RMF Playbook, CIS companion guides, CIS → CSF mapping (not in the repo; see source/README.md; SHA-256 in metadata.json)
-    ├── parse_config.json       expected counts and file names for the parser
+    ├── parse_config.json       expected counts and file names for the parser; the AI text length for impact notes
     ├── ai_rmf_core.json        4 functions (Playbook description) with their 72 subcategories + suggested actions (parsed)
     ├── cis_ai_safeguard_ids.json  safeguards of the three guides: ids, controls, IG (committed)
     ├── cis_ai_safeguards.json  the same with the CIS text (parsed, local only, not committed)
-    ├── question_rules.json     question banks: roles, producer details, impacts, question counts, the AI systems sheet
+    ├── question_rules.json     question banks: roles, producer details, impacts, question counts, the AI systems sheet,
+    │                           text length limits
     ├── area_client_labels.json what the client sees for each AI area (area id -> plain label)
     ├── authoring/ai_areas.xlsx  AI areas and their impact, decided by a person (sheet_io.py import -> ai_areas.json)
     ├── ai_areas.json           generated from authoring/ai_areas.xlsx; scripts read this

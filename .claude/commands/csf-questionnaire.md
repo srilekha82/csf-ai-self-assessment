@@ -24,8 +24,11 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `intak
 
 - yes: ask for the file path, then
   `.venv/bin/python ./scripts/parse_soa.py <run_dir> /path/to/soa.xlsx`
-  It copies the SoA into `<run_dir>/inputs/` and writes `soa_parsed.json`. If it cannot find the ID or applicability
-  column it lists the headers it saw: show them and ask which columns to use; do not guess.
+  It copies the SoA into `<run_dir>/inputs/` and writes `soa_parsed.json`, then prints which sheet, header row and
+  columns it used (control ID, applicable, reason, implemented) and the counts. **STOP and show the user those picks;
+  ask whether they are right.** If one is wrong, or it could not find a column (it lists the headers it saw), ask
+  which sheet or header to use and run it again with `--sheet NAME`, `--id-col`, `--applicable-col`,
+  `--reason-col` or `--implemented-col` followed by the header text. Never pick a column yourself.
 - no: tell the user all ISO-mapped subcategories will be `confirmatory` with `confidence: LOW`, and that re-running
   with an SoA later gives a more precise scope.
 

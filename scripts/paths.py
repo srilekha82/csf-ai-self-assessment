@@ -23,6 +23,7 @@ CSF = DATA / "csf"
 CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_crosswalk.py (refreshed ~yearly)
 CSF_CORE = CSF / "csf2_core.json"
 DOMAIN_WEIGHTS = CSF / "domain_weights.json"
+CSF_BANK_RULES = CSF / "bank_rules.json"   # how CSET questions are flagged and routed when a CSF bank is built
 SCOPE_RULES = CSF / "scope_rules.json"   # state -> question type policy, max questions per type
 EVIDENCE_PROMPTS = CSF / "evidence_prompts.json"   # evidence an assessor asks for, by CSF category
 CSF_CROSSWALKS = CSF / "crosswalks"      # olir_iso27001.json, olir_pcidss.json

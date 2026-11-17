@@ -3,7 +3,7 @@ Collects every CSET question linked to a CSF 2.0 subcategory, from CISA's CSET S
 the same for every sector.
 
 Called by: /build-csf-bank (step 2)
-Input:     the SQL migration files in your local CSET copy
+Input:     the SQL migration files in your local CSET copy; the "truncated" rule in data/csf/bank_rules.json
 Output:    data/csf/bank_build/cset_candidates.json
 
 Usage: .venv/bin/python ./scripts/extract_cset_candidates.py [--cset-path PATH] [--output-dir DIR] [--force] [--no-pull]
@@ -29,7 +29,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import BANK_BUILD  # noqa: E402
+from paths import BANK_BUILD, CSF_BANK_RULES  # noqa: E402
 import audit  # noqa: E402
 
 DEFAULT_CSET_PATH = "~/workstuff/cset"
@@ -334,12 +334,15 @@ def practice_fields(row: dict) -> dict:
     return {k: v for k, v in out.items() if v}
 
 
+TRUNCATED = json.loads(CSF_BANK_RULES.read_text())["truncated"]   # data/csf/bank_rules.json
+
+
 def question_flags(raw_text: str | None, is_answerable, practice: dict) -> list[str]:
     text = clean_text(raw_text)
     flags = []
     if not text:
         flags.append("statement_only" if practice else "empty_text")
-    elif text.endswith((":", ",")) or len(text) < 25:
+    elif text.endswith(tuple(TRUNCATED["ends_with"])) or len(text) < TRUNCATED["min_chars"]:
         flags.append("truncated")
     if is_answerable in (0, False, "0"):
         flags.append("not_answerable")

@@ -81,5 +81,11 @@
       ]
     },
     "rows": 30
+  },
+  "text_limits": {
+    "description": "Length limits record_ai_bank.py applies to agent output in the AI RMF bank build: a question or an evidence line shorter than min_chars, an evidence line longer than evidence_max_chars, or an impact note shorter than note_min_chars is rejected.",
+    "min_chars": 30,
+    "evidence_max_chars": 400,
+    "note_min_chars": 30
   }
 }
