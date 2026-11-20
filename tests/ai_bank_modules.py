@@ -1,4 +1,4 @@
-"""The AI RMF bank code as one object for the tests: record_ai_bank.py and the modules it uses (ai_mapping,
+"""The AI RMF bank code as one object for the tests: record_bank.py and the modules it uses (ai_mapping,
 ai_questions, ai_notes).
 
 Reading a name finds it in whichever module has it. Setting a name (a test pointing a store at a temp folder) sets it
@@ -12,9 +12,9 @@ import ai_bank_common  # noqa: E402
 import ai_mapping  # noqa: E402
 import ai_notes  # noqa: E402
 import ai_questions  # noqa: E402
-import record_ai_bank  # noqa: E402
+import record_bank  # noqa: E402
 
-_SPLIT = (record_ai_bank, ai_mapping, ai_questions, ai_notes)
+_SPLIT = (record_bank, ai_mapping, ai_questions, ai_notes)
 
 
 class _AIBank:

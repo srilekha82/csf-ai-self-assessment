@@ -2,7 +2,7 @@
 The CSF AI impact notes: a short note per CSF subcategory on what AI changes there. Checks the notes and the notes
 checker's findings before they are stored, and converts the notes to and from their review spreadsheet.
 
-Called by: record_ai_bank.py (notes, notes-review), sheet_io.py (the impact notes sheet)
+Called by: record_bank.py (ai-notes, ai-notes-review), sheet_io.py (the impact notes sheet)
 Input:     data/csf/ai_impact_notes.json, data/csf/csf2_core.json, the CIS safeguard data; the note length limit
            (data/ai/question_rules.json text_limits)
 Output:    data/csf/ai_impact_notes.json

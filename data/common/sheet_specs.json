@@ -1,5 +1,5 @@
 {
-  "description": "One entry per spreadsheet that scripts/sheet_io.py converts between XLSX (for people) and JSON (for scripts and agents). Columns, required cells and allowed values live here, not in code. `xlsx`, `json` and `audit` name constants in scripts/config.py. A column with \"in_json\": false is kept in the spreadsheet only. `decision` says which side is the decision: spreadsheet (default) or json (the sheet is exported for review and its edits imported back). `shape` names a converter for a JSON that is not a flat list (mapping, questions: record_ai_bank.py).",
+  "description": "One entry per spreadsheet that scripts/sheet_io.py converts between XLSX (for people) and JSON (for scripts and agents). Columns, required cells and allowed values live here, not in code. `xlsx`, `json` and `audit` name constants in scripts/config.py. A column with \"in_json\": false is kept in the spreadsheet only. `decision` says which side is the decision: spreadsheet (default) or json (the sheet is exported for review and its edits imported back). `shape` names a converter for a JSON that is not a flat list (mapping, questions: ai_mapping.py, ai_questions.py).",
   "sheets": {
     "ai_areas": {
       "xlsx": "AI_AREAS_XLSX",

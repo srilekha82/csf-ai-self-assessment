@@ -274,7 +274,7 @@ class MappingSheet(unittest.TestCase):
         self.assertIn("2 human decisions kept", line)
 
     def test_the_mapping_gate(self):
-        import ai_pilot as PL
+        import ai_mapping as PL
         accepted = self.tmp / "accepted.json"
         saved = PL.AI_MAPPING, PL.AI_MAPPING_ACCEPTED, PL.AI_MAPPING_XLSX
         PL.AI_MAPPING, PL.AI_MAPPING_ACCEPTED, PL.AI_MAPPING_XLSX = self.json, accepted, self.xlsx

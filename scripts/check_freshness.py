@@ -34,7 +34,8 @@ from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE,
 import audit  # noqa: E402
 from sheet_io import sheet_status  # noqa: E402
 from extract_cset_candidates import DEFAULT_CSET_PATH, git, sql_changed  # noqa: E402
-from ai_pilot import mapping_status, pilot_status  # noqa: E402
+from ai_mapping import mapping_status  # noqa: E402
+from ai_questions import pilot_status  # noqa: E402
 
 def load(path: Path):
     return json.loads(path.read_text()) if path.is_file() else None

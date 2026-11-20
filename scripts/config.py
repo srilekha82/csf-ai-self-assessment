@@ -41,7 +41,7 @@ BANK_BUILD = CSF / "bank_build"          # cset_candidates.json, cset_judgements
 # AI track
 AI = DATA / "ai"
 AI_SOURCE = AI / "source"                # Playbook, CIS companion guides, CIS -> CSF xlsx (not redistributed)
-AI_PILOT = AI / "bank_build" / "pilot_accepted.json"  # written by ai_pilot.py accept
+AI_PILOT = AI / "bank_build" / "pilot_accepted.json"  # written by record_bank.py ai-accept-pilot
 AI_CORE = AI / "ai_rmf_core.json"        # 72 subcategories + Playbook suggested actions (parse_ai_rmf_sources.py)
 AI_SAFEGUARDS = AI / "cis_ai_safeguards.json"   # CIS companion guide safeguards with their text (parse_ai_rmf_sources.py;
                                                 # local only, not committed: CIS text is CC BY-NC-ND 4.0)
@@ -58,13 +58,13 @@ AI_AREAS_XLSX = AI_AUTHORING / "ai_areas.xlsx"   # AI areas (usage and ecosystem
 AI_AREAS = AI / "ai_areas.json"          # generated from ai_areas.xlsx by sheet_io.py import; scripts read this
 AI_AREA_LABELS = AI / "area_client_labels.json"   # area id -> the plain label the client sees
 AI_MAPPING_RULES = AI / "mapping_rules.json"   # candidate CIS controls per AI area, required checks, foundation functions
-AI_MAPPING = AI / "mapping.json"         # AI area x AI RMF function -> subcategory, CIS safeguards, impact (record_ai_bank.py)
+AI_MAPPING = AI / "mapping.json"         # AI area x AI RMF function -> subcategory, CIS safeguards, impact (record_bank.py ai-mapping)
 AI_MAPPING_XLSX = AI_AUTHORING / "mapping.xlsx"   # the mapping for review: one line per area x subcategory (sheet_io.py)
-AI_MAPPING_ACCEPTED = AI / "bank_build" / "mapping_accepted.json"   # written by ai_pilot.py accept-mapping
+AI_MAPPING_ACCEPTED = AI / "bank_build" / "mapping_accepted.json"   # written by record_bank.py ai-accept-mapping
 AI_QUESTION_RULES = AI / "question_rules.json"   # question banks: roles, producer flags, impacts (step 4)
 AI_SEVERITY_RULES = AI / "severity_rules.json"   # priority (High / Medium / Low) per AI RMF subcategory, Stage 2
-AI_BANK_FOUNDATION = AI_BANKS / "question_bank_ai_rmf_foundation.json"   # foundation questions (record_ai_bank.py questions)
-AI_BANK_AREAS = AI_BANKS / "question_bank_ai_rmf_areas.json"             # area questions (record_ai_bank.py questions)
+AI_BANK_FOUNDATION = AI_BANKS / "question_bank_ai_rmf_foundation.json"   # foundation questions (record_bank.py ai-questions)
+AI_BANK_AREAS = AI_BANKS / "question_bank_ai_rmf_areas.json"             # area questions (record_bank.py ai-questions)
 AI_QUESTIONS_FOUNDATION_XLSX = AI_AUTHORING / "questions_foundation.xlsx"   # the foundation bank for review (sheet_io.py)
 AI_IMPACT_NOTES_XLSX = AI_AUTHORING / "impact_notes.xlsx"                # the CSF AI impact notes for review
 AI_QUESTIONS_AREAS_XLSX = AI_AUTHORING / "questions_areas.xlsx"             # the area bank for review (sheet_io.py)

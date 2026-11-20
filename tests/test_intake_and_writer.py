@@ -160,10 +160,10 @@ class SoaReadingRecord(unittest.TestCase):
 
 
 class EvidenceLoop(unittest.TestCase):
-    """record_csf_bank.py evidence: round 1, one revision, then a person; a person's decision is final."""
+    """record_bank.py csf-evidence: round 1, one revision, then a person; a person's decision is final."""
 
     def setUp(self):
-        import record_csf_bank as RC
+        import build_question_bank as RC
         self.RC, tmp = RC, Path(tempfile.mkdtemp())
         targets = list(RC.evidence_targets()) or ["PR.AA-03", "PR.AA-04"]
         self.a, self.b = sorted(targets)[:2] if len(targets) >= 2 else ("PR.AA-03", "PR.AA-04")
@@ -181,7 +181,7 @@ class EvidenceLoop(unittest.TestCase):
     def record(self, prompts, verdicts, *more):
         (self.tmp / "p.json").write_text(json.dumps(prompts))
         (self.tmp / "v.json").write_text(json.dumps(verdicts))
-        self.RC.evidence_record([str(self.tmp / "p.json"), "--review", str(self.tmp / "v.json"), "--model", "m", *more])
+        self.RC.record_evidence(str(self.tmp / "p.json"), str(self.tmp / "v.json"), bool(more), "m", None)
 
     def test_a_failure_is_revised_once_then_decided_by_a_person(self):
         good = "The latest record of this outcome, with the systems it covers and when it was last reviewed."
@@ -199,10 +199,10 @@ class EvidenceLoop(unittest.TestCase):
         review = json.loads(self.RC.EVIDENCE_REVIEW.read_text())
         self.assertEqual([len(i["drafts"]) for i in review["items"]], [2])
         with self.assertRaises(SystemExit):                       # the person has not decided yet
-            self.RC.evidence_reviewed()
+            self.RC.record_review()
         review["items"][0]["keep_category_line"] = True
         self.RC.EVIDENCE_REVIEW.write_text(json.dumps(review))
-        self.RC.evidence_reviewed()
+        self.RC.record_review()
         doc = json.loads(self.RC.EVIDENCE_PROMPTS.read_text())
         self.assertEqual((doc["by_subcategory"][self.a], list(doc["category_line_kept"])), (good, [self.b]))
         self.assertEqual(self.RC.evidence_targets(), {})          # never asked again
@@ -284,7 +284,7 @@ class CsfEvidencePrompts(unittest.TestCase):
             BQ.EVIDENCE = old
 
     def test_the_writer_file_and_the_review_are_validated_together(self):
-        import record_csf_bank as RC
+        import build_question_bank as RC
         ok = "The backup schedule for critical data and the latest restore test result."
         self.assertEqual(RC.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}],
                                               {"PR.DS-11"}), [])

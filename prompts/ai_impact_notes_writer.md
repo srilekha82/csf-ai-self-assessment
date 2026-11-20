@@ -48,5 +48,5 @@ patch (a rewritten note is reviewed again).
 - Plain language, no marketing words, no invented statistics. Never mention a vendor.
 - `exposure` is shown to every org, including orgs that use no AI: it never assumes the org runs a model, tools or
   agents. What the org's own AI changes goes in `use`.
-- Ids must exist in `items`. A script (`record_ai_bank.py notes`) rejects the whole file on an unknown id, a note
+- Ids must exist in `items`. A script (`record_bank.py ai-notes`) rejects the whole file on an unknown id, a note
   under 30 characters, a `use` object missing a key, or a subcategory a person decided in the review sheet.

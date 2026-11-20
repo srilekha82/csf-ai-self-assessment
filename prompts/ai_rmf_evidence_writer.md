@@ -31,5 +31,5 @@ One JSON object to the file the command names: subcategory id -> question number
 {"MEASURE 2.8": {"1": "An extract of the AI action log for one agent (identity used, request, approval, result), the list of AI systems and agents it covers, and the log retention setting."}}
 ```
 
-A script (`record_ai_bank.py evidence`) rejects the whole file on an unknown subcategory or question number, a
+A script (`record_bank.py ai-evidence`) rejects the whole file on an unknown subcategory or question number, a
 question that already has an evidence prompt, or a prompt shorter than 30 or longer than 400 characters.
