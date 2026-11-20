@@ -67,10 +67,13 @@ The intake is `scripts/intake.py`: it prints the numbered menus (from `data/comm
 
 1. `extract_cset_candidates.py` replays the CSET SQL migrations into `cset_candidates.json` (skipped if CSET has not changed): CSET's own CSF 2.0 set (`NCSF_V2`, one question for each of the 106 subcategories) and the maturity-model questions (ACET, CPG, SSG…) CSET maps to CSF 2.0.
 2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
-3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_judgements.py` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
+3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_csf_bank.py` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
 4. Run the build again; it writes all six `data/csf/banks/question_bank_<sector>.json` together (no bank is written while anything is pending, so the six always share one record of what they were built from).
-5. Once for all domains: each subcategory's own evidence prompt (`record_judgements.py evidence`, writer and evaluator
-   agents, `data/csf/evidence_prompts.json` `by_subcategory`); a subcategory without one keeps its category's line.
+5. Once for all domains: each subcategory's own evidence prompt, the "Evidence Required" line of the CSF sheet
+   (`record_csf_bank.py evidence`, `data/csf/evidence_prompts.json` `by_subcategory`). A writer agent drafts it from
+   NIST's implementation examples and an evaluator agent checks it; a failed draft is revised once and checked again;
+   what still fails goes to you (`evidence_review.json`): write the line or keep the category's line. Your decision is
+   final.
 
 Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`, `other`.
 
@@ -120,7 +123,7 @@ flowchart TD
     OK1 -- "a pick is wrong: run again naming the column" --> SOA
     OK1 -- right --> SC["compute_scope.py<br/><small>also reads: csf_intake.json</small>"]:::script
     CQ --> SC
-    SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent --> RJ[record_judgements.py log]:::script --> SC
+    SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent -- "soa_judgements.json, run again with --model" --> SC
     SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: csf_intake.json, the CSF bank</small>"]:::script
     BQ --> CD([csf_questions_draft.json]):::file
 
@@ -149,10 +152,12 @@ flowchart TD
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
     SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
-    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_judgements.py]:::script --> JS([cset_judgements.json]):::file --> BQB
+    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_csf_bank.py]:::script --> JS([cset_judgements.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
-    B --> EP["record_judgements.py evidence prepare"]:::script
-    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_judgements.py evidence"]:::script --> EVP([evidence_prompts.json]):::file
+    B --> EP["record_csf_bank.py evidence prepare"]:::script
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_csf_bank.py evidence"]:::script --> EVP([evidence_prompts.json]):::file
+    RE -- "failed: revise once" --> EW
+    RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then evidence reviewed)"]:::you --> EVP
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
     classDef script fill:#dbeafe,stroke:#2563eb,color:#111

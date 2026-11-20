@@ -123,16 +123,17 @@ def write_once_record(log_dir, step: str, record: dict) -> Path:
 
 def record_agent_output(*, log_path, log_dir, step: str, args: dict, file, validate, store, model: str,
                         session: str | None = None, prompts=(), log_name=None, extra_inputs=(), extra_record=None,
-                        snapshot_key: str = "output_snapshot") -> tuple[Path, str]:
-    """The one recording contract for agent output (used by record_judgements.py bank mode and record_ai_bank.py).
+                        snapshot_key: str = "output_snapshot", decided_by: str = "agent") -> tuple[Path, str]:
+    """The one recording contract for agent output (used by record_csf_bank.py bank mode and record_ai_bank.py).
 
     Reads the agent's JSON `file`, calls validate(data) -> list of problems, and if there are any rejects the WHOLE
     file: audit line "rejected", nothing stored, exit 1. Otherwise calls store(data) -> (store path, one-line summary),
     writes a write-once record (model, session, prompt hashes, input and store hashes, the output exactly as submitted
     under `snapshot_key`, plus `extra_record`) to `log_dir` as <timestamp>_<log_name>.json, and appends an audit line
     (actor "agent"). `prompts` are repo-relative paths; `log_name` is a string or a function of the data (default: step).
+    decided_by "person" records a person's decisions the same way (actor "person"; `model` is then "person").
     """
-    ev = begin(log_path, step, {**args, "model": model, "session": session}, actor="agent")
+    ev = begin(log_path, step, {**args, "model": model, "session": session}, actor=decided_by)
     file = Path(file)
     try:
         data = json.loads(file.read_text())
@@ -145,7 +146,7 @@ def record_agent_output(*, log_path, log_dir, step: str, args: dict, file, valid
 
     store_path, summary = store(data)
     record = {
-        "recorded_at": datetime.now(timezone.utc).isoformat(), "step": step, "decided_by": "agent",
+        "recorded_at": datetime.now(timezone.utc).isoformat(), "step": step, "decided_by": decided_by,
         "model": model, "session": session,
         "prompts": [{"path": p, "sha": sha(REPO_ROOT / p)} for p in prompts],
         "input_file": {"path": str(file), "sha": sha(file)},

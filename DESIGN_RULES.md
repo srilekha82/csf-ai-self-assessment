@@ -13,8 +13,9 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 4. **A recording script is the only door for agent output.** The agent hands in a file; the script validates the WHOLE
    file, rejects it if anything is wrong (exit 1, nothing stored), otherwise stores it and writes a write-once record
    (model, prompt hash, input hash, output snapshot). The contract lives once, in `audit.record_agent_output`; a recording
-   script supplies only its validator and its store. CSF: `record_judgements.py`. AI RMF: `record_ai_bank.py`
-   (mapping, questions, notes). In a client run: `record_judgements.py log` (the SoA reading).
+   script supplies only its validator and its store. CSF banks: `record_csf_bank.py`. AI RMF banks:
+   `record_ai_bank.py` (mapping, questions, notes). In a client run, the agent's SoA reading is checked and recorded
+   by `compute_scope.py`, the script that uses it.
 5. **Everything is audited.** Every script calls `scripts/audit.py` (`begin`, then `finish` / `fail` / `pending`), which
    appends to the folder's `audit.jsonl`. Do not invent another logging scheme. Use `audit.write_once_record` for
    write-once records.

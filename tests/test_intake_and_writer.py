@@ -131,15 +131,82 @@ class Intake(unittest.TestCase):
             OPT.load_csf_intake(self.tmp / "missing")
 
 
-class RecordLog(unittest.TestCase):
-    """record_judgements.py log (an agent step in a run, e.g. the SoA reading) goes through audit.record_agent_output."""
+class SoaReadingRecord(unittest.TestCase):
+    """compute_scope.py records the agent's SoA reading (soa_judgements.json) once, the first time it uses it."""
 
-    def test_a_run_step_is_logged_with_a_write_once_record(self):
-        import record_judgements as RJ
-        run = Path(tempfile.mkdtemp())
-        (run / "soa_judgements.json").write_text(json.dumps({"A.5.1": {"reason": "r"}}))
-        RJ.log_run_step([str(run), "--step", "soa_exclusions", "--output", "soa_judgements.json", "--model", "test"])
-        self.assertEqual(len(list((run / "judgement_log").glob("*_soa_exclusions.json"))), 1)
+    def scope(self, *more):
+        p = __import__("subprocess").run([sys.executable, str(ROOT / "scripts" / "compute_scope.py"), str(self.run), *more],
+                                         capture_output=True, text=True)
+        return p.returncode
+
+    def test_the_reading_needs_a_model_and_is_recorded_once(self):
+        runs = Path(tempfile.mkdtemp())
+        IN.write(args(runs_dir=str(runs), certs="2", ai_in_use="1", role=None, ai_usage=None, ai_components=None))
+        self.run = runs / "Acme_Corp_2026-10-14"
+        (self.run / "soa_parsed.json").write_text(json.dumps([
+            {"control_id": "Annex A Controls: 5.20", "control_id_raw": "5.20", "applicable": False,
+             "applicable_raw": "No", "exclusion_reason": None, "implemented": None}]))
+        self.assertEqual(self.scope(), 2)                                   # the exclusion needs an agent reading
+        (self.run / "soa_judgements.json").write_text(json.dumps(
+            {"Annex A Controls: 5.20": {"exclusion_class": "not_relevant", "reason": "No suppliers handle data."}}))
+        self.assertEqual(self.scope(), 1)                                   # used for the first time: --model needed
+        self.assertFalse((self.run / "csf_scope.json").exists())
+        self.assertEqual(self.scope("--model", "test-model"), 0)
+        records = list((self.run / "judgement_log").glob("*_soa_exclusions.json"))
+        self.assertEqual(len(records), 1)
+        self.assertEqual(json.loads(records[0].read_text())["model"], "test-model")
+        self.assertEqual(self.scope(), 0)                                   # already recorded: no model, no new record
+        self.assertEqual(len(list((self.run / "judgement_log").glob("*_soa_exclusions.json"))), 1)
+
+
+class EvidenceLoop(unittest.TestCase):
+    """record_csf_bank.py evidence: round 1, one revision, then a person; a person's decision is final."""
+
+    def setUp(self):
+        import record_csf_bank as RC
+        self.RC, tmp = RC, Path(tempfile.mkdtemp())
+        targets = list(RC.evidence_targets()) or ["PR.AA-03", "PR.AA-04"]
+        self.a, self.b = sorted(targets)[:2] if len(targets) >= 2 else ("PR.AA-03", "PR.AA-04")
+        core = json.loads(RC.CSF_CORE.read_text())
+        others = {s["subcategory_id"]: "x" * 40 for s in core["subcategories"]
+                  if s["subcategory_id"] not in (self.a, self.b)}
+        (tmp / "evidence_prompts.json").write_text(json.dumps({"default": "d", "by_category": {}, "by_subcategory": others}))
+        for name, value in (("EVIDENCE_PROMPTS", tmp / "evidence_prompts.json"), ("BANK_BUILD", tmp),
+                            ("EVIDENCE_INPUT", tmp / "evidence_input.json"), ("EVIDENCE_REVISE", tmp / "evidence_revise.json"),
+                            ("EVIDENCE_REVIEW", tmp / "evidence_review.json")):
+            self.addCleanup(setattr, RC, name, getattr(RC, name))
+            setattr(RC, name, value)
+        self.tmp = tmp
+
+    def record(self, prompts, verdicts, *more):
+        (self.tmp / "p.json").write_text(json.dumps(prompts))
+        (self.tmp / "v.json").write_text(json.dumps(verdicts))
+        self.RC.evidence_record([str(self.tmp / "p.json"), "--review", str(self.tmp / "v.json"), "--model", "m", *more])
+
+    def test_a_failure_is_revised_once_then_decided_by_a_person(self):
+        good = "The latest record of this outcome, with the systems it covers and when it was last reviewed."
+        self.RC.evidence_prepare()
+        self.assertEqual(len(json.loads(self.RC.EVIDENCE_INPUT.read_text())["items"]), 2)
+        self.record({self.a: good, self.b: good}, [{"subcategory_id": self.a, "verdict": "pass"},
+                                                   {"subcategory_id": self.b, "verdict": "fail", "reason": "generic"}])
+        self.assertEqual(list(self.RC.evidence_targets()), [self.b])
+        with self.assertRaises(SystemExit):                       # the revision round is not finished
+            self.RC.evidence_prepare()
+        with self.assertRaises(SystemExit):                       # a revision must cover only the failed ones
+            self.record({self.a: good}, [{"subcategory_id": self.a, "verdict": "pass"}], "--revision")
+        self.record({self.b: good + " Revised."}, [{"subcategory_id": self.b, "verdict": "fail", "reason": "still"}],
+                    "--revision")
+        review = json.loads(self.RC.EVIDENCE_REVIEW.read_text())
+        self.assertEqual([len(i["drafts"]) for i in review["items"]], [2])
+        with self.assertRaises(SystemExit):                       # the person has not decided yet
+            self.RC.evidence_reviewed()
+        review["items"][0]["keep_category_line"] = True
+        self.RC.EVIDENCE_REVIEW.write_text(json.dumps(review))
+        self.RC.evidence_reviewed()
+        doc = json.loads(self.RC.EVIDENCE_PROMPTS.read_text())
+        self.assertEqual((doc["by_subcategory"][self.a], list(doc["category_line_kept"])), (good, [self.b]))
+        self.assertEqual(self.RC.evidence_targets(), {})          # never asked again
+        self.assertFalse(self.RC.EVIDENCE_REVIEW.exists())
 
 
 class Metadata(unittest.TestCase):
@@ -217,14 +284,12 @@ class CsfEvidencePrompts(unittest.TestCase):
             BQ.EVIDENCE = old
 
     def test_the_writer_file_and_the_review_are_validated_together(self):
-        import record_judgements as RJ
+        import record_csf_bank as RC
         ok = "The backup schedule for critical data and the latest restore test result."
-        store = Path(tempfile.mkdtemp()) / "evidence_prompts.json"
-        store.write_text(json.dumps({"default": "d", "by_category": {}}))
-        old, RJ.EVIDENCE_PROMPTS = RJ.EVIDENCE_PROMPTS, store   # a store without subcategory prompts
-        self.addCleanup(setattr, RJ, "EVIDENCE_PROMPTS", old)
-        self.assertEqual(RJ.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}]), [])
-        errs = RJ.validate_evidence({"PR.DS-11": "short", "ZZ.ZZ-01": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "fail"}])
+        self.assertEqual(RC.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}],
+                                              {"PR.DS-11"}), [])
+        errs = RC.validate_evidence({"PR.DS-11": "short", "ZZ.ZZ-01": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "fail"}],
+                                    {"PR.DS-11"})
         self.assertTrue(any("ZZ.ZZ-01" in e for e in errs) and any("30 to 400" in e for e in errs)
                         and any("a fail needs a reason" in e or "exactly one verdict" in e for e in errs))
 

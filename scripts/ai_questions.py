@@ -4,7 +4,7 @@ stored, combines the generator's and checker's files (assemble), says whether a 
 banks to and from their review spreadsheets.
 
 Called by: record_ai_bank.py (questions, evidence, assemble), sheet_io.py (the question sheets),
-           check_freshness.py (bank completeness), record_judgements.py
+           check_freshness.py (bank completeness), record_csf_bank.py
 Input:     data/ai/mapping.json, data/ai/question_rules.json, data/ai/scope_rules.json, the parsed AI RMF and CIS data
 Output:    data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json
 

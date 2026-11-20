@@ -1015,10 +1015,10 @@ class CsfBankStage(unittest.TestCase):
 
 
 class CsfBankRecording(unittest.TestCase):
-    """Characterisation of record_judgements.py bank mode (it shares its recording skeleton with record_ai_bank.py)."""
+    """Characterisation of record_csf_bank.py bank mode (it shares its recording skeleton with record_ai_bank.py)."""
 
     def setUp(self):
-        import record_judgements as RJ
+        import record_csf_bank as RJ
         self.RJ = RJ
         self.cache = Path(tempfile.mkdtemp())
         q = lambda text, flags: {"question_text": text, "title": "t", "category": "c", "sub_category": "s", "model_id": "1",

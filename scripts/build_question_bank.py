@@ -20,7 +20,7 @@ Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each ot
 
 Exit 2 if anything is pending in any sector: it writes one pending_judgements.json (each question once, whatever
 the sector) and no bank. An agent decides them
-(prompts/question_bank_judge.md), record_judgements.py stores the decisions, then run it again. Decisions are tied to
+(prompts/question_bank_judge.md), record_csf_bank.py stores the decisions, then run it again. Decisions are tied to
 the question's text, so they are redone only if CSET changes the question. --allow-pending writes the banks
 anyway, leaving pending questions out.
 """
