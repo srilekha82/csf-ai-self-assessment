@@ -16,7 +16,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 |---|---|
 | Generate a questionnaire for a client | `/generate-questions`. It asks the intake once (numbered choices), checks the banks are recent enough (it stops if one is missing or too old, and never rebuilds), then runs the CSF and AI commands, and writes one `questionnaire.xlsx` (CSF sheet + AI RMF sheet). |
 | Generate only the CSF part, or only the AI part | On an existing run folder: `/csf-questionnaire` or `/ai-questionnaire`. Each checks its questions and writes its own sheet; either can run in any order. |
-| See what is stale or missing | `.venv/bin/python ./scripts/check_freshness.py --all --run runs/<Org>_<date>` (CSF and AI together; `--domain <d> --certs <c>` instead of `--run` before a run exists). |
+| See what the bank builds need to redo (maintainer) | `.venv/bin/python ./scripts/check_freshness.py --csf` (NIST's reference data and every CSF bank against CSET) or `--ai-bank` (each part of the AI RMF build against its sources). |
 | Build or refresh the CSF bank for a domain | `/build-csf-bank`. `/generate-questions` stops and names it when a bank is missing or too old. |
 | Build or refresh the AI RMF mapping, the question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank`: pilot first; after you accept the pilot (`ai_pilot.py accept`) later rebuilds run on their own. |
 | Use a new Playbook, CIS guide or CSF download | Replace the file (`data/ai/source/` or `data/csf/source/csf2.xlsx`, links in `data/metadata.json`). The freshness check sees the change; rebuild with the commands above. |

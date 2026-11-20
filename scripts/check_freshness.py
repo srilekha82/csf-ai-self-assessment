@@ -3,20 +3,22 @@ For the maintainer: says which question banks and other build outputs are out of
 build commands know what to redo. It reports only; it never rebuilds. (A client run checks only the banks' age, with
 check_bank_age.py.)
 
-Called by: /build-ai-bank (--ai-bank), /build-csf-bank (--all)
+Called by: /build-ai-bank (--ai-bank), /build-csf-bank (--csf)
 Input:     the source files (AI RMF Playbook and CIS guides, NIST's CSF download, your CSET copy), the fingerprints each
            output recorded about them, data/metadata.json, the review spreadsheets
 Output:    a report on screen; exit 1 when something needs work
 
 Usage: .venv/bin/python ./scripts/check_freshness.py --ai-bank
-       .venv/bin/python ./scripts/check_freshness.py --all --domain D [--certs C ...]   (or --run runs/<Org>_<date>)
+       .venv/bin/python ./scripts/check_freshness.py --csf [--cset-path PATH]
 
   --ai-bank    for the maintainer (/build-ai-bank): one line per part of the AI RMF build (parsed sources, each bank,
                impact notes, pilot, AI areas, mapping): current, stale, missing or incomplete. Current means built from
                the source files as they are now (compared by fingerprint), complete, and approved where an approval is
                needed. Needs the source PDFs.
-  --all        for the maintainer: the age of the CSF reference data, the CSF bank against CSET (it runs git fetch on
-               your CSET copy and says so if that fails), and the AI RMF lines above.
+  --csf        for the maintainer (/build-csf-bank): the age of NIST's CSF reference data (csf2_core.json and the ISO
+               27001 and PCI DSS crosswalks), and each of the six CSF banks against CSET (it runs git fetch once on your
+               CSET copy, default ~/workstuff/cset, and says so if that fails). CSET's questions are collected for every
+               sector at once, so every bank is checked against the same CSET commit.
 
 Exit 0: everything checked is current. Exit 1: something needs work (listed).
 """
@@ -25,7 +27,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, CERT_FILES, DOMAINS, load_intake  # noqa: E402
+from options import AI_QUESTION_BANKS, CERT_FILES, DOMAINS  # noqa: E402
 from paths import (AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE,  # noqa: E402
                    AI_PARSE_CONFIG, AI_PILOT, AI_SAFEGUARD_IDS, AI_SAFEGUARDS, AI_SOURCE, AI_AREAS, AI_AREAS_XLSX, CSF_IMPACT_NOTES,
                    AI_IMPACT_NOTES_XLSX, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX, BANK_BUILD, DATA_AUDIT, METADATA,
@@ -107,8 +109,22 @@ def check_ai_bank() -> None:
     sys.exit(0)
 
 
-def csf_bank_stage(domain: str, cset_path: Path) -> tuple[tuple[str, bool, str], list[str]]:
-    """(stage line, notes) for the CSF question bank of a domain. Stale = the CSET SQL changed since the bank was built."""
+def cset_upstream(cset_path: Path) -> tuple[str | None, list[str], str]:
+    """(CSET's newest commit or None, notes, error). Fetches once; falls back to the local commit if the fetch fails."""
+    try:
+        git(cset_path, "fetch")
+        return git(cset_path, "rev-parse", "@{u}"), [], ""
+    except (RuntimeError, OSError) as e:
+        try:
+            local = git(cset_path, "rev-parse", "HEAD")
+        except (RuntimeError, OSError) as e2:
+            return None, [], f"cannot check against CSET ({e2})"
+        return local, [f"could not check upstream CSET ({e}); compared with the local CSET commit instead"], ""
+
+
+def csf_bank_stage(domain: str, cset_path: Path, upstream: tuple | None = None) -> tuple[tuple[str, bool, str], list[str]]:
+    """(stage line, notes) for the CSF question bank of a domain. Stale = the CSET SQL changed since the bank was built.
+    `upstream` is cset_upstream()'s result, so several banks share one fetch; without it this bank fetches itself."""
     stage = f"CSF bank {domain}"
     bank = load(bank_path(domain))
     if bank is None:
@@ -116,16 +132,9 @@ def csf_bank_stage(domain: str, cset_path: Path) -> tuple[tuple[str, bool, str],
     from build_question_bank import bank_inputs_sha
     if bank.get("inputs_sha") != bank_inputs_sha(BANK_BUILD):
         return (stage, False, "stale (the agent judgements or csf2_core.json changed since the bank was built)"), []
-    notes = []
-    try:
-        git(cset_path, "fetch")
-        ref = git(cset_path, "rev-parse", "@{u}")
-    except (RuntimeError, OSError) as e:
-        notes.append(f"could not check upstream CSET ({e}); compared with the local CSET commit instead")
-        try:
-            ref = git(cset_path, "rev-parse", "HEAD")
-        except (RuntimeError, OSError) as e2:
-            return (stage, False, f"cannot check against CSET ({e2})"), notes
+    ref, notes, error = upstream or cset_upstream(cset_path)
+    if ref is None:
+        return (stage, False, error), notes
     built = bank.get("cset_commit")
     if built == ref:
         return (stage, True, "current"), notes
@@ -138,12 +147,12 @@ def csf_bank_stage(domain: str, cset_path: Path) -> tuple[tuple[str, bool, str],
     return (stage, True, "current (CSET moved, no SQL changed)"), notes
 
 
-def reference_table(certs: list[str]) -> tuple[list[str], list[str]]:
-    """Print the age table of the reference data files relevant for these certs; (files checked, files needing attention)."""
+def reference_table() -> tuple[list[str], list[str]]:
+    """Print the age table of NIST's CSF reference data (csf2_core.json and every crosswalk); (files, files needing
+    attention)."""
     metadata = json.loads(METADATA.read_text())
 
-    relevant = ["csf2_core.json"]
-    relevant.extend(CERT_FILES[cert] for cert in certs if cert in CERT_FILES)
+    relevant = ["csf2_core.json", *CERT_FILES.values()]
 
     today = date.today()
     needs_attention = []
@@ -151,7 +160,7 @@ def reference_table(certs: list[str]) -> tuple[list[str], list[str]]:
     col_w = [22, 14, 9, 11, 45]
     sep = "─" * (sum(col_w) + len(col_w) * 3 - 1)
     header = f"{'File':<{col_w[0]}} {'Last updated':<{col_w[1]}} {'Age':<{col_w[2]}} {'Threshold':<{col_w[3]}} {'Status':<{col_w[4]}}"
-    print("\nData file status for this engagement:")
+    print("\nNIST CSF reference data:")
     print(sep)
     print(header)
     print(sep)
@@ -194,47 +203,39 @@ def reference_table(certs: list[str]) -> tuple[list[str], list[str]]:
     return relevant, needs_attention
 
 
-def check_all(args) -> None:
-    """CSF reference data, the CSF bank of the domain, and every AI RMF stage, in one report."""
-    ev = audit.begin(DATA_AUDIT, "check_freshness_all", {"domain": args.domain, "certs": args.certs})
-    _, files = reference_table(args.certs)
-    csf_stage, notes = csf_bank_stage(args.domain, Path(args.cset_path).expanduser())
-    stages = [csf_stage, *ai_stages()]
+def check_csf(cset_path: Path) -> None:
+    """NIST's CSF reference data and every sector's CSF bank against CSET, in one report."""
+    ev = audit.begin(DATA_AUDIT, "check_freshness_csf", {"cset_path": str(cset_path)})
+    _, files = reference_table()
+    upstream = cset_upstream(cset_path)
+    stages = [csf_bank_stage(domain, cset_path, upstream)[0] for domain in DOMAINS]
     print()
     for stage, ok, text in stages:
-        print(f"{stage + ':':<22}{text}")
-    for note in notes:
+        print(f"{stage + ':':<28}{text}")
+    for note in upstream[1]:
         print(f"note: {note}")
     todo = files + [stage for stage, ok, _ in stages if not ok]
     if todo:
         print(f"\nNeeds work: {', '.join(todo)}")
-        ev.finish("stale", detail=f"needs work: {', '.join(todo)}", stages={s: t for s, _, t in stages}, notes=notes)
+        ev.finish("stale", detail=f"needs work: {', '.join(todo)}", stages={s: t for s, _, t in stages},
+                  notes=upstream[1])
         sys.exit(1)
     print("\nEverything is current.")
-    ev.finish(detail="everything current", notes=notes)
+    ev.finish(detail="everything current", notes=upstream[1])
     sys.exit(0)
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--certs", nargs="*", default=[], choices=list(CERT_FILES), help="with --all and no --run")
-    parser.add_argument("--run", help="with --all: the run folder; domain and certs come from its intake.json")
-    parser.add_argument("--ai-bank", action="store_true", help="SHA-256 gate for the AI RMF build (see the docstring)")
-    parser.add_argument("--all", action="store_true", help="CSF and AI freshness together (needs --run, or --domain)")
-    parser.add_argument("--domain", choices=DOMAINS, help="with --all and no --run: the CSF domain")
-    parser.add_argument("--cset-path", default=DEFAULT_CSET_PATH, help="with --all: local CSET clone")
+    parser = argparse.ArgumentParser(description="For the maintainer: what the bank builds need to redo.")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--ai-bank", action="store_true", help="the AI RMF build: each part against its sources")
+    mode.add_argument("--csf", action="store_true", help="NIST's CSF reference data and every CSF bank against CSET")
+    parser.add_argument("--cset-path", default=DEFAULT_CSET_PATH, help="with --csf: your local CSET copy")
     args = parser.parse_args()
-
     if args.ai_bank:
         check_ai_bank()
-    if not args.all:
-        parser.error("give --ai-bank, or --all with --domain (or --run)")
-    if args.run:
-        intake = load_intake(args.run)
-        args.domain, args.certs = intake["domain"], intake["certs"]
-    elif not args.domain:
-        parser.error("--all needs --domain, or --run")
-    check_all(args)
+    check_csf(Path(args.cset_path).expanduser())
+
 
 if __name__ == "__main__":
     main()
