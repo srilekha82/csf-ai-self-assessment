@@ -9,8 +9,9 @@ Output:    data/csf/bank_build/cset_candidates.json
 Usage: .venv/bin/python ./scripts/extract_cset_candidates.py [--cset-path PATH] [--output-dir DIR] [--force] [--no-pull]
 
 cset_candidates.json holds, per CSF subcategory, CSET's own CSF 2.0 question (question set NCSF_V2) and the
-maturity-model questions (ACET, CPG, SSG ...) CSET links to it, with text, category and model. The SQL files are read
-in file order, because later files change or delete earlier rows.
+maturity-model questions (ACET, CPG, SSG ...) CSET links to it, with text, category, model and practice fields. CSET
+has no plain question list: its SQL migration files add, change and delete rows over time. replay() reads them in file
+order and keeps each table's rows as they are after the last file (every INSERT, UPDATE and DELETE counts).
 
 It skips the work when CSET has not changed since the last run (same commit, or no SQL file changed). Each question
 gets flags for later steps: empty_text, truncated, not_answerable, statement_only (a practice with no question text,
@@ -25,7 +26,6 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -42,6 +42,7 @@ DEFAULT_QUESTION_COLUMNS = ["Mat_Question_Id", "Question_Title", "Question_Text"
                             "Category", "Sub_Category", "Maturity_Level_Id", "Sequence", "Maturity_Model_Id"]
 
 NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+SUBCATEGORY_ID = re.compile(r"[A-Z]{2}\.[A-Z]{2}-\d{2}$")
 
 
 def git(cset_path: Path, *args) -> str:
@@ -122,6 +123,7 @@ def parse_values(s: str, i: int) -> list:
 
 
 def parse_insert(line: str, default_cols: list[str] | None = None) -> dict | None:
+    """{column: value} of one INSERT. An INSERT without a column list uses default_cols."""
     m = re.search(r"INSERT INTO \[dbo\]\.\[\w+\]\s*(?:\((.*?)\))?\s*VALUES\s*\(", line)
     if not m:
         return None
@@ -130,25 +132,37 @@ def parse_insert(line: str, default_cols: list[str] | None = None) -> dict | Non
     return dict(zip(cols, vals))
 
 
-def parse_update_set(line: str) -> tuple[dict, str]:
-    """Parse 'UPDATE ... SET [A]=v, [B]=v WHERE ...' -> ({A: v, B: v}, where_clause)."""
+ASSIGN = re.compile(r"\s*\[(\w+)\]\s*=\s*")
+
+
+def parse_assignments(text: str, i: int, separator: str) -> tuple[dict, int]:
+    """[A]=v <separator> [B]=v ... from text[i]: ({A: v, B: v}, index after the last one)."""
+    out = {}
+    while True:
+        cm = ASSIGN.match(text, i)
+        if not cm:
+            return out, i
+        out[cm.group(1)], i = parse_value(text, cm.end())
+        rest = re.match(r"\s*" + separator + r"\s*", text[i:], re.I)
+        if not rest:
+            return out, i
+        i += rest.end()
+
+
+def parse_update(line: str) -> tuple[dict, dict]:
+    """'UPDATE ... SET [A]=v, [B]=v WHERE [K]=k AND ...' -> ({A: v, B: v}, {K: k, ...})."""
     m = re.search(r"\bSET\s+", line)
     if not m:
-        return {}, ""
-    i, out = m.end(), {}
-    while True:
-        cm = re.compile(r"\s*\[(\w+)\]\s*=\s*").match(line, i)
-        if not cm:
-            break
-        v, i = parse_value(line, cm.end())
-        out[cm.group(1)] = v
-        while i < len(line) and line[i] in " \t":
-            i += 1
-        if i < len(line) and line[i] == ",":
-            i += 1
-        else:
-            break
-    return out, line[i:]
+        return {}, {}
+    sets, i = parse_assignments(line, m.end(), ",")
+    w = re.compile(r"\s*WHERE\s+", re.I).match(line, i)
+    return sets, (parse_assignments(line, w.end(), "AND")[0] if w else {})
+
+
+def parse_delete(line: str) -> dict:
+    """'DELETE FROM ... WHERE [K]=k AND ...' -> {K: k, ...}."""
+    m = re.search(r"\bWHERE\s+", line, re.I)
+    return parse_assignments(line, m.end(), "AND")[0] if m else {}
 
 
 # ── extraction ────────────────────────────────────────────────────────────────
@@ -188,69 +202,36 @@ def read_sql_lines(cset_sql: Path) -> list[str]:
     return lines
 
 
-def net_active_pairs(lines: list[str]) -> set[tuple[int, str]]:
-    ins_pat = re.compile(r"VALUES \((\d+), %d, N?'([A-Z]{2}\.[A-Z]{2}-\d{2})'" % CSF_GEN_FILE_ID)
-    del_pat = re.compile(r"\[Mat_Question_Id\] = (\d+).*?\[Section_Ref\] = N?'([A-Z]{2}\.[A-Z]{2}-\d{2})'")
-    active: set[tuple[int, str]] = set()
-    for line in lines:   # replayed in migration order: a mapping deleted and inserted again stays
-        if "[MATURITY_REFERENCES]" not in line:
-            continue
-        if "INSERT INTO" in line and f", {CSF_GEN_FILE_ID}, " in line:
-            m = ins_pat.search(line)
-            if m:
-                active.add((int(m.group(1)), m.group(2)))
-        elif "DELETE FROM" in line and f"Gen_File_Id] = {CSF_GEN_FILE_ID}" in line:
-            m = del_pat.search(line)
-            if m:
-                active.discard((int(m.group(1)), m.group(2)))
-    return active
-
-
-def extract_models(lines: list[str]) -> dict[int, str]:
-    models = {}
+def replay(lines: list[str], table: str, key: tuple[str, ...], default_cols: list[str] | None = None) -> dict:
+    """The rows of one table after every migration: INSERT adds a row, UPDATE changes it, DELETE removes it, in file
+    order. Rows are keyed by the `key` columns (the table's primary key), as a tuple."""
+    stmt = re.compile(r"^(INSERT INTO|UPDATE|DELETE FROM) \[dbo\]\.\[%s\][\s(]" % table)
+    rows: dict[tuple, dict] = {}
     for line in lines:
-        if "INSERT INTO [dbo].[MATURITY_MODELS]" in line:
-            row = parse_insert(line)
-            if row and row.get("Maturity_Model_Id") is not None:
-                models[int(row["Maturity_Model_Id"])] = row.get("Model_Name")
-    return models
-
-
-def extract_questions(lines: list[str], qids: set[int]) -> tuple[dict[int, dict], dict]:
-    """Replay MATURITY_QUESTIONS INSERT / UPDATE / DELETE for qids, in migration order."""
-    state: dict[int, dict] = {}
-    stats = {"inserted": 0, "text_updates": 0, "answerable_updates": 0, "deleted": 0}
-    id_in_where = re.compile(r"\[Mat_Question_Id\]\s*=\s*(\d+)")
-
-    for line in lines:
-        if "[MATURITY_QUESTIONS]" not in line:
+        line = line.lstrip("\ufeff \t")                     # some statements are indented or start with a BOM
+        m = stmt.match(line)
+        if not m:
             continue
-        if "INSERT INTO" in line:
-            m = re.search(r"VALUES\s*\((\d+)", line)
-            if not m or int(m.group(1)) not in qids:
-                continue
-            row = parse_insert(line, DEFAULT_QUESTION_COLUMNS)
-            if row:
-                state.setdefault(int(m.group(1)), row)
-                stats["inserted"] += 1
-        elif "UPDATE" in line:
-            m = id_in_where.search(line)
-            if not m or int(m.group(1)) not in qids or int(m.group(1)) not in state:
-                continue
-            sets, _ = parse_update_set(line)
-            row = state[int(m.group(1))]
-            if "Question_Text" in sets and sets["Question_Text"]:
-                row["Question_Text"] = sets["Question_Text"]
-                stats["text_updates"] += 1
-            if "Is_Answerable" in sets:
-                row["Is_Answerable"] = sets["Is_Answerable"]
-                stats["answerable_updates"] += 1
-        elif "DELETE FROM" in line:
-            m = id_in_where.search(line)
-            if m and int(m.group(1)) in state:
-                del state[int(m.group(1))]
-                stats["deleted"] += 1
-    return state, stats
+        if m.group(1) == "INSERT INTO":
+            row = parse_insert(line, default_cols)
+            if row and all(k in row for k in key):
+                rows[tuple(row[k] for k in key)] = row
+        elif m.group(1) == "UPDATE":
+            sets, where = parse_update(line)
+            old = tuple(where.get(k) for k in key)
+            if old in rows:
+                row = rows.pop(old)
+                row.update(sets)
+                rows[tuple(row[k] for k in key)] = row      # an update may change a key column
+        else:
+            rows.pop(tuple(parse_delete(line).get(k) for k in key), None)
+    return rows
+
+
+def csf_mappings(lines: list[str]) -> set[tuple[int, str]]:
+    """(maturity question id, CSF 2.0 subcategory) for every link in MATURITY_REFERENCES to the CSF 2.0 file."""
+    refs = replay(lines, "MATURITY_REFERENCES", ("Mat_Question_Id", "Gen_File_Id", "Section_Ref"))
+    return {(q, ref) for q, f, ref in refs if f == CSF_GEN_FILE_ID and SUBCATEGORY_ID.match(str(ref or ""))}
 
 
 def clean_text(raw: str | None) -> str:
@@ -259,65 +240,19 @@ def clean_text(raw: str | None) -> str:
 
 # ── CSET's own CSF 2.0 set (NCSF_V2): one question per subcategory ────────────
 
-SUBCATEGORY_ID = re.compile(r"[A-Z]{2}\.[A-Z]{2}-\d{2}$")
 TRAILING_REF = re.compile(r"\s*\([A-Z]{2}\.[A-Z]{2}-\d{2}\)(?=[.?]?$)")
-
-
-def replay_table(lines: list[str], table: str, id_col: str, keep_cols: set[str]) -> dict[int, dict]:
-    """Replay INSERT / UPDATE / DELETE of one table keyed by id_col, keeping only keep_cols."""
-    state: dict[int, dict] = {}
-    tag = f"[dbo].[{table}]"
-    id_in_where = re.compile(r"\[%s\]\s*=\s*(\d+)" % id_col)
-    for line in lines:
-        if tag + " " not in line and tag + "(" not in line:
-            continue
-        if line.startswith("INSERT INTO"):
-            row = parse_insert(line)
-            if row and isinstance(row.get(id_col), int):
-                state[row[id_col]] = {k: v for k, v in row.items() if k in keep_cols}
-        elif line.startswith("UPDATE"):
-            sets, where = parse_update_set(line)
-            m = id_in_where.search(where)
-            if m and int(m.group(1)) in state:
-                state[int(m.group(1))].update({k: v for k, v in sets.items() if k in keep_cols})
-        elif line.startswith("DELETE FROM"):
-            m = id_in_where.search(line)
-            if m:
-                state.pop(int(m.group(1)), None)
-    return state
-
-
-def csf2_links(lines: list[str], set_name: str) -> dict[int, int]:
-    """Question id -> requirement id in REQUIREMENT_QUESTIONS_SETS for one set, after every migration."""
-    links: dict[int, int] = {}
-    qid_in_where = re.compile(r"\[Question_Id\]\s*=\s*(\d+)")
-    for line in lines:
-        if "[REQUIREMENT_QUESTIONS_SETS]" not in line or f"'{set_name}'" not in line:
-            continue
-        if line.startswith("INSERT INTO"):
-            row = parse_insert(line)
-            if row and row.get("Set_Name") == set_name:
-                links[int(row["Question_Id"])] = int(row["Requirement_Id"])
-        elif line.startswith("UPDATE"):
-            sets, where = parse_update_set(line)
-            m = qid_in_where.search(where)
-            if m and "Requirement_Id" in sets:
-                links[int(m.group(1))] = int(sets["Requirement_Id"])
-        elif line.startswith("DELETE FROM"):
-            m = qid_in_where.search(line)
-            if m:
-                links.pop(int(m.group(1)), None)
-    return links
 
 
 def extract_csf2_set(lines: list[str]) -> dict[str, dict]:
     """CSET's CSF 2.0 standard (NCSF_V2): subcategory -> its question(s). Every subcategory has one in CSET."""
-    reqs = replay_table(lines, "NEW_REQUIREMENT", "Requirement_Id", {"Requirement_Title"})
-    texts = replay_table(lines, "NEW_QUESTION", "Question_Id", {"Simple_Question"})
+    reqs = replay(lines, "NEW_REQUIREMENT", ("Requirement_Id",))
+    texts = replay(lines, "NEW_QUESTION", ("Question_Id",))
+    links = sorted((q, r["Requirement_Id"]) for (q, name), r in
+                   replay(lines, "REQUIREMENT_QUESTIONS_SETS", ("Question_Id", "Set_Name")).items() if name == CSF2_SET_NAME)
     out: dict[str, dict] = {}
-    for qid, rid in sorted(csf2_links(lines, CSF2_SET_NAME).items()):
-        sid = str((reqs.get(rid) or {}).get("Requirement_Title") or "")
-        text = clean_text((texts.get(qid) or {}).get("Simple_Question"))
+    for qid, rid in links:
+        sid = str((reqs.get((rid,)) or {}).get("Requirement_Title") or "")
+        text = clean_text((texts.get((qid,)) or {}).get("Simple_Question"))
         if not SUBCATEGORY_ID.match(sid) or not text:
             continue
         out.setdefault(sid, {"questions": []})["questions"].append(
@@ -350,38 +285,30 @@ def question_flags(raw_text: str | None, is_answerable, practice: dict) -> list[
 
 
 def build_candidates(lines: list[str], cset_commit: str) -> dict:
-    pairs = net_active_pairs(lines)
+    """cset_candidates.json: per question its text, model, category and practice fields with flags; the question ->
+    subcategory mappings; and CSET's own CSF 2.0 set."""
+    pairs = csf_mappings(lines)
     qids = {q for q, _ in pairs}
-    models = extract_models(lines)
-    rows, stats = extract_questions(lines, qids)
-
+    models = {m: r.get("Model_Name") for (m,), r in replay(lines, "MATURITY_MODELS", ("Maturity_Model_Id",)).items()}
+    rows = {q: r for (q,), r in replay(lines, "MATURITY_QUESTIONS", ("Mat_Question_Id",), DEFAULT_QUESTION_COLUMNS).items()
+            if q in qids}
     questions = {}
     for qid in sorted(rows):
         r = rows[qid]
-        model_id = r.get("Maturity_Model_Id")
         practice = practice_fields(r)
         questions[str(qid)] = {
             "question_text": clean_text(r.get("Question_Text")),
-            "title": r.get("Question_Title"),
             "category": r.get("Category"),
             "sub_category": r.get("Sub_Category"),
-            "model_id": model_id,
-            "model_name": models.get(model_id),
-            "is_answerable": r.get("Is_Answerable"),
+            "model_name": models.get(r.get("Maturity_Model_Id")),
             "practice": practice,
             "flags": question_flags(r.get("Question_Text"), r.get("Is_Answerable"), practice),
         }
-    mappings = [{"qid": q, "subcategory_id": s} for q, s in sorted(pairs) if str(q) in questions]
-    csf2_set = extract_csf2_set(lines)
     return {
         "cset_commit": cset_commit,
-        "extracted_on": date.today().isoformat(),
-        "stats": {**stats, "net_active_pairs": len(pairs), "questions": len(questions),
-                  "dropped_deleted_questions": len(qids) - len(questions), "csf2_set_subcategories": len(csf2_set)},
-        "models": {str(k): v for k, v in sorted(models.items())},
         "questions": questions,
-        "mappings": mappings,
-        "csf2_set": csf2_set,
+        "mappings": [{"qid": q, "subcategory_id": s} for q, s in sorted(pairs) if str(q) in questions],
+        "csf2_set": extract_csf2_set(lines),
     }
 
 
@@ -441,20 +368,15 @@ def main():
 
     data = build_candidates(read_sql_lines(cset_sql), cset_commit)
     out_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
-    s = data["stats"]
     flag_counts: dict[str, int] = {}
     for q in data["questions"].values():
         for f in q["flags"]:
             flag_counts[f] = flag_counts.get(f, 0) + 1
-    no_model = sum(1 for q in data["questions"].values() if q["model_id"] is None)
-    print(f"Extracted: {out_path}\nCSET commit: {cset_commit}\n"
-          f"Questions: {s['questions']} | mappings: {s['net_active_pairs']} | text updates: {s['text_updates']} "
-          f"| dropped (deleted in CSET): {s['dropped_deleted_questions']}\n"
-          f"CSF 2.0 set ({CSF2_SET_NAME}): {s['csf2_set_subcategories']} subcategories\n"
-          f"Flags: {flag_counts} | missing model id: {no_model}")
-    ev.finish(outputs=[out_path], detail=f"extracted {s['questions']} questions, {s['net_active_pairs']} mappings; flags {flag_counts}",
-              cset_commit=cset_commit)
-
+    no_model = sum(1 for q in data["questions"].values() if q["model_name"] is None)
+    detail = (f"{len(data['questions'])} questions, {len(data['mappings'])} mappings, CSF 2.0 set ({CSF2_SET_NAME}) "
+              f"{len(data['csf2_set'])} subcategories; flags {flag_counts}; no model: {no_model}")
+    print(f"Extracted: {out_path}\nCSET commit: {cset_commit}\n{detail}")
+    ev.finish(outputs=[out_path], detail=detail, cset_commit=cset_commit)
 
 if __name__ == "__main__":
     main()

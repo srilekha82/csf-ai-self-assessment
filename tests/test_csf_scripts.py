@@ -80,14 +80,26 @@ class ParseSoa(unittest.TestCase):
 class CsetReplay(unittest.TestCase):
     def ref(self, verb, qid, sid):
         if verb == "INSERT":
-            return f"INSERT INTO [dbo].[MATURITY_REFERENCES] VALUES ({qid}, {EX.CSF_GEN_FILE_ID}, N'{sid}')"
+            return (f"INSERT INTO [dbo].[MATURITY_REFERENCES] ([Mat_Question_Id], [Gen_File_Id], [Section_Ref]) "
+                    f"VALUES ({qid}, {EX.CSF_GEN_FILE_ID}, N'{sid}')")
         return (f"DELETE FROM [dbo].[MATURITY_REFERENCES] WHERE [Mat_Question_Id] = {qid} AND "
                 f"[Gen_File_Id] = {EX.CSF_GEN_FILE_ID} AND [Section_Ref] = N'{sid}'")
 
     def test_a_mapping_deleted_then_inserted_again_stays(self):
         lines = [self.ref("INSERT", 1, "ID.AM-01"), self.ref("DELETE", 1, "ID.AM-01"), self.ref("INSERT", 1, "ID.AM-01"),
                  self.ref("INSERT", 2, "PR.DS-11"), self.ref("DELETE", 2, "PR.DS-11")]
-        self.assertEqual(EX.net_active_pairs(lines), {(1, "ID.AM-01")})
+        self.assertEqual(EX.csf_mappings(lines), {(1, "ID.AM-01")})
+
+    def test_every_later_update_counts(self):
+        # CSET rewrote the practice fields of some questions in a later file; the last value is the one kept
+        lines = ["INSERT INTO [dbo].[MATURITY_QUESTIONS] ([Mat_Question_Id], [Question_Text], [Security_Practice]) "
+                 "VALUES (7, N'', N'Old practice')",
+                 "  UPDATE [dbo].[MATURITY_QUESTIONS] SET [Sequence]=1, [Security_Practice]=N'New, practice' "
+                 "WHERE [Mat_Question_Id] = 7",
+                 "UPDATE [dbo].[MATURITY_QUESTIONS] SET [Question_Text]=N'Is it done?' WHERE [Mat_Question_Id] = 8"]
+        rows = EX.replay(lines, "MATURITY_QUESTIONS", ("Mat_Question_Id",))
+        self.assertEqual(list(rows), [(7,)])
+        self.assertEqual(rows[(7,)]["Security_Practice"], "New, practice")
 
     def test_an_unknown_stored_commit_means_extract_again(self):
         out = Path(tempfile.mkdtemp()) / "cset_candidates.json"
