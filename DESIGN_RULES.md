@@ -23,6 +23,12 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    certifications, question types) in `data/common/intake_options.json`. Changing a rule means editing JSON. Keep each
    constant in one place only: scripts import shared facts from `scripts/options.py` (which reads those files) and
    paths from `scripts/paths.py`; a script never defines its own copy of a domain list, function order or bank name.
+   **Spreadsheet layouts live in `templates/`, not in code.** The questionnaire's sheets, headers, colours, widths and
+   drop-downs are `templates/questionnaire_template.xlsx`, edited in Excel; `write_questionnaire.py` copies it into the
+   run folder and only fills rows, writing each value under its header by name. Per client it only hides: the AI
+   systems sheet when the inventory question (GOVERN 1.6) is not asked (AI in use "none"), and the AI area columns the
+   client did not tick (all are shown for AI in use "unsure"). A test fails if the template no longer matches the data
+   it shows (AI area labels, criticality bands, question headers).
 7. **Every agent that writes is checked by another, in a fresh context** (a subagent with only the files it needs):
    questions, notes, mapping rows. The same loop everywhere: a verdict on every item, fail when unsure; one revision
    turn on the failures; round 2 judges only what changed (an unchanged item keeps its pass, and the recording script

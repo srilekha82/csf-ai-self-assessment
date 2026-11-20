@@ -238,6 +238,9 @@ class Workbook(unittest.TestCase):
                  "questions": [{"question_text": text, "source_reference": "s"}], "evidence_prompt": "ep",
                  "confidence_flag": "", **extra}]
 
+    def visible(self, wb):
+        return [s.title for s in wb if s.sheet_state == "visible"]
+
     def write(self, framework, *files, out):
         argv = ["x", *map(str, files), str(out)] + (["--framework", framework] if framework != "csf" else [])
         sys.argv = argv
@@ -253,33 +256,71 @@ class Workbook(unittest.TestCase):
         self.write("csf", csf, out=out)     # then CSF: used to wipe the AI sheet
         self.write("csf", csf, out=out)     # and a CSF re-run must keep it
         wb = openpyxl.load_workbook(out)
-        self.assertEqual(wb.sheetnames, ["CSF Questionnaire", "AI RMF Questionnaire"])
+        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire"])
         self.assertEqual(wb["AI RMF Questionnaire"].max_row, 2)
         self.assertEqual(wb["CSF Questionnaire"].max_row, 2)
 
-    def test_the_ai_system_inventory_gets_its_own_table_sheet(self):
+    def test_the_ai_system_inventory_sheet_shows_only_when_asked(self):
         import openpyxl
-        from paths import AI_AREA_LABELS, AI_QUESTION_RULES
+        from paths import AI_QUESTION_RULES
         tmp = Path(tempfile.mkdtemp())
         ai, out = tmp / "ai.json", tmp / "questionnaire.xlsx"
         ai.write_text(json.dumps(self.entries("GOVERN", "GOVERN 1.1", "How is AI governed?", bank="foundation")))
         self.write("ai", ai, out=out)
-        self.assertEqual(openpyxl.load_workbook(out).sheetnames, ["AI RMF Questionnaire"])   # no inventory asked
         inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
+        self.assertEqual(self.visible(openpyxl.load_workbook(out)), ["CSF Questionnaire", "AI RMF Questionnaire"])
+        ai.write_text(json.dumps(self.entries("GOVERN", inv["subcategory"], "In the AI systems sheet, list ...",
+                                              bank="foundation")))
+        self.write("ai", ai, out=out)                                    # a re-run that asks it shows the sheet again
+        wb = openpyxl.load_workbook(out)
+        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire", inv["sheet"]])
+        ws = wb[inv["sheet"]]
+        hidden = [c.value for c in ws[2] if ws.column_dimensions[c.column_letter].hidden]
+        self.assertEqual(hidden, [])                                      # no ai_usage.json: treated as unsure, all shown
+
+    def area_columns_shown(self, usage):
+        import openpyxl
+        from paths import AI_AREA_LABELS, AI_QUESTION_RULES
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / "ai_usage.json").write_text(json.dumps(usage))
+        inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
+        ai, out = tmp / "ai.json", tmp / "questionnaire.xlsx"
         ai.write_text(json.dumps(self.entries("GOVERN", inv["subcategory"], "In the AI systems sheet, list ...",
                                               bank="foundation")))
         self.write("ai", ai, out=out)
-        self.write("ai", ai, out=out)                                    # a re-run replaces it
-        wb = openpyxl.load_workbook(out)
-        self.assertEqual(wb.sheetnames, ["AI RMF Questionnaire", inv["sheet"]])
-        ws = wb[inv["sheet"]]
-        heads = [c.value for c in ws[2]]
-        labels = list(json.loads(AI_AREA_LABELS.read_text())["labels"].values())
-        self.assertEqual(heads[0], inv["system_column"])
-        self.assertEqual(sorted(heads[1:1 + len(labels)]), sorted(labels))
-        self.assertEqual(heads[1 + len(labels):], list(inv["criticality"]))
-        self.assertEqual(len(ws.data_validations.dataValidation), len(heads) - 1)
+        ws = openpyxl.load_workbook(out)[inv["sheet"]]
+        labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
+        return {c.value for c in ws[2] if c.value in labels.values() and not ws.column_dimensions[c.column_letter].hidden}
 
+    def test_the_ai_systems_sheet_shows_only_the_clients_ai_areas(self):
+        from paths import AI_AREA_LABELS
+        labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
+        some = {"ai_in_use": "some", "ai_areas": ["customer_facing", "invisible_usage"]}
+        self.assertEqual(self.area_columns_shown(some), {labels["customer_facing"], labels["invisible_usage"]})
+        self.assertEqual(self.area_columns_shown({"ai_in_use": "unsure", "ai_areas": ["invisible_usage"]}),
+                         set(labels.values()))                            # unsure: all, to find out what AI it has
+
+    def test_the_template_matches_the_data(self):
+        """The questionnaire template is laid out by hand in Excel: fail if it drifts from the data it shows."""
+        import openpyxl
+        from paths import AI_AREAS, AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE
+        wb = openpyxl.load_workbook(QUESTIONNAIRE_TEMPLATE)
+        for framework, spec in WQ.FRAMEWORKS.items():
+            heads = {c.value for c in wb[spec["sheet"]][1]}
+            self.assertLessEqual(set(WQ.row_values(framework, {}, 0, {})) | {"Answer", "Evidence"}, heads, framework)
+        inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
+        labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
+        areas = [labels[a["id"]] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
+        ws = wb[inv["sheet"]]
+        self.assertEqual(ws["A1"].value, inv["instructions"])
+        self.assertEqual([c.value for c in ws[2]], [inv["system_column"], *areas, *inv["criticality"]])
+        from openpyxl.utils.cell import range_boundaries
+        bounds = [(range_boundaries(str(dv.sqref)), dv) for dv in ws.data_validations.dataValidation]
+        lists = {b[0]: dv.formula1.strip('"').split(",") for b, dv in bounds}
+        self.assertEqual([lists[c] for c in range(2, 2 + len(areas))], [["Yes"]] * len(areas))
+        self.assertEqual([lists[2 + len(areas) + i] for i in range(len(inv["criticality"]))],
+                         list(inv["criticality"].values()))
+        self.assertEqual({b[3] for b, _ in bounds}, {2 + inv["rows"]})
 
 if __name__ == "__main__":
     unittest.main()

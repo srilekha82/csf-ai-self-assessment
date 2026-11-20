@@ -40,7 +40,8 @@ hand. Exit 0:
 
 `.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/ai_questions_draft_foundation.json <run_dir>/ai_questions_draft_areas.json <run_dir>/questionnaire.xlsx --framework ai`
 
-It writes or replaces only the AI RMF sheet (and the AI systems sheet when the inventory question is asked).
+It fills only the AI RMF sheet, and shows the AI systems sheet with the client's own AI areas when the inventory
+question is asked (it stays hidden otherwise).
 
 ## Done
 Tell the user: the run folder and the counts per bank (subcategories, questions).

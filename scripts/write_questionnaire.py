@@ -2,151 +2,120 @@
 Writes the picked questions into the questionnaire workbook, one row per question.
 
 Called by: /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes
-Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files
+Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files; <run_dir>/ai_usage.json
+           (which AI areas to show); templates/questionnaire_template.xlsx (the layout)
 Output:    <run_dir>/questionnaire.xlsx (its CSF sheet, or its AI RMF and AI systems sheets)
 
-Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai] [--sheet NAME]
+Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai]
 
   csf (default)  csf_questions_draft.json -> sheet "CSF Questionnaire"
   ai             ai_questions_draft_foundation.json and ai_questions_draft_areas.json -> sheet "AI RMF Questionnaire",
-                 with an Area column (whole organisation, one AI area, or "This question covers: ..."). If the AI
-                 system inventory question is asked, it also adds an "AI systems" sheet where the client lists them.
+                 with an Area column (whole organisation, one AI area, or "This question covers: ...")
 
-Each mode replaces only its own sheet, so the two can be written in any order. The CSF sheet always comes first.
+The layout (sheets, headers, colours, widths, drop-downs) lives in the template, not here: change it in Excel. The first
+run copies the template into the run folder; each mode then clears and refills only its own sheet, writing each value
+under its header by name, so the two can be written in any order and a column can be moved in the template.
+
+The AI systems sheet (the client lists its AI systems for the GOVERN 1.6 inventory question) is shown only when that
+question is asked: AI in use "none" does not get it, so it is hidden. Its AI area columns show only the client's own AI
+areas (ai_usage.json); for AI in use "unsure" all of them, since the sheet is how such a client finds out what AI it has.
 """
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
 import openpyxl
-from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.datavalidation import DataValidation
 
 sys.path.insert(0, str(Path(__file__).parent))
 from options import AI_FUNCTION_ORDER, AI_QUESTION_BANKS, CSF_FUNCTION_ORDER  # noqa: E402
-from paths import AI_AREA_LABELS, AI_AREAS, AI_QUESTION_RULES  # noqa: E402
+from paths import AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE  # noqa: E402
 import audit  # noqa: E402
 
-FRAMEWORKS = {
-    "csf": {
-        "sheet": "CSF Questionnaire",
-        "order": CSF_FUNCTION_ORDER,
-        "headers": ["Function", "Subcategory ID", "Q#", "Outcome", "Question Type", "Question", "Source", "Confidence",
-                    "Evidence Required", "Answer", "Evidence"],
-        "widths": [10, 14, 5, 40, 14, 70, 35, 20, 40, 40, 40],
-    },
-    "ai": {
-        "sheet": "AI RMF Questionnaire",
-        "order": AI_FUNCTION_ORDER,
-        "headers": ["Function", "Subcategory ID", "Area", "Q#", "Outcome", "Question Type", "Question", "Source",
-                    "CIS Reference", "Confidence", "Evidence Required", "Answer", "Evidence"],
-        "widths": [10, 14, 24, 5, 40, 14, 70, 35, 22, 20, 40, 40, 40],
-    },
-}
+FRAMEWORKS = {"csf": {"sheet": "CSF Questionnaire", "order": CSF_FUNCTION_ORDER},
+              "ai": {"sheet": "AI RMF Questionnaire", "order": AI_FUNCTION_ORDER}}
 
 
-def row_values(framework: str, entry: dict, q_num: int, q: dict) -> list:
-    function, sid = entry.get("function", ""), entry.get("subcategory_id", "")
-    rest = [entry.get("outcome", ""), entry.get("question_type", ""), q.get("question_text", ""),
-            q.get("source_reference", "")]
-    confidence, evidence = entry.get("confidence_flag", ""), entry.get("evidence_prompt", "")
+def row_values(framework: str, entry: dict, q_num: int, q: dict) -> dict:
+    """{header: value} for one question row. Answer and Evidence stay blank for the client."""
+    row = {"Function": entry.get("function", ""), "Subcategory ID": entry.get("subcategory_id", ""), "Q#": q_num,
+           "Outcome": entry.get("outcome", ""), "Question Type": entry.get("question_type", ""),
+           "Question": q.get("question_text", ""), "Source": q.get("source_reference", ""),
+           "Confidence": entry.get("confidence_flag", ""), "Evidence Required": entry.get("evidence_prompt", "")}
     if framework == "ai":
-        return ([function, sid, q.get("applies_to", ""), q_num] + rest +
-                [", ".join(q.get("cis_refs", [])), confidence, q.get("evidence_prompt") or evidence, "", ""])
-    return [function, sid, q_num] + rest + [confidence, evidence, "", ""]
+        row.update({"Area": q.get("applies_to", ""), "CIS Reference": ", ".join(q.get("cis_refs", [])),
+                    "Evidence Required": q.get("evidence_prompt") or entry.get("evidence_prompt", "")})
+    return row
 
 
-def replace_sheet(wb, name: str):
-    if name in wb.sheetnames:  # re-run: replace that sheet, keep the others
-        del wb[name]
-    return wb.create_sheet(name)
+def fill_questions(ws, framework: str, entries: list[dict]) -> int:
+    """Clear the sheet below its header and write one row per question; returns the number of rows."""
+    columns = {c.value: c.column for c in ws[1] if c.value}
+    missing = sorted(set(row_values(framework, {}, 0, {})) - set(columns))
+    if missing:
+        sys.exit(f"[write_questionnaire] ERROR: the template's '{ws.title}' sheet has no column {missing}; "
+                 f"fix {QUESTIONNAIRE_TEMPLATE.name}. Nothing written.")
+    if ws.max_row > 1:
+        ws.delete_rows(2, ws.max_row - 1)
+    bank_order = {b: i for i, b in enumerate(AI_QUESTION_BANKS)}
+    order = FRAMEWORKS[framework]["order"]
+    entries = sorted(entries, key=lambda e: (order.get(e.get("function", ""), 99), e.get("subcategory_id", ""),
+                                             bank_order.get(e.get("bank"), 9)))
+    row = 2
+    for entry in entries:
+        for q_num, q in enumerate(entry.get("questions", []), 1):
+            for header, value in row_values(framework, entry, q_num, q).items():
+                ws.cell(row=row, column=columns[header], value=value).alignment = Alignment(wrap_text=True,
+                                                                                            vertical="top")
+            row += 1
+    ws.auto_filter.ref = f"A1:{get_column_letter(ws.max_column)}{max(row - 1, 1)}"
+    return row - 2
 
 
-def style_header(cell):
-    cell.fill = PatternFill("solid", fgColor="1A56DB")
-    cell.font = Font(bold=True, color="FFFFFF")
-    cell.alignment = Alignment(wrap_text=True, vertical="top")
-
-
-def write_inventory(wb, inv: dict) -> None:
-    """The AI system inventory as a table: instructions, then a header row, then blank rows with drop-downs."""
+def show_inventory(wb, entries: list[dict], usage_path: Path) -> str:
+    """Show the AI systems sheet only when the inventory question is asked, with the client's AI area columns."""
+    inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
+    ws = wb[inv["sheet"]]
+    if not any(e.get("subcategory_id") == inv["subcategory"] for e in entries):
+        ws.sheet_state = "veryHidden"
+        return f"{inv['sheet']} sheet hidden (the inventory question is not asked)"
+    ws.sheet_state = "visible"
     labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
-    areas = [labels[a["id"]] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
-    ws = replace_sheet(wb, inv["sheet"])
-    headers = [inv["system_column"]] + areas + list(inv["criticality"])
-    ws.cell(row=1, column=1, value=inv["instructions"]).font = Font(bold=True)
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
-    first, last = 3, 2 + inv["rows"]
-    for col, h in enumerate(headers, 1):
-        style_header(ws.cell(row=2, column=col, value=h))
-        ws.column_dimensions[get_column_letter(col)].width = 40 if col == 1 else 18
-    lists = [["Yes"]] * len(areas) + list(inv["criticality"].values())
-    for col, options in enumerate(lists, 2):
-        dv = DataValidation(type="list", formula1='"' + ",".join(options) + '"', allow_blank=True)
-        letter = get_column_letter(col)
-        dv.add(f"{letter}{first}:{letter}{last}")
-        ws.add_data_validation(dv)
-    ws.row_dimensions[2].height = 90
-    ws.freeze_panes = "B3"
+    usage = json.loads(usage_path.read_text()) if usage_path.is_file() else {}
+    show_all = usage.get("ai_in_use", "unsure") == "unsure"
+    shown = set(labels.values()) if show_all else {labels[a] for a in usage.get("ai_areas", [])}
+    for cell in ws[2]:
+        if cell.value in labels.values():
+            ws.column_dimensions[cell.column_letter].hidden = cell.value not in shown
+    return f"{inv['sheet']} sheet: {'all' if show_all else len(shown)} AI area columns shown"
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("paths", nargs="+", help="question file(s), then the output xlsx")
     parser.add_argument("--framework", choices=list(FRAMEWORKS), default="csf")
-    parser.add_argument("--sheet")
     args = parser.parse_args()
-    spec = FRAMEWORKS[args.framework]
-
     if len(args.paths) < 2 or (args.framework == "csf" and len(args.paths) != 2):
         parser.error("give one question file (csf) or one or two (ai), then the output xlsx")
     *question_files, output = args.paths
-    questions = [e for f in question_files for e in json.loads(Path(f).read_text())]
+    entries = [e for f in question_files for e in json.loads(Path(f).read_text())]
     outpath = Path(output)
     ev = audit.begin(audit.run_log(outpath.parent), "write_questionnaire",
                      {"questions": question_files, "output": output, "framework": args.framework})
-
-    sheet_name = args.sheet or spec["sheet"]
-    if outpath.is_file():
-        wb = openpyxl.load_workbook(outpath)
-        ws = replace_sheet(wb, sheet_name)
-    else:
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = sheet_name
-
-    for col, h in enumerate(spec["headers"], 1):
-        style_header(ws.cell(row=1, column=col, value=h))
-
-    bank_order = {b: i for i, b in enumerate(AI_QUESTION_BANKS)}
-    sorted_entries = sorted(
-        questions, key=lambda q: (spec["order"].get(q.get("function", ""), 99), q.get("subcategory_id", ""),
-                                  bank_order.get(q.get("bank"), 9)))
-    row_idx, total_q_rows = 2, 0
-    for entry in sorted_entries:
-        for q_num, q in enumerate(entry.get("questions", []), 1):
-            for col, value in enumerate(row_values(args.framework, entry, q_num, q), 1):
-                cell = ws.cell(row=row_idx, column=col, value=value)
-                cell.alignment = Alignment(wrap_text=True, vertical="top")
-            row_idx += 1
-            total_q_rows += 1
-
-    for i, w in enumerate(spec["widths"], 1):
-        ws.column_dimensions[get_column_letter(i)].width = w
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = ws.dimensions
-
-    inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"] if args.framework == "ai" else None
-    if inv and any(e.get("subcategory_id") == inv["subcategory"] for e in questions):
-        write_inventory(wb, inv)
-    if args.framework == "csf":
-        wb.move_sheet(ws, offset=-wb.index(ws))  # CSF sheet first, whichever was written first
+    if not outpath.is_file():
+        shutil.copyfile(QUESTIONNAIRE_TEMPLATE, outpath)
+    wb = openpyxl.load_workbook(outpath)
+    sheet = FRAMEWORKS[args.framework]["sheet"]
+    rows = fill_questions(wb[sheet], args.framework, entries)
+    line = f"{sheet}: {rows} question rows, {len(entries)} subcategories"
+    if args.framework == "ai":
+        line += "; " + show_inventory(wb, entries, outpath.parent / "ai_usage.json")
     wb.save(outpath)
-    print(f"Written: {outpath} [{sheet_name}] ({total_q_rows} question rows across {len(sorted_entries)} subcategories)")
-    ev.finish(inputs=question_files, outputs=[outpath],
-              detail=f"{sheet_name}: {total_q_rows} question rows, {len(sorted_entries)} subcategories")
+    print(f"Written: {outpath} [{line}]")
+    ev.finish(inputs=[*question_files, QUESTIONNAIRE_TEMPLATE], outputs=[outpath], detail=line)
 
 
 if __name__ == "__main__":

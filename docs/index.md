@@ -79,7 +79,7 @@ The questions ask how something is done, by whom and with what proof, not just "
 | Scripts | `scripts/` | Do the deterministic work: intake, picking questions, writing the workbook |
 | AI agent instructions | `prompts/` | How each AI agent judges or writes when the banks are built |
 | Commands | `.claude/commands/` | The steps you run in Claude Code, such as `/generate-questions` |
-| Profile templates | `templates/` | The empty CSF and AI RMF profile spreadsheets that Stage 2 will fill |
+| Templates | `templates/` | The questionnaire layout each run fills in, and the empty CSF and AI RMF profile spreadsheets that Stage 2 will fill |
 | Tests | `tests/` | Checks for the scripts |
 
 ## More detail

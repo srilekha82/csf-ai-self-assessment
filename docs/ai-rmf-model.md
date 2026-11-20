@@ -136,8 +136,9 @@ Assessing per AI system (GOVERN 1.6 inventory, MAP 1.1 context per system) does 
 once per system. The areas already describe what systems are made of, so:
 - **Inventory in the foundation (GOVERN 1.6):** one question lists the client's AI systems, each with its AI areas and
   its criticality. It is the only per-system question, answered in its own "AI systems" sheet of the questionnaire:
-  one row per system, a Yes column per AI area by its client label, and a drop-down per criticality band
-  (`question_rules.json` `ai_system_inventory`). The question only points to the sheet.
+  one row per system, a Yes column per AI area by its client label (only the client's own areas are shown; all of them
+  for AI in use "unsure"), and a drop-down per criticality band (`question_rules.json` `ai_system_inventory`). The
+  question only points to the sheet. AI in use "none" is not asked it, so the sheet is hidden.
 - **Area questions are asked once per area x subcategory**, proportionate to criticality: "for your
   highest-criticality AI systems, ...".
 - **Maturity (GOVERN 1.3, risk management proportionate to risk):** low = no difference between systems; middle =

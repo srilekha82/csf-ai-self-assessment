@@ -553,7 +553,7 @@ class Scope(unittest.TestCase):
             sys.argv = argv
             WQ.main()
         wb = openpyxl.load_workbook(out)
-        self.assertEqual(wb.sheetnames, ["CSF Questionnaire", "AI RMF Questionnaire"])
+        self.assertEqual([s.title for s in wb if s.sheet_state == "visible"], ["CSF Questionnaire", "AI RMF Questionnaire"])
         ws = wb["AI RMF Questionnaire"]
         header = [c.value for c in ws[1]]
         area = [row[header.index("Area")].value for row in ws.iter_rows(min_row=2)]

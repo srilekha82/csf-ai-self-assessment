@@ -17,6 +17,13 @@ CSF and AI RMF banks built; `/generate-questions` writes one `questionnaire.xlsx
 ## Stage 3: reports — rebuild after Stage 2
 One report per profile XLS (CSF, AI RMF) and a page linking both, built from scratch.
 
+## For the reviews
+- Prompt review: the GOVERN 1.2 question asked of AI in use "none" assumes an AI policy exists ("when an AI policy or
+  procedure is written or revised ..."); an organisation with no AI may have none.
+- Docs refactor: each fact in one place. A script's own header (what it does, Called by / Input / Output, how to run
+  it) and the guide's diagrams (how the scripts fit together); the guide's step lists and tables point to them instead
+  of repeating them.
+
 ## Parked
 - Unit tests for each `compute_scope.py` state (today it is tested end to end, through `check_questionnaire.py`'s
   tests, and for its SoA judgement checks).

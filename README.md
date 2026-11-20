@@ -34,7 +34,7 @@ own the controls.
 | `.claude/commands/` | The commands you run in Claude Code, such as `/generate-questions`. Each lists the scripts to run, in order. |
 | `prompts/` | Instructions for the AI agents, used when they judge or write something a script can't decide |
 | `data/` | The prepared content: the frameworks, the question banks, and the rules for tailoring. Split into `csf/`, `ai/` and `common/`. |
-| `templates/` | The empty CSF and AI RMF profile spreadsheets (for Stage 2) |
+| `templates/` | The questionnaire layout (`questionnaire_template.xlsx`, filled for each assessment) and the empty CSF and AI RMF profile spreadsheets (for Stage 2) |
 | `runs/` | One folder per assessment: intake answers and the finished `questionnaire.xlsx`. Created when you run the tool. Holds your data, so it's never committed. |
 | `tests/` | Checks for the scripts |
 | `docs/` | The detailed documentation |

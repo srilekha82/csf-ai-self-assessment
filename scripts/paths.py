@@ -10,6 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA = REPO_ROOT / "data"
+QUESTIONNAIRE_TEMPLATE = REPO_ROOT / "templates" / "questionnaire_template.xlsx"   # the questionnaire layout
 METADATA = DATA / "metadata.json"
 RUNS = REPO_ROOT / "runs"                  # one folder per engagement: <Org>_<date>/ (client data)
 DATA_AUDIT = DATA / "audit.jsonl"          # reference data refresh and freshness checks (see audit.py)
