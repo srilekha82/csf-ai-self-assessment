@@ -144,7 +144,7 @@ class RecordLog(unittest.TestCase):
 
 class Metadata(unittest.TestCase):
     def test_a_refresh_updates_only_the_files_parsed(self):
-        import parse_crosswalk as PC
+        import parse_csf_source as PC
         from datetime import date
         path = Path(tempfile.mkdtemp()) / "metadata.json"
         old = {"last_refreshed": "2020-01-01", "is_placeholder": True, "record_count": None, "notes": "n"}

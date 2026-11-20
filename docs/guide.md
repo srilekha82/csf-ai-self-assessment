@@ -145,7 +145,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    B["/build-csf-bank"]:::cmd --> PC["parse_crosswalk.py<br/>(only when NIST's file is refreshed)"]:::script
+    B["/build-csf-bank"]:::cmd --> PC["parse_csf_source.py<br/>(only when NIST's file is refreshed)"]:::script
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
     SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script

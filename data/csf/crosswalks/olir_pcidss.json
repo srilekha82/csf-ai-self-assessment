@@ -2,9 +2,8 @@
   "meta": {
     "framework": "PCI DSS v4.0.1",
     "focal_document": "NIST CSF 2.0",
-    "author": "NIST (CPRT export)",
     "source_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
-    "notes": "Extracted from the NIST CSF 2.0 Reference Tool informative references column. PCI DSS requirement IDs only \u2014 relationship type not carried. For the owner-authority OLIR submission from PCI SSC see: csrc.nist.gov/projects/olir/informative-reference-catalog/details?referenceId=183",
+    "author": "NIST (CPRT export)",
     "source_file": "csf2.xlsx"
   },
   "summary": {
