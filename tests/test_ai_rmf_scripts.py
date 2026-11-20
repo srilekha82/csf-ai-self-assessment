@@ -1075,6 +1075,40 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class CsfBanksLine(unittest.TestCase):
+    """check_freshness --csf: the six CSF banks are built together, so one line reports them."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        real = CF.bank_path
+        self.addCleanup(setattr, CF, "bank_path", real)
+        CF.bank_path = lambda domain: self.tmp / f"{domain}.json"
+        from build_question_bank import bank_inputs_sha
+        self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha(CF.BANK_BUILD)}
+
+    def write_all(self, **change):
+        for d in CF.DOMAINS:
+            (self.tmp / f"{d}.json").write_text(json.dumps({**self.record, **(change if d == "finance" else {})}))
+
+    def line(self):
+        return CF.csf_banks_line(self.tmp / "no-cset", ("abc", [], ""))   # CSET's commit given: no git needed
+
+    def test_one_line_when_the_banks_share_their_record(self):
+        self.write_all()
+        self.assertEqual(self.line(), ("CSF banks", True, "current"))
+
+    def test_banks_built_from_different_records_are_reported(self):
+        self.write_all(cset_commit="old")
+        ok, text = self.line()[1:]
+        self.assertFalse(ok)
+        self.assertIn("different CSET versions", text)
+
+    def test_missing_banks_are_named(self):
+        self.write_all()
+        (self.tmp / "healthcare.json").unlink()
+        self.assertEqual(self.line(), ("CSF banks", False, "missing: healthcare (run /build-csf-bank)"))
+
+
 class BankAge(unittest.TestCase):
     """check_bank_age.py: a client run checks only each bank's build date against its limit."""
 
@@ -1088,36 +1122,30 @@ class BankAge(unittest.TestCase):
     def write(self, path, built_on):
         path.write_text(json.dumps({"built_on": built_on}))
 
-    def stages(self):
-        return {s: (ok, text) for s, ok, text in BA.bank_age_stages(
-            "finance", today=self.today, limits=self.limits, csf_file=self.csf, ai_dir=self.tmp)}
+    def problems(self):
+        return BA.bank_problems("finance", today=self.today, limits=self.limits, csf_file=self.csf, ai_dir=self.tmp)
 
     def write_all(self, csf, ai):
         self.write(self.csf, csf)
         for bank in BA.AI_QUESTION_BANKS:
             self.write(self.tmp / f"question_bank_ai_rmf_{bank}.json", ai)
 
-    def test_banks_within_their_limit_are_ok(self):
+    def test_banks_within_their_limit_have_no_problems(self):
         self.write_all("2026-01-01", "2026-09-01")
-        self.assertTrue(all(ok for ok, _ in self.stages().values()), self.stages())
+        self.assertEqual(self.problems(), [])
 
-    def test_a_bank_older_than_its_limit_is_too_old_and_names_the_command(self):
-        self.write_all("2026-01-01", "2026-08-01")   # AI: 108 days, limit 90
-        s = self.stages()
-        self.assertTrue(s["CSF bank finance"][0])
-        self.assertFalse(s["AI bank foundation"][0])
-        self.assertIn("too old", s["AI bank foundation"][1])
-        self.assertIn("/build-ai-bank", s["AI bank foundation"][1])
+    def test_a_bank_older_than_its_limit_names_the_command(self):
+        self.write_all("2026-01-01", "2026-08-01")   # AI: 108 days, limit 90; CSF fine
+        self.assertEqual(self.problems(), [
+            "AI bank foundation is too old (built 2026-08-01, limit 90 days): run /build-ai-bank",
+            "AI bank areas is too old (built 2026-08-01, limit 90 days): run /build-ai-bank"])
 
-    def test_a_missing_bank_is_reported_with_the_command_to_build_it(self):
-        s = self.stages()
-        self.assertFalse(s["CSF bank finance"][0])
-        self.assertIn("missing (run /build-csf-bank finance)", s["CSF bank finance"][1])
+    def test_a_missing_bank_names_the_command_to_build_it(self):
+        self.assertIn("CSF bank finance is missing: run /build-csf-bank", self.problems())
 
     def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
         from paths import METADATA, bank_path
         limits = json.loads(METADATA.read_text())["question_banks"]
-        for stage, ok, text in BA.bank_age_stages("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
-                                                  csf_file=bank_path("finance")):
-            self.assertTrue(ok, (stage, text))
+        self.assertEqual(BA.bank_problems("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
+                                          csf_file=bank_path("finance")), [])
         self.assertTrue({"csf_max_age_days", "ai_max_age_days"} <= set(limits))

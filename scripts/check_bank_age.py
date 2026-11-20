@@ -26,27 +26,24 @@ from paths import AI_BANKS, DATA_AUDIT, METADATA, bank_path  # noqa: E402
 import audit  # noqa: E402
 
 
-def bank_age_stages(domain: str, today: date | None = None, limits: dict | None = None,
-                    csf_file: Path | None = None, ai_dir: Path | None = None) -> list[tuple[str, bool, str]]:
-    """(bank, ok?, text) per bank a client run uses: missing, too old (built_on older than its limit) or ok."""
+def bank_problems(domain: str, today: date | None = None, limits: dict | None = None,
+                  csf_file: Path | None = None, ai_dir: Path | None = None) -> list[str]:
+    """One message per bank the run uses that is missing or older than its limit, naming the command to rebuild it.
+    An empty list means every bank is fine."""
     today = today or date.today()
     limits = limits or json.loads(METADATA.read_text())["question_banks"]
     ai_dir = ai_dir or AI_BANKS
-    banks = [(f"CSF bank {domain}", csf_file or bank_path(domain), limits["csf_max_age_days"], "/build-csf-bank " + domain)]
+    banks = [(f"CSF bank {domain}", csf_file or bank_path(domain), limits["csf_max_age_days"], "/build-csf-bank")]
     banks += [(f"AI bank {b}", ai_dir / f"question_bank_ai_rmf_{b}.json", limits["ai_max_age_days"], "/build-ai-bank")
               for b in AI_QUESTION_BANKS]
-    stages = []
-    for stage, path, limit, command in banks:
+    problems = []
+    for name, path, limit, command in banks:
         built = json.loads(path.read_text()).get("built_on") if path.is_file() else None
         if built is None:
-            stages.append((stage, False, f"missing (run {command})"))
-            continue
-        age = (today - date.fromisoformat(built)).days
-        if age > limit:
-            stages.append((stage, False, f"too old: built {built}, {age} days ago, limit {limit} (run {command})"))
-        else:
-            stages.append((stage, True, f"ok: built {built}, {age} days ago, limit {limit}"))
-    return stages
+            problems.append(f"{name} is missing: run {command}")
+        elif (today - date.fromisoformat(built)).days > limit:
+            problems.append(f"{name} is too old (built {built}, limit {limit} days): run {command}")
+    return problems
 
 
 def main():
@@ -57,16 +54,13 @@ def main():
     args = parser.parse_args()
     domain = load_intake(args.run)["domain"] if args.run else args.domain
     ev = audit.begin(audit.run_log(Path(args.run)) if args.run else DATA_AUDIT, "check_bank_age", {"domain": domain})
-    stages = bank_age_stages(domain)
-    for stage, ok, text in stages:
-        print(f"{stage + ':':<24}{text}")
-    todo = [stage for stage, ok, _ in stages if not ok]
-    if todo:
-        print(f"\nRebuild first: {', '.join(todo)}")
-        ev.finish("stale", detail=f"rebuild first: {', '.join(todo)}", stages={s: t for s, _, t in stages})
+    problems = bank_problems(domain)
+    if problems:
+        print("\n".join(problems))
+        ev.finish("stale", detail="; ".join(problems))
         sys.exit(1)
-    print("\nAll question banks are within their age limit.")
-    ev.finish(detail="all banks within age limit")
+    print("All question banks are recent enough.")
+    ev.finish(detail="all banks recent enough")
 
 
 if __name__ == "__main__":

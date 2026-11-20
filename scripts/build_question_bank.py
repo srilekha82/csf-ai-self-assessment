@@ -1,13 +1,16 @@
 """
-Builds the CSF question bank for one sector from the collected CSET questions.
+Builds the six CSF question banks, one per sector, together from the collected CSET questions.
 
 Called by: /build-csf-bank (step 3)
 Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions); the routing
            rules in data/csf/bank_rules.json
-Output:    data/csf/banks/question_bank_<sector>.json, or pending_judgements_<sector>.json (exit 2)
+Output:    data/csf/banks/question_bank_<sector>.json for every sector, or pending_judgements.json (exit 2)
 
-Usage: .venv/bin/python ./scripts/build_question_bank.py --domain <sector|all> [--fanout-threshold N]
-                                                 [--allow-pending] [--output-dir DIR] [--cache-dir DIR]
+Usage: .venv/bin/python ./scripts/build_question_bank.py [--fanout-threshold N] [--allow-pending] [--output-dir DIR]
+                                                 [--cache-dir DIR]
+
+The banks are always built together, from the same CSET collection and agent judgements, so they share one record of
+what they were built from (check_freshness.py --csf checks it).
 
 Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each other CSET question is then:
   rejected   not answerable, empty, or already judged unfit or not for this sector
@@ -15,10 +18,11 @@ Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each ot
   pending    needs an agent: sector unclear, text to (re)write, or linked to many subcategories
              (--fanout-threshold; default in data/csf/bank_rules.json)
 
-Exit 2 if anything is pending: it writes pending_judgements_<sector>.json and no bank. An agent decides them
+Exit 2 if anything is pending in any sector: it writes one pending_judgements.json (each question once, whatever
+the sector) and no bank. An agent decides them
 (prompts/question_bank_judge.md), record_judgements.py stores the decisions, then run it again. Decisions are tied to
-the question's text, so they are redone only if CSET changes the question. --allow-pending writes the bank anyway,
-leaving pending questions out.
+the question's text, so they are redone only if CSET changes the question. --allow-pending writes the banks
+anyway, leaving pending questions out.
 """
 
 import argparse
@@ -148,7 +152,7 @@ def bank_inputs_sha(cache: Path) -> dict:
     return {"cset_judgements": audit.sha(cache / "cset_judgements.json"), "csf2_core": audit.sha(CSF_CORE)}
 
 
-def build_pending_file(domain: str, pending: dict, candidates: dict, active: dict[str, dict]) -> dict:
+def build_pending_file(pending: dict, candidates: dict, active: dict[str, dict]) -> dict:
     items = []
     for qid, p in sorted(pending.items(), key=lambda kv: int(kv[0])):
         q = candidates["questions"][qid]
@@ -165,7 +169,7 @@ def build_pending_file(domain: str, pending: dict, candidates: dict, active: dic
             "mapped_subcategories": [{"id": s, "outcome": active[s]["subcategory_text"]} for s in sorted(mapped)],
             "check_fit_for": sorted(p["fit_subcategories"]),
         })
-    return {"domain": domain, "cset_commit": candidates["cset_commit"], "count": len(items), "items": items}
+    return {"cset_commit": candidates["cset_commit"], "count": len(items), "items": items}
 
 
 def build_bank(domain: str, routed: list[dict], candidates: dict, active: dict[str, dict],
@@ -234,7 +238,6 @@ def build_bank(domain: str, routed: list[dict], candidates: dict, active: dict[s
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--domain", required=True, choices=DOMAINS + ["all"])
     parser.add_argument("--fanout-threshold", type=int, default=BANK_RULES["fanout_threshold"]["value"])
     parser.add_argument("--allow-pending", action="store_true")
     parser.add_argument("--output-dir", default=str(CSF_BANKS))
@@ -243,12 +246,11 @@ def main():
 
     cache, out_dir = Path(args.cache_dir), Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    audit_log = cache / "audit.jsonl"
+    ev = audit.begin(cache / "audit.jsonl", "build_question_bank",
+                     {"fanout_threshold": args.fanout_threshold, "allow_pending": args.allow_pending})
     candidates = load_json(cache / "cset_candidates.json")
     if candidates is None:
-        audit.begin(audit_log, "build_question_bank", {"domain": args.domain}).fail(
-            "[build_question_bank] ERROR: cset_candidates.json not found. "
-            "Run scripts/extract_cset_candidates.py first.")
+        ev.fail("[build_question_bank] ERROR: cset_candidates.json not found. Run scripts/extract_cset_candidates.py first.")
     judgements = load_json(cache / "cset_judgements.json", {"questions": {}})
 
     csf_core = load_json(CSF_CORE)
@@ -256,43 +258,46 @@ def main():
               if not s["subcategory_text"].startswith("[Withdrawn")}
     olir_iso = load_json(CROSSWALK_DIRS["olir_iso27001.json"] / "olir_iso27001.json")
     iso_lookup = {k: v.get("controls", []) for k, v in olir_iso.get("csf_to_controls", {}).items()}
-
-    any_pending = False
     build_inputs = [cache / "cset_candidates.json", cache / "cset_judgements.json", CSF_CORE]
-    for domain in (DOMAINS if args.domain == "all" else [args.domain]):
-        ev = audit.begin(audit_log, "build_question_bank", {"domain": domain, "fanout_threshold": args.fanout_threshold,
-                                                             "allow_pending": args.allow_pending})
-        routed, pending = route_pairs(domain, candidates, judgements, active, args.fanout_threshold)
-        n_pending = sum(1 for r in routed if r["status"] == "pending")
-        pending_path = cache / f"pending_judgements_{domain}.json"
-        if not pending:
-            pending_path.unlink(missing_ok=True)
-        if pending:
-            pending_path.write_text(json.dumps(build_pending_file(domain, pending, candidates, active),
-                                               indent=2, ensure_ascii=False))
-            print(f"[{domain}] {len(pending)} questions need a judgement → {pending_path}")
-            if not args.allow_pending:
-                any_pending = True
-                ev.finish("pending", build_inputs, [pending_path], detail=f"{len(pending)} questions need an agent judgement",
-                          cset_commit=candidates["cset_commit"])
-                continue
-        bank = build_bank(domain, routed, candidates, active, iso_lookup, n_pending)
+
+    # Route every sector first: the banks are built together, from the same CSET collection and judgements.
+    routed, pending = {}, {}
+    for domain in DOMAINS:
+        routed[domain], domain_pending = route_pairs(domain, candidates, judgements, active, args.fanout_threshold)
+        for qid, p in domain_pending.items():         # one question needs one judgement, whatever the sector
+            item = pending.setdefault(qid, {"needs": [], "fit_subcategories": []})
+            item["needs"] += [n for n in p["needs"] if n not in item["needs"]]
+            item["fit_subcategories"] += [s for s in p["fit_subcategories"] if s not in item["fit_subcategories"]]
+
+    pending_path = cache / "pending_judgements.json"
+    if pending:
+        pending_path.write_text(json.dumps(build_pending_file(pending, candidates, active), indent=2, ensure_ascii=False))
+        print(f"{len(pending)} questions need a judgement → {pending_path}")
+        if not args.allow_pending:
+            ev.finish("pending", build_inputs, [pending_path], detail=f"{len(pending)} questions need an agent judgement; "
+                      "no bank written", cset_commit=candidates["cset_commit"])
+            sys.exit(2)
+    else:
+        pending_path.unlink(missing_ok=True)
+
+    paths, details = [], []
+    for domain in DOMAINS:
+        n_pending = sum(1 for r in routed[domain] if r["status"] == "pending")
+        bank = build_bank(domain, routed[domain], candidates, active, iso_lookup, n_pending)
         bank["inputs_sha"] = bank_inputs_sha(cache)
         path = bank_path(domain, out_dir)
         path.write_text(json.dumps(bank, indent=2, ensure_ascii=False))
+        paths.append(path)
         by = {}
-        for r in routed:
+        for r in routed[domain]:
             by[(r["status"], r["decided_by"])] = by.get((r["status"], r["decided_by"]), 0) + 1
-        print(f"Built: {path}\nCSET commit: {bank['cset_commit']}\nSubcategories: {bank['total_subcategories']}\n"
-              f"  With candidates: {bank['with_candidates']} (CSF 2.0 set question first; maturity-model questions in "
-              f"{bank['with_maturity_questions']})\n  Empty (fallback at engagement time): {bank['empty']}\n"
-              f"  Routing: " + ", ".join(f"{s}/{d or '-'}: {n}" for (s, d), n in sorted(by.items(), key=str)))
-        ev.finish(inputs=build_inputs, outputs=[path],
-                  detail=f"{bank['with_candidates']} of {bank['total_subcategories']} subcategories with candidates; routing "
-                         + ", ".join(f"{s}/{d or '-'}: {n}" for (s, d), n in sorted(by.items(), key=str)),
-                  cset_commit=bank["cset_commit"])
-    if any_pending:
-        sys.exit(2)
+        routing = ", ".join(f"{s}/{d or '-'}: {n}" for (s, d), n in sorted(by.items(), key=str))
+        print(f"Built: {path}\n  Subcategories: {bank['total_subcategories']}, with candidates: {bank['with_candidates']} "
+              f"(maturity-model questions in {bank['with_maturity_questions']}), empty: {bank['empty']}\n"
+              f"  Routing: {routing}")
+        details.append(f"{domain}: {bank['with_candidates']} of {bank['total_subcategories']} with candidates")
+    print(f"CSET commit: {candidates['cset_commit']}")
+    ev.finish(inputs=build_inputs, outputs=paths, detail="; ".join(details), cset_commit=candidates["cset_commit"])
 
 
 if __name__ == "__main__":
