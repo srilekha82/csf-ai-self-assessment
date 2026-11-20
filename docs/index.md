@@ -67,7 +67,7 @@ The questions ask how something is done, by whom and with what proof, not just "
 | Part | Where | What it is |
 |---|---|---|
 | Intake menus | `data/common/intake_options.json` | Sectors, certifications, AI usage choices |
-| Intake answers | `runs/<Org>_<date>/intake.json`, `ai_usage.json` | One folder per assessment. Holds client data, never committed. |
+| Intake answers | `runs/<Org>_<date>/csf_intake.json`, `ai_intake.json` | One folder per assessment. Holds client data, never committed. |
 | CSF framework | `data/csf/csf2_core.json` | The 106 CSF 2.0 subcategories, from NIST |
 | CSF question banks | `data/csf/banks/question_bank_<sector>.json` | CSET questions per subcategory, one file per sector |
 | CSF tailoring rules | `data/csf/scope_rules.json`, `data/csf/crosswalks/` | How certifications change each question; the ISO 27001 and PCI DSS mappings to CSF |

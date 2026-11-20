@@ -55,11 +55,11 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 |---|---|
 | `/generate-questions` | The whole flow: intake (numbered choices) → bank age check (stops if a bank is missing or too old) → `/csf-questionnaire` → `/ai-questionnaire` → one `questionnaire.xlsx`. Stops at the SoA question and to confirm the SoA columns. Send the XLSX to control owners. |
 | `/csf-questionnaire` | The CSF sheet for a run folder: SoA question (and confirming its columns), scope, questions from the bank, check, sheet. Writes `csf_scope.json`, `csf_questions_draft.json` and the CSF sheet of `questionnaire.xlsx`. |
-| `/ai-questionnaire` | The AI RMF sheet for a run folder: picks the client's questions by role, producer details and AI areas from `ai_usage.json`, checks them, writes the sheet. Writes `ai_scope.json`, `ai_questions_draft_<foundation|areas>.json` and the AI RMF sheet of `questionnaire.xlsx`. |
+| `/ai-questionnaire` | The AI RMF sheet for a run folder: picks the client's questions by role, producer details and AI areas from `ai_intake.json`, checks them, writes the sheet. Writes `ai_scope.json`, `ai_questions_draft_<foundation|areas>.json` and the AI RMF sheet of `questionnaire.xlsx`. |
 | `/build-csf-bank` | Builds the six CSF question banks, all sectors together, from the CSET repo (occasional; reused by every engagement). |
 | `/build-ai-bank` | Builds the AI RMF mapping (AI area x subcategory), the two question banks (foundation, areas) and the CSF AI impact notes from the Playbook and CIS companion guides (quarterly, or when a source changes). Pilot first, then full run. |
 
-The intake is `scripts/intake.py`: it prints the numbered menus (from `data/common/intake_options.json`), turns the typed numbers into values, and writes `intake.json` (org, domain, certs) and `ai_usage.json` in the run folder. Every later step reads those files.
+The intake is `scripts/intake.py`: it prints the numbered menus (from `data/common/intake_options.json`), turns the typed numbers into values, and writes `csf_intake.json` (org, domain, certs) and `ai_intake.json` in the run folder. Every later step reads those files.
 
 **Not built yet:** Stage 2 (answers → the two profile spreadsheets, including writing the AI impact notes into the CSF profile's Considerations column) and Stage 3 (reports). The AI RMF banks and notes are built by `/build-ai-bank`; both banks are in `data/ai/banks/`.
 
@@ -76,7 +76,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 
 ### Running an engagement (`/generate-questions`)
 
-1. `intake.py` asks once, as numbered choices: org, domain, certs, the AI usage profile (AI in use none / some / unsure, then "How do you use AI?" and "What does your AI include?", which give the client's AI areas), for an organisation that builds its own model the two producer details, and whether a CSF assessment is part of the engagement and ISO 42001 is held. It writes `intake.json` and `ai_usage.json`; every later step, including the AI RMF track, reads them.
+1. `intake.py` asks once, as numbered choices: org, domain, certs, the AI usage profile (AI in use none / some / unsure, then "How do you use AI?" and "What does your AI include?", which give the client's AI areas), and for an organisation that builds its own model the two producer details. It writes `csf_intake.json` (org, date, sector, certifications: the CSF sheet is picked from these) and `ai_intake.json` (the AI answers: the AI RMF sheet is picked from these); every later step reads them.
 2. `check_bank_age.py --run <run>` checks the build date of the CSF bank of the domain and the two AI RMF banks against the limits in `data/metadata.json` (`question_banks`: CSF 365 days, AI 90). If a bank is missing or too old the run stops and names the command to rebuild it (`/build-csf-bank`, `/build-ai-bank`); a client run never rebuilds a bank. It needs no source files.
 3. `/csf-questionnaire`: `parse_soa.py <run> <soa>` extracts the SoA and prints the sheet and columns it picked; the user confirms them (a wrong pick is corrected with `--sheet` / `--id-col` / ...). If any excluded control needs reading, `compute_scope.py` exits 2 and the agent classifies it with `prompts/soa_exclusion_judge.md`. `compute_scope.py` gives each subcategory a type: `full_discovery`, `gap` (cert covers it, ask what goes beyond), `confirmatory` (cert should cover it, ask for evidence) or `skip`; policy is in `data/csf/scope_rules.json`. `build_questions.py` picks questions from the bank and words them for the certs held, producing `csf_questions_draft.json`.
 4. `/ai-questionnaire`: see below.
@@ -91,7 +91,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_ai_bank.py assemble` and `questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`ai_pilot.py accept`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
 5. AI impact notes: `prepare_ai_notes.py` joins the CIS → CSF mapping to the MCP and agents guides (48 CSF subcategories); an agent writes an exposure layer and a use layer (`prompts/ai_impact_notes_writer.md`); `record_ai_bank.py notes` stores `data/csf/ai_impact_notes.json`; a second agent reviews them (`prompts/ai_impact_notes_evaluator.md`, `record_ai_bank.py notes-review`).
 
-**Running an engagement (`/ai-questionnaire`, run by `/generate-questions` or alone):** `build_ai_questions.py` picks the client's questions from both banks by filtering on `ai_usage.json`: roles (`scope_rules.json` `client_roles`), producer details and, for area questions, the client's AI areas. A question shared by several of the client's areas carries "This question covers: ..." naming them. Every question is `full_discovery`: it asks what is done for AI, so it never repeats the CSF sheet or ISO 27001. It writes one draft per bank. `check_questionnaire.py` checks them and `write_questionnaire.py --framework ai` writes the AI RMF sheet of `questionnaire.xlsx`, plus an "AI systems" sheet where the client answers the inventory question (GOVERN 1.6) as a table: one row per system, which of the client's AI areas it involves, and its criticality. The layout comes from `templates/questionnaire_template.xlsx`.
+**Running an engagement (`/ai-questionnaire`, run by `/generate-questions` or alone):** `build_ai_questions.py` picks the client's questions from both banks by filtering on `ai_intake.json`: roles (`scope_rules.json` `client_roles`), producer details and, for area questions, the client's AI areas. A question shared by several of the client's areas carries "This question covers: ..." naming them. Every question is `full_discovery`: it asks what is done for AI, so it never repeats the CSF sheet or ISO 27001. It writes one draft per bank. `check_questionnaire.py` checks them and `write_questionnaire.py --framework ai` writes the AI RMF sheet of `questionnaire.xlsx`, plus an "AI systems" sheet where the client answers the inventory question (GOVERN 1.6) as a table: one row per system, which of the client's AI areas it involves, and its criticality. The layout comes from `templates/questionnaire_template.xlsx`.
 
 ## What is where
 
@@ -108,8 +108,8 @@ a run stops, and the rounded boxes are the files they read or write.
 ```mermaid
 flowchart TD
     GQ["/generate-questions"]:::cmd --> IN[intake.py]:::script
-    IN --> INT([intake.json]):::file
-    IN --> USE([ai_usage.json]):::file
+    IN --> INT([csf_intake.json]):::file
+    IN --> USE([ai_intake.json]):::file
     INT --> AGE["check_bank_age.py<br/><small>also reads: the banks' build dates</small>"]:::script
     AGE -- "a bank is missing or too old" --> STOP["stop: run /build-csf-bank or /build-ai-bank first"]:::stop
     AGE -- ok --> CQ["/csf-questionnaire"]:::cmd
@@ -118,10 +118,10 @@ flowchart TD
     CQ -- "ISO 27001 held" --> SOA["parse_soa.py<br/><small>reads: the SoA Excel file</small>"]:::script --> SOAJ([soa_parsed.json]):::file
     SOAJ --> OK1["you: confirm the sheet and columns it picked"]:::you
     OK1 -- "a pick is wrong: run again naming the column" --> SOA
-    OK1 -- right --> SC["compute_scope.py<br/><small>also reads: intake.json</small>"]:::script
+    OK1 -- right --> SC["compute_scope.py<br/><small>also reads: csf_intake.json</small>"]:::script
     CQ --> SC
     SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent --> RJ[record_judgements.py log]:::script --> SC
-    SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: intake.json, the CSF bank</small>"]:::script
+    SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: csf_intake.json, the CSF bank</small>"]:::script
     BQ --> CD([csf_questions_draft.json]):::file
 
     AQ --> BAQ["build_ai_questions.py<br/><small>also reads: the AI RMF banks</small>"]:::script
@@ -257,8 +257,8 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 |---|---|
 | `inputs/soa_original.xlsx` | Client SoA (if provided) |
 | `soa_parsed.json`, `soa_pending.json`, `soa_judgements.json` | Parsed SoA, controls needing a reading, the agent's classifications |
-| `intake.json` | Org, date, domain, certifications (from `intake.py`; read by scope, question building and the freshness check) |
-| `ai_usage.json` | The AI usage profile (AI in use, role, producer details, the client's AI areas, and whether a CSF assessment is part of the engagement and ISO 42001 is held), from the same intake |
+| `csf_intake.json` | Org, date, domain, certifications (from `intake.py`; read by scope, question building and the freshness check) |
+| `ai_intake.json` | The AI usage profile (AI in use, role, producer details, the client's AI areas), from the same intake |
 | `csf_scope.json` | Question type per subcategory, with the reason |
 | `ai_scope.json`, `ai_questions_draft_<bank>.json` | The AI RMF track for the run (scope, the picked questions per bank); the AI RMF sheet goes into `questionnaire.xlsx` |
 | `csf_question_bank_used.json`, `csf_questions_draft.json` | Copy of the CSF bank used, the picked CSF questions |

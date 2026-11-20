@@ -21,7 +21,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, DOMAINS, load_intake  # noqa: E402
+from options import AI_QUESTION_BANKS, DOMAINS, load_csf_intake  # noqa: E402
 from paths import AI_BANKS, DATA_AUDIT, METADATA, bank_path  # noqa: E402
 import audit  # noqa: E402
 
@@ -49,10 +49,10 @@ def bank_problems(domain: str, today: date | None = None, limits: dict | None = 
 def main():
     parser = argparse.ArgumentParser()
     where = parser.add_mutually_exclusive_group(required=True)
-    where.add_argument("--run", help="the run folder; the sector comes from its intake.json")
+    where.add_argument("--run", help="the run folder; the sector comes from its csf_intake.json")
     where.add_argument("--domain", choices=DOMAINS, help="the sector, when there is no run folder")
     args = parser.parse_args()
-    domain = load_intake(args.run)["domain"] if args.run else args.domain
+    domain = load_csf_intake(args.run)["domain"] if args.run else args.domain
     ev = audit.begin(audit.run_log(Path(args.run)) if args.run else DATA_AUDIT, "check_bank_age", {"domain": domain})
     problems = bank_problems(domain)
     if problems:

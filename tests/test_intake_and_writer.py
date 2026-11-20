@@ -17,9 +17,8 @@ from paths import AI_AREAS, AI_SCOPE_RULES  # noqa: E402
 
 
 def args(**over):
-    base = dict(replace=False, org="Acme Corp", domain="1", certs="2 3", ai_in_use="2", role="1", built_on_model=None,
-                given_to_others=None, ai_usage="1 3", ai_components="2", csf_assessment_done="1", iso42001_held="2",
-                date="2026-10-14", runs_dir=None)
+    base = dict(replace=False, org="Acme Corp", domain="1", certs="2 3", ai_in_use="2", role="1",
+                built_on_existing_model=None, given_to_others=None, ai_usage="1 3", ai_components="2", date="2026-10-14", runs_dir=None)
     base.update(over)
     return type("A", (), base)()
 
@@ -66,30 +65,27 @@ class Intake(unittest.TestCase):
         return self.tmp / "Acme_Corp_2026-10-14"
 
     def usage(self):
-        return json.loads((self.run_dir() / "ai_usage.json").read_text())
+        return json.loads((self.run_dir() / "ai_intake.json").read_text())
 
-    def test_numbers_become_ai_areas_and_the_iso_flag_is_derived(self):
+    def test_numbers_become_the_csf_and_ai_answers(self):
         self.assertEqual(self.go(), 0)
-        intake = json.loads((self.run_dir() / "intake.json").read_text())
+        intake = json.loads((self.run_dir() / "csf_intake.json").read_text())
         self.assertEqual((intake["domain"], intake["certs"]), ("finance", ["iso27001", "pci_dss"]))
         usage = self.usage()
         self.assertEqual(usage["ai_areas"], ["internal_process", "customer_facing", "invisible_usage", "input", "output",
                                              "mcp_tools"])
         self.assertEqual((usage["role"], usage["producer"]), ("consumer", None))
-        self.assertFalse({"rung", "usage_contexts", "modifiers", "hosts_model"} & set(usage))   # the old fields are gone
-        self.assertEqual(usage["engagement_flags"], {"csf_assessment_done": True, "iso27001_held": True,
-                                                     "iso42001_held": False})
+        self.assertEqual(set(usage), {"ai_in_use", "role", "producer", "ai_areas"})
 
-    def test_no_ai_keeps_only_invisible_usage_and_pci_only_leaves_iso_false(self):
+    def test_no_ai_keeps_only_invisible_usage(self):
         self.assertEqual(self.go(ai_in_use="1", role=None, ai_usage=None, ai_components=None, certs="3"), 0)
         usage = self.usage()
         self.assertEqual(usage["ai_areas"], ["invisible_usage"])
         self.assertEqual((usage["role"], usage["producer"]), (None, None))
-        self.assertFalse(usage["engagement_flags"]["iso27001_held"])
 
     def test_producer_and_agents_bring_their_areas(self):
         # build, built on an existing model, not given to others; agents and a hosted model
-        self.assertEqual(self.go(role="2", built_on_model="1", given_to_others="2", ai_usage="", ai_components="3 4"), 0)
+        self.assertEqual(self.go(role="2", built_on_existing_model="1", given_to_others="2", ai_usage="", ai_components="3 4"), 0)
         usage = self.usage()
         for area in ("model_building", "model", "test_tuning_data", "agent", "mcp_tools", "hosting"):
             self.assertIn(area, usage["ai_areas"])
@@ -97,7 +93,7 @@ class Intake(unittest.TestCase):
         self.assertEqual(usage["role"], "producer")
 
     def test_both_keeps_the_usage_areas_and_adds_the_producer_ones(self):
-        self.assertEqual(self.go(role="3", built_on_model="2", given_to_others="1"), 0)
+        self.assertEqual(self.go(role="3", built_on_existing_model="2", given_to_others="1"), 0)
         usage = self.usage()
         self.assertEqual(usage["role"], "both")
         self.assertTrue({"internal_process", "customer_facing", "model_building", "model"} <= set(usage["ai_areas"]))
@@ -112,26 +108,26 @@ class Intake(unittest.TestCase):
     def test_bad_input_is_rejected_and_writes_nothing(self):
         for bad in (dict(domain="9"), dict(domain="x"), dict(domain="1 2"), dict(certs="1 2"), dict(certs=""),
                     dict(ai_usage="9"), dict(ai_components="1 7"), dict(role=None), dict(role="4"),
-                    dict(built_on_model="1"),                                 # producer follow-up for a consumer
-                    dict(role="2", built_on_model=None, given_to_others="2"),  # follow-up missing for a producer
+                    dict(built_on_existing_model="1"),                        # producer follow-up for a consumer
+                    dict(role="2", built_on_existing_model=None, given_to_others="2"),  # follow-up missing for a producer
                     dict(ai_in_use="1"),                                      # questions answered without "some"
                     dict(ai_in_use="3", role=None, ai_usage=None, ai_components="1"),
-                    dict(org="!!!")):
+                    dict(org="!!!"), dict(date="2026-13-01")):
             self.assertEqual(self.go(**bad), 1, bad)
             self.assertFalse(self.run_dir().exists(), bad)
 
     def test_an_existing_intake_is_not_overwritten_without_replace(self):
         self.assertEqual(self.go(), 0)
         self.assertEqual(self.go(domain="2"), 1)
-        self.assertEqual(json.loads((self.run_dir() / "intake.json").read_text())["domain"], "finance")
+        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["domain"], "finance")
         self.assertEqual(self.go(domain="2", replace=True), 0)
-        self.assertEqual(json.loads((self.run_dir() / "intake.json").read_text())["domain"], "healthcare")
+        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["domain"], "healthcare")
 
     def test_downstream_scripts_find_domain_and_certs(self):
         self.go()
-        self.assertEqual(OPT.load_intake(self.run_dir())["certs"], ["iso27001", "pci_dss"])
+        self.assertEqual(OPT.load_csf_intake(self.run_dir())["certs"], ["iso27001", "pci_dss"])
         with self.assertRaises(SystemExit):
-            OPT.load_intake(self.tmp / "missing")
+            OPT.load_csf_intake(self.tmp / "missing")
 
 
 class RecordLog(unittest.TestCase):
@@ -276,13 +272,13 @@ class Workbook(unittest.TestCase):
         self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire", inv["sheet"]])
         ws = wb[inv["sheet"]]
         hidden = [c.value for c in ws[2] if ws.column_dimensions[c.column_letter].hidden]
-        self.assertEqual(hidden, [])                                      # no ai_usage.json: treated as unsure, all shown
+        self.assertEqual(hidden, [])                                      # no ai_intake.json: treated as unsure, all shown
 
     def area_columns_shown(self, usage):
         import openpyxl
         from paths import AI_AREA_LABELS, AI_QUESTION_RULES
         tmp = Path(tempfile.mkdtemp())
-        (tmp / "ai_usage.json").write_text(json.dumps(usage))
+        (tmp / "ai_intake.json").write_text(json.dumps(usage))
         inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
         ai, out = tmp / "ai.json", tmp / "questionnaire.xlsx"
         ai.write_text(json.dumps(self.entries("GOVERN", inv["subcategory"], "In the AI systems sheet, list ...",

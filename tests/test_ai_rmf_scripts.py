@@ -445,9 +445,7 @@ class Scope(unittest.TestCase):
 
     def profile(self, **over):
         p = {"ai_in_use": "some", "role": "consumer", "producer": None,
-             "ai_areas": ["invisible_usage", "input", "output", "mcp_tools", "agent"],
-             "engagement_flags": {"csf_assessment_done": True, "iso27001_held": False, "iso42001_held": False},
-             "captured_on": "2026-10-14"}
+             "ai_areas": ["invisible_usage", "input", "output", "mcp_tools", "agent"]}
         p.update(over)
         return p
 
@@ -457,7 +455,7 @@ class Scope(unittest.TestCase):
         return self.profile(**{**p, **over})
 
     def go(self, profile):
-        (self.run / "ai_usage.json").write_text(json.dumps(profile))
+        (self.run / "ai_intake.json").write_text(json.dumps(profile))
         sys.argv = ["x", str(self.run)]
         try:
             BQ.main()
@@ -565,16 +563,10 @@ class Scope(unittest.TestCase):
         with self.assertRaises(SystemExit):   # csf mode takes exactly one question file
             WQ.main()
 
-    def test_engagement_flags_change_nothing(self):
-        # the questions are about AI, so a CSF assessment or ISO 27001 neither drops nor rewords any of them
-        drafts = []
-        for flags in ((False, False, False), (True, True, True)):
-            ef = dict(zip(("csf_assessment_done", "iso27001_held", "iso42001_held"), flags))
-            self.assertEqual(self.go(self.profile(engagement_flags=ef)), 0)
-            drafts.append([json.loads((self.run / f"ai_questions_draft_{b}.json").read_text())
-                           for b in ("foundation", "areas")])
-        self.assertEqual(drafts[0], drafts[1])
-        self.assertTrue(all(e["question_type"] == "full_discovery" for bank in drafts[1] for e in bank))
+    def test_every_ai_question_is_full_discovery(self):
+        self.assertEqual(self.go(self.profile()), 0)
+        drafts = [json.loads((self.run / f"ai_questions_draft_{b}.json").read_text()) for b in ("foundation", "areas")]
+        self.assertTrue(all(e["question_type"] == "full_discovery" for bank in drafts for e in bank))
 
     def test_missing_bank_fails(self):
         self.banks["areas"].unlink()
@@ -584,8 +576,7 @@ class Scope(unittest.TestCase):
     def test_invalid_profiles_are_rejected_and_write_nothing(self):
         for bad in (self.profile(ai_in_use="maybe"), self.profile(role=None), self.profile(role="vendor"),
                     self.profile(ai_areas=["mobile"]), self.profile(producer={"built_on_existing_model": True}),
-                    self.producer(producer=None), self.profile(ai_in_use="none", role="consumer"),
-                    self.profile(engagement_flags={"csf_assessment_done": True})):
+                    self.producer(producer=None), self.profile(ai_in_use="none", role="consumer")):
             self.assertEqual(self.go(bad), 1, bad)
             self.assertFalse((self.run / "ai_scope.json").exists())
 

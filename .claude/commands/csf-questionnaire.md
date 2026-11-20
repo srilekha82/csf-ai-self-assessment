@@ -5,7 +5,7 @@ Picks the CSF 2.0 questions for one organisation and writes the CSF sheet of its
 - **Who runs it:** normally `/generate-questions`, which first checks the banks are recent enough. Run it alone only
   on an existing run folder, to redo the CSF sheet.
 - **Argument:** the run folder (`runs/<Org>_<date>`).
-- **Reads:** `intake.json` (sector and certifications), the ISO 27001 SoA if there is one, and the CSF bank for the
+- **Reads:** `csf_intake.json` (sector and certifications), the ISO 27001 SoA if there is one, and the CSF bank for the
   sector (`data/csf/banks/question_bank_<sector>.json`).
 - **Writes:** `csf_scope.json` (question type per subcategory, and why), `csf_questions_draft.json` (the picked
   questions), `csf_question_bank_used.json` (a copy of the bank used), and the CSF sheet of `questionnaire.xlsx`.
@@ -15,8 +15,8 @@ Tools: Bash, Read, Write. Working directory: repo root. Say little: the script's
 from the user.
 
 ## 1 — Run folder
-If no run folder was given: `ls runs/` and ask which one. It must contain `intake.json`; if not, tell the user to run
-`/generate-questions` (or `scripts/intake.py`) first and stop. Read `intake.json` (a few lines) for the certifications.
+If no run folder was given: `ls runs/` and ask which one. It must contain `csf_intake.json`; if not, tell the user to run
+`/generate-questions` (or `scripts/intake.py`) first and stop. Read `csf_intake.json` (a few lines) for the certifications.
 
 ## 2 — SoA (only when `certs` contains `iso27001`)
 **STOP and ask, then wait for the answer; never assume it:** "Do you have your ISO 27001 Statement of Applicability

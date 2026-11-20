@@ -2,7 +2,7 @@
 Writes the picked questions into the questionnaire workbook, one row per question.
 
 Called by: /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes
-Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files; <run_dir>/ai_usage.json
+Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files; <run_dir>/ai_intake.json
            (which AI areas to show); templates/questionnaire_template.xlsx (the layout)
 Output:    <run_dir>/questionnaire.xlsx (its CSF sheet, or its AI RMF and AI systems sheets)
 
@@ -18,7 +18,7 @@ under its header by name, so the two can be written in any order and a column ca
 
 The AI systems sheet (the client lists its AI systems for the GOVERN 1.6 inventory question) is shown only when that
 question is asked: AI in use "none" does not get it, so it is hidden. Its AI area columns show only the client's own AI
-areas (ai_usage.json); for AI in use "unsure" all of them, since the sheet is how such a client finds out what AI it has.
+areas (ai_intake.json); for AI in use "unsure" all of them, since the sheet is how such a client finds out what AI it has.
 """
 import argparse
 import json
@@ -112,7 +112,7 @@ def main():
     rows = fill_questions(wb[sheet], args.framework, entries)
     line = f"{sheet}: {rows} question rows, {len(entries)} subcategories"
     if args.framework == "ai":
-        line += "; " + show_inventory(wb, entries, outpath.parent / "ai_usage.json")
+        line += "; " + show_inventory(wb, entries, outpath.parent / "ai_intake.json")
     wb.save(outpath)
     print(f"Written: {outpath} [{line}]")
     ev.finish(inputs=[*question_files, QUESTIONNAIRE_TEMPLATE], outputs=[outpath], detail=line)

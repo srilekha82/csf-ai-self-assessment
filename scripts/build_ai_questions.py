@@ -3,7 +3,7 @@ Picks the AI RMF questions for one organisation from the two AI RMF banks. It de
 the banks by what the intake says.
 
 Called by: /ai-questionnaire (step 2)
-Input:     <run_dir>/ai_usage.json, data/ai/banks/ (both banks), data/ai/scope_rules.json
+Input:     <run_dir>/ai_intake.json, data/ai/banks/ (both banks), data/ai/scope_rules.json
 Output:    <run_dir>/ai_scope.json, ai_questions_draft_<bank>.json and ai_question_bank_used_<bank>.json
 
 Usage: .venv/bin/python ./scripts/build_ai_questions.py <run_dir>
@@ -14,17 +14,16 @@ A question is picked when all three hold:
   producer   every producer detail it needs (built on an existing model, given to others) was answered yes
   AI area    (area questions) it covers one of the organisation's AI areas
 A question shared by several of the organisation's areas says "This question covers: ...". A subcategory with no
-picked question is left out. Every AI question is full_discovery: it asks about AI, so certifications and the other
-engagement answers change nothing here. A bank entry still marked needs_human_review is flagged in the Confidence
+picked question is left out. Every AI question is full_discovery: it asks about AI, so certifications change nothing
+here. A bank entry still marked needs_human_review is flagged in the Confidence
 column.
 
-ai_usage.json (written by intake.py):
+ai_intake.json (written by intake.py):
   {"ai_in_use": "none" | "some" | "unsure", "role": "consumer" | "producer" | "both" | null,
    "producer": {"built_on_existing_model": bool, "given_to_others": bool} | null,
-   "ai_areas": [AI area ids], "engagement_flags": {"csf_assessment_done", "iso27001_held", "iso42001_held": bool},
-   "captured_on": "YYYY-MM-DD"}
+   "ai_areas": [AI area ids]}
 
-Exit 1, writing nothing, if ai_usage.json breaks a rule or a bank is missing.
+Exit 1, writing nothing, if ai_intake.json breaks a rule (for example after a hand edit) or a bank is missing.
 """
 
 import argparse
@@ -43,9 +42,9 @@ import audit  # noqa: E402
 
 # ── the profile ─────────────────────────────────────────────────────────────
 
-def validate_profile(p: dict, areas: list[str], qrules: dict, rules: dict) -> list[str]:
+def validate_profile(p: dict, areas: list[str], qrules: dict) -> list[str]:
     if not isinstance(p, dict):
-        return ["ai_usage.json must be a JSON object"]
+        return ["ai_intake.json must be a JSON object"]
     if p.get("ai_in_use") not in ("none", "some", "unsure"):
         return ["ai_in_use must be none, some or unsure"]
     errors = []
@@ -64,10 +63,6 @@ def validate_profile(p: dict, areas: list[str], qrules: dict, rules: dict) -> li
     got = p.get("ai_areas")
     if not isinstance(got, list) or not set(got) <= set(areas):
         errors.append(f"ai_areas must be a list from {areas}")
-    eflags = p.get("engagement_flags")
-    known = set(rules["engagement_flags"]["flags"])
-    if not isinstance(eflags, dict) or set(eflags) != known or not all(isinstance(x, bool) for x in eflags.values()):
-        errors.append(f"engagement_flags must be an object of booleans with exactly {sorted(known)}")
     return errors
 
 
@@ -138,12 +133,12 @@ def main():
 
     run_dir = Path(args.run_dir)
     ev = audit.begin(audit.run_log(run_dir), "build_ai_questions", {})
-    usage_path = run_dir / "ai_usage.json"
+    usage_path = run_dir / "ai_intake.json"
     inputs = [usage_path, AI_SCOPE_RULES, AI_QUESTION_RULES, AI_EVIDENCE_PROMPTS, AI_AREAS, AI_AREA_LABELS, AI_CORE]
     for p in inputs:
         if not p.is_file():
             ev.fail(f"[build_ai_questions] ERROR: {p} not found" + (
-                " (capture the AI usage profile first)" if p == usage_path else
+                " (run the intake first)" if p == usage_path else
                 " (run parse_ai_rmf_sources.py)" if p == AI_CORE else ""), inputs)
     rules = json.loads(AI_SCOPE_RULES.read_text())
     qrules = json.loads(AI_QUESTION_RULES.read_text())
@@ -156,9 +151,9 @@ def main():
     outcomes = {s["subcategory_id"]: s["outcome"] for s in core_subcategories(json.loads(AI_CORE.read_text()))}
     profile = json.loads(usage_path.read_text())
 
-    errors = validate_profile(profile, list(names), qrules, rules)
+    errors = validate_profile(profile, list(names), qrules)
     if errors:
-        ev.reject(errors, "ai_usage.json", inputs)
+        ev.reject(errors, "ai_intake.json", inputs)
 
     roles = client_roles(profile, rules)
     flags = [f for f, v in (profile.get("producer") or {}).items() if v]

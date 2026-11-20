@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, CERT_LABELS, load_intake  # noqa: E402
+from options import AI_QUESTION_BANKS, CERT_LABELS, load_csf_intake  # noqa: E402
 from paths import AI_SCOPE_RULES, SCOPE_RULES  # noqa: E402
 from build_ai_questions import client_roles, pick  # noqa: E402
 import audit  # noqa: E402
@@ -52,7 +52,7 @@ def check_csf(run_dir: Path) -> list[str]:
     if draft is None or scope is None or bank is None:
         return ["CSF: csf_questions_draft.json, csf_scope.json and csf_question_bank_used.json must all exist "
                 "(run /csf-questionnaire)"]
-    certs = load_intake(run_dir)["certs"]
+    certs = load_csf_intake(run_dir)["certs"]
     max_questions = json.loads(SCOPE_RULES.read_text())["max_questions"]
     expected = {e["subcategory_id"]: e["question_type"] for e in scope if e["question_type"] != "skip"}
     got = {e["subcategory_id"]: e for e in draft}
@@ -93,9 +93,9 @@ def check_csf(run_dir: Path) -> list[str]:
 
 
 def check_ai(run_dir: Path) -> list[str]:
-    profile = load(run_dir / "ai_usage.json")
+    profile = load(run_dir / "ai_intake.json")
     if profile is None:
-        return ["AI: ai_usage.json is missing (run the intake)"]
+        return ["AI: ai_intake.json is missing (run the intake)"]
     roles = client_roles(profile, json.loads(AI_SCOPE_RULES.read_text()))
     flags = [f for f, v in (profile.get("producer") or {}).items() if v]
     areas = profile["ai_areas"]
@@ -153,7 +153,7 @@ def main():
     run_dir = Path(args.run_dir)
     if not run_dir.is_dir():
         sys.exit(f"[check_questionnaire] ERROR: run folder not found: {run_dir}")
-    load_intake(run_dir)   # exits with a clear message when the intake is missing
+    load_csf_intake(run_dir)   # exits with a clear message when the intake is missing
     ev = audit.begin(audit.run_log(run_dir), "check_questionnaire", {"framework": args.framework})
     frameworks = [args.framework] if args.framework else [
         f for f, present in (("csf", (run_dir / CSF_DRAFT).is_file()),

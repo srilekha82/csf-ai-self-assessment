@@ -2,7 +2,7 @@
 Picks the CSF questions for one organisation from the CSF bank for its sector.
 
 Called by: /csf-questionnaire (step 4)
-Input:     <run_dir>/intake.json, <run_dir>/csf_scope.json, data/csf/banks/question_bank_<sector>.json
+Input:     <run_dir>/csf_intake.json, <run_dir>/csf_scope.json, data/csf/banks/question_bank_<sector>.json
 Output:    <run_dir>/csf_questions_draft.json and csf_question_bank_used.json (a copy of the bank used)
 
 Usage: .venv/bin/python ./scripts/build_questions.py <run_dir>
@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from paths import CSF_CORE, EVIDENCE_PROMPTS, SCOPE_RULES, bank_path  # noqa: E402
-from options import CERT_LABELS, CSF_FUNCTION_ORDER, DOMAIN_LABELS, load_intake  # noqa: E402
+from options import CERT_LABELS, CSF_FUNCTION_ORDER, DOMAIN_LABELS, load_csf_intake  # noqa: E402
 import audit  # noqa: E402
 
 RULES = json.loads(SCOPE_RULES.read_text())  # policy and wording live in scope_rules.json
@@ -56,11 +56,11 @@ def evidence_prompt(subcategory_id: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("run_dir", help="Path to run folder containing csf_scope.json and intake.json")
+    parser.add_argument("run_dir", help="Path to run folder containing csf_scope.json and csf_intake.json")
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
-    intake = load_intake(run_dir)
+    intake = load_csf_intake(run_dir)
     domain, certs = intake["domain"], intake["certs"]
     client = (f"Sector: {DOMAIN_LABELS.get(domain, domain)}. Certifications held: "
               f"{', '.join(CERT_LABELS.get(c, c) for c in certs if c in CERT_LABELS) or 'none'}.")  # who the questions are for

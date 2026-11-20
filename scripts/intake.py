@@ -3,26 +3,27 @@ The intake: asks about the organisation as numbered menus and saves the answers 
 
 Called by: /generate-questions (step 1)
 Input:     your answers, typed as menu numbers
-Output:    runs/<Org>_<date>/intake.json (organisation, date, sector, certifications) and ai_usage.json (how it
+Output:    runs/<Org>_<date>/csf_intake.json (organisation, date, sector, certifications) and ai_intake.json (how it
            uses AI)
 
 Usage: .venv/bin/python ./scripts/intake.py menu [KEY]
        .venv/bin/python ./scripts/intake.py write --org NAME --domain N --certs "N N" --ai-in-use N
-              [--role N [--built-on-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
-              --csf-assessment-done N --iso42001-held N [--date YYYY-MM-DD] [--runs-dir DIR] [--replace]
+              [--role N [--built-on-existing-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
+              [--date YYYY-MM-DD] [--runs-dir DIR] [--replace]
 
   menu    prints the menus (from data/common/intake_options.json), or one of them. Ask one question at a time.
   write   turns the typed numbers into values and writes runs/<Org>_<date>/:
-            intake.json     organisation, date, sector, certifications
-            ai_usage.json   how the organisation uses AI (no name): AI in use, role, producer details, AI areas
+            csf_intake.json  organisation, date, sector, certifications (the CSF sheet is picked from these)
+            ai_intake.json   how the organisation uses AI: AI in use, role, producer details, AI areas (the AI RMF
+                             sheet is picked from these)
 
 Asked only when AI is in use (option 2): build / use / both; for builders the two producer details; then "How do you
 use AI?" and "What does your AI include?" (these give the AI areas; some areas are added automatically). Answers given
 when not asked are refused.
 
-Exit 1, writing nothing, if a number is not on its menu, a one-choice question gets several, "None" is combined with
-a certification, or the run folder already has an intake (--replace overwrites it; the folder's later files are then
-out of date).
+Exit 1, writing nothing, if the date or a number is not valid, a one-choice question gets several, "None" is combined
+with a certification, or the run folder already has an intake (--replace overwrites it; the folder's later files are
+then out of date).
 """
 
 import argparse
@@ -33,9 +34,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_AREAS, AI_QUESTION_RULES, AI_SCOPE_RULES, RUNS  # noqa: E402
+from paths import AI_AREAS, AI_SCOPE_RULES, RUNS  # noqa: E402
 from options import INTAKE_QUESTIONS  # noqa: E402
-from build_ai_questions import validate_profile  # noqa: E402
 import audit  # noqa: E402
 
 BY_KEY = {q["key"]: q for q in INTAKE_QUESTIONS}
@@ -71,8 +71,9 @@ def pick(q: dict, text: str) -> tuple[list, list[str]]:
             chosen.append(q["options"][int(t) - 1]["value"])
     if not q["multi"] and len(chosen) > 1:
         errors.append(f"{q['key']}: pick one option")
-    if q["key"] == "certs" and "none" in chosen and len(chosen) > 1:
-        errors.append("certs: 'None' cannot be combined with a certification")
+    alone = [o["label"] for o in q["options"] if o.get("alone") and o["value"] in chosen]
+    if alone and len(chosen) > 1:
+        errors.append(f"{q['key']}: '{alone[0]}' cannot be combined with another option")
     return chosen, errors
 
 
@@ -96,6 +97,11 @@ def write(args) -> None:
     errors, values = [], {}
     if not re.search(r"[A-Za-z0-9]", args.org):
         errors.append("org: a name with at least one letter or digit is needed")
+    try:
+        if date.fromisoformat(args.date).isoformat() != args.date:
+            raise ValueError
+    except ValueError:
+        errors.append(f"date: must be written YYYY-MM-DD, got {args.date!r}")
     for q in INTAKE_QUESTIONS:
         given = getattr(args, q["key"])
         if not applies(q, values):
@@ -108,44 +114,30 @@ def write(args) -> None:
     if errors:
         fail(errors)
 
-    gate = values["ai_in_use"]
-    certs = [c for c in values["certs"] if c != "none"]
-    rules = json.loads(AI_SCOPE_RULES.read_text())
-    order = [a["id"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
-    role = values.get("role")
-    areas = ai_areas(gate, role, values.get("ai_usage", []), values.get("ai_components", []), rules, order)
-    profile = {
-        "ai_in_use": gate,
-        "role": role,
-        "producer": ({"built_on_existing_model": values["built_on_model"], "given_to_others": values["given_to_others"]}
-                     if role in ("producer", "both") else None),
-        "ai_areas": areas,
-        "engagement_flags": {"csf_assessment_done": values["csf_assessment_done"],
-                             "iso27001_held": "iso27001" in certs, "iso42001_held": values["iso42001_held"]},
-        "captured_on": args.date,
-    }
-    problems = validate_profile(profile, order, json.loads(AI_QUESTION_RULES.read_text()), rules)
-    if problems:
-        fail(problems)
-
-    try:
-        if date.fromisoformat(args.date).isoformat() != args.date:
-            raise ValueError
-    except ValueError:
-        sys.exit(f"[intake] ERROR: --date must be a date written YYYY-MM-DD, got {args.date!r}. Nothing written.")
     run_dir = Path(args.runs_dir) / run_folder_name(args.org, args.date)
-    if (run_dir / "intake.json").is_file() and not args.replace:
+    if (run_dir / "csf_intake.json").is_file() and not args.replace:
         fail([f"{run_dir} already has an intake. Use --replace to overwrite it (scope and drafts already in that folder "
               "would then be out of date: re-run /csf-questionnaire and /ai-questionnaire), or use another --date."])
+
+    certs = [c for c in values["certs"] if c != "none"]
+    gate, role = values["ai_in_use"], values.get("role")
+    order = [a["id"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
+    areas = ai_areas(gate, role, values.get("ai_usage", []), values.get("ai_components", []),
+                     json.loads(AI_SCOPE_RULES.read_text()), order)
+    csf = {"org": args.org.strip(), "date": args.date, "domain": values["domain"], "certs": certs}
+    ai = {"ai_in_use": gate, "role": role,
+          "producer": ({k: values[k] for k in ("built_on_existing_model", "given_to_others")}
+                       if role in ("producer", "both") else None),
+          "ai_areas": areas}
+
     ev = audit.begin(audit.run_log(run_dir), "intake", {"org": args.org, "date": args.date})
     run_dir.mkdir(parents=True, exist_ok=True)
-    intake = {"org": args.org.strip(), "date": args.date, "domain": values["domain"], "certs": certs}
     outputs = []
-    for name, doc in (("intake.json", intake), ("ai_usage.json", profile)):
+    for name, doc in (("csf_intake.json", csf), ("ai_intake.json", ai)):
         (run_dir / name).write_text(json.dumps(doc, indent=2, ensure_ascii=False))
         outputs.append(run_dir / name)
     detail = f"{values['domain']}; certs {', '.join(certs) or 'none'}; AI {gate}: {', '.join(areas)}"
-    print(f"[intake] {run_dir}: {detail} → intake.json, ai_usage.json")
+    print(f"[intake] {run_dir}: {detail} → csf_intake.json, ai_intake.json")
     ev.finish(outputs=outputs, detail=detail)
 
 
