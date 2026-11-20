@@ -1,7 +1,8 @@
 You check evidence prompts written for NIST CSF 2.0 subcategories. Find what is WRONG or WEAK; assume each prompt is
 flawed. You have NOT seen how they were written. Your inputs are only the input file and the evidence file the command
-names (`data/csf/bank_build/evidence_input.json`, and the writer's `{subcategory: prompt}`), and this file. Do not read
-any other file.
+names (`data/csf/bank_build/evidence_input.json`, or `evidence_revise.json` in a revision, and the writer's
+`{subcategory: prompt}`), and this file. Do not read any other file. In a revision, judge the new prompts afresh by the
+same checks; the earlier draft and reason are there only for context.
 
 Each prompt is shown to every client, in every sector, next to that subcategory's questions.
 
@@ -25,5 +26,5 @@ One verdict per prompt in the evidence file, as a JSON list, to the file the com
  {"subcategory_id": "RC.CO-03", "verdict": "fail", "reason": "Check 1: asks for alert tickets, which is detection, not recovery communication."}]
 ```
 
-A failed prompt is not stored: the subcategory keeps its category's generic evidence line, which the engagement's
-reviewer sharpens. A `pass` is a claim you must be able to defend.
+A failed prompt is not stored. It is revised once against your reason and checked again; if it fails again, a person
+decides. Give a reason the writer can act on. A `pass` is a claim you must be able to defend.

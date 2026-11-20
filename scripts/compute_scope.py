@@ -6,7 +6,7 @@ Input:     <run_dir>/csf_intake.json, soa_parsed.json and soa_judgements.json (i
            the crosswalks
 Output:    <run_dir>/csf_scope.json (a question type per subcategory, and why), or soa_pending.json (exit 2)
 
-Usage: .venv/bin/python ./scripts/compute_scope.py <run_dir>
+Usage: .venv/bin/python ./scripts/compute_scope.py <run_dir> [--model ID]
 
 Question types:
   full_discovery  ask from scratch
@@ -20,10 +20,12 @@ certifications or controls the most demanding type wins, and data/csf/domain_wei
 
 Exit 2 when the SoA excludes a mapped control (or its applicability can't be read) and no one has judged it yet: it
 writes <run_dir>/soa_pending.json, an agent (prompts/soa_exclusion_judge.md) writes soa_judgements.json, and the
-script is run again. That file looks like:
+script is run again with --model (the agent's model id). That file looks like:
   {"Annex A Controls: 5.1": {"applicable": false,     # only if applicability was unreadable
                              "exclusion_class": "covered_elsewhere" | "not_relevant" | "unclear",
                              "reason": "one sentence"}}
+The first time a soa_judgements.json is used, it also writes a write-once record of that reading to
+<run_dir>/judgement_log/ (model, prompt, the reading as given), through audit.record_agent_output.
 """
 
 import argparse
@@ -118,9 +120,29 @@ def cert_state(cert: str, sid: str, olir: dict, soa: dict | None, judgements: di
     return "no_soa", "", controls
 
 
+SOA_JUDGE_PROMPT = "prompts/soa_exclusion_judge.md"
+
+
+def soa_reading_recorded(run_dir: Path, jpath: Path) -> bool:
+    """True when this exact soa_judgements.json already has its write-once record in judgement_log/."""
+    sha = audit.sha(jpath)
+    return any(json.loads(p.read_text()).get("input_file", {}).get("sha") == sha
+               for p in (run_dir / "judgement_log").glob("*_soa_exclusions.json"))
+
+
+def record_soa_reading(run_dir: Path, jpath: Path, model: str, session: str | None) -> None:
+    """The write-once record of the agent's SoA reading. compute_scope has already checked the file."""
+    audit.record_agent_output(
+        log_path=audit.run_log(run_dir), log_dir=run_dir / "judgement_log", step="soa_exclusions", args={},
+        file=jpath, validate=lambda data: [], store=lambda data: (jpath, "SoA reading recorded"),
+        model=model, session=session, prompts=[SOA_JUDGE_PROMPT], extra_inputs=[run_dir / "soa_parsed.json"])
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_dir")
+    parser.add_argument("--model", help="model id of the agent that wrote soa_judgements.json (needed once it exists)")
+    parser.add_argument("--session", help="session reference of that agent")
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
@@ -138,7 +160,7 @@ def main():
     olirs = {c: json.loads((CROSSWALK_DIRS[CERT_FILES[c]] / CERT_FILES[c]).read_text()) for c in certs}
 
     # ── SoA and the agent's reading of its exclusions ────────────────────────
-    soa, judgements = None, {}
+    soa, judgements, to_record = None, {}, None
     soa_path = run_dir / "soa_parsed.json"
     if "iso27001" in certs and soa_path.exists():
         soa = {normalize_soa_id(r["control_id"]): r for r in json.loads(soa_path.read_text())}
@@ -150,6 +172,11 @@ def main():
         errors = validate_judgements(judgements, soa, rules)
         if errors:
             ev.reject(errors, "soa_judgements.json", ev_inputs)
+        if judgements and not soa_reading_recorded(run_dir, jpath):
+            if not args.model:
+                ev.fail("[compute_scope] ERROR: soa_judgements.json is used for the first time: run again with --model "
+                        "<the agent's model id> so the reading is recorded. Nothing written.", ev_inputs)
+            to_record = jpath
 
         # only controls that map to an active CSF subcategory need reading
         mapped = {normalize_soa_id(c) for ids in olirs["iso27001"]["csf_to_controls"].values()
@@ -211,6 +238,8 @@ def main():
     summary = " | ".join(f"{t}: {counts.get(t, 0)}" for t in order if t != "skip" or counts.get(t))
     print("[compute_scope] " + summary, file=sys.stderr)
     ev.finish(inputs=ev_inputs, outputs=[out], detail=summary, soa_used=soa is not None)
+    if to_record:
+        record_soa_reading(run_dir, to_record, args.model, args.session)
 
 
 if __name__ == "__main__":

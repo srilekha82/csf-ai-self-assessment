@@ -40,12 +40,10 @@ read it or re-apply it by hand.
 
 - **Exit 2**: it needs your reading of some SoA controls and wrote `<run_dir>/soa_pending.json`. Read that file and
   `prompts/soa_exclusion_judge.md`, judge only from what they contain, write `<run_dir>/soa_judgements.json` in the
-  format the prompt gives, and run the same command again. If it then exits 1 it lists what is wrong with
-  `soa_judgements.json`: fix those entries and re-run. Once `csf_scope.json` is written, log the reading (your model id):
-  ```bash
-  .venv/bin/python ./scripts/record_judgements.py log <run_dir> --step soa_exclusions \
-      --output soa_judgements.json --inputs soa_pending.json --prompt prompts/soa_exclusion_judge.md --model <model id>
-  ```
+  format the prompt gives, and run it again with your model id:
+  `.venv/bin/python ./scripts/compute_scope.py <run_dir> --model <model id>`. It keeps a record of your reading in
+  `<run_dir>/judgement_log/`. If it exits 1 it lists what is wrong with `soa_judgements.json`: fix those entries and
+  run it again.
 - Exit 0: nothing more.
 
 ## 4 — Questions from the bank

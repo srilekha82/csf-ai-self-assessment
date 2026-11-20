@@ -24,6 +24,10 @@ One evidence prompt of 1 to 2 short sentences (at most 400 characters) that:
 
 Do not write a prompt for a subcategory that is not in the input.
 
+## Revision (when the command gives you `evidence_revise.json` instead)
+Each item also has your earlier `draft` and the evaluator's `reason` for failing it. Write a new prompt for every item
+that fixes what the reason names, by the same rules. Do not argue with the reason or repeat the draft unchanged.
+
 ## Output
 One JSON object to the file the command names: subcategory id -> evidence prompt.
 
@@ -31,5 +35,5 @@ One JSON object to the file the command names: subcategory id -> evidence prompt
 {"PR.DS-11": "The backup schedule for critical data and the systems it covers, the latest restore test result, and where offline or offsite copies are kept."}
 ```
 
-A script (`record_judgements.py evidence`) rejects the whole file on an unknown subcategory, one that already has an
-evidence prompt, or a prompt shorter than 30 or longer than 400 characters.
+A script (`record_csf_bank.py evidence`) rejects the whole file on a subcategory that is not in your input, a missing
+one in a revision, or a prompt shorter than 30 or longer than 400 characters.
