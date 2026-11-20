@@ -18,12 +18,12 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Generate only the CSF part, or only the AI part | On an existing run folder: `/csf-questionnaire` or `/ai-questionnaire`. Each checks its questions and writes its own sheet; either can run in any order. |
 | See what the bank builds need to redo (maintainer) | `.venv/bin/python ./scripts/check_freshness.py --csf` (NIST's reference data and every CSF bank against CSET) or `--ai-bank` (each part of the AI RMF build against its sources). |
 | Build or refresh the CSF banks | `/build-csf-bank` (all six sectors together). `/generate-questions` stops and names it when a bank is missing or too old. |
-| Build or refresh the AI RMF mapping, the question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank`: pilot first; after you accept the pilot (`ai_pilot.py accept`) later rebuilds run on their own. |
+| Build or refresh the AI RMF mapping, the question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank`: pilot first; after you accept the pilot (`record_bank.py ai-accept-pilot`) later rebuilds run on their own. |
 | Use a new Playbook, CIS guide or CSF download | Replace the file (`data/ai/source/` or `data/csf/source/csf2.xlsx`, links in `data/metadata.json`). The freshness check sees the change; rebuild with the commands above. |
 | Change how many questions per type, or when a question is `gap` | `data/csf/scope_rules.json` (CSF). AI: `data/ai/scope_rules.json` says which roles each client is asked as; every AI question is `full_discovery` (they ask what is done for AI, so they never repeat general security; no gap rule). No code change. |
 | Change an intake menu, a domain, a certification or the question-type order | `data/common/intake_options.json`. Every script reads it through `scripts/options.py`. |
-| Change the AI question roles, producer details or impacts | `data/ai/question_rules.json` (what the generator and evaluator are told, and what `record_ai_bank.py questions` checks). |
-| Review the AI RMF mapping (right, wrong, missing) | `.venv/bin/python ./scripts/sheet_io.py export mapping`, open `data/ai/authoring/mapping.xlsx` (one line per AI area x subcategory, mapped or not, with the Playbook text; a Coverage sheet), edit, then `sheet_io.py import mapping`. Then accept it: `.venv/bin/python ./scripts/ai_pilot.py accept-mapping`. |
+| Change the AI question roles, producer details or impacts | `data/ai/question_rules.json` (what the generator and evaluator are told, and what `record_bank.py ai-questions` checks). |
+| Review the AI RMF mapping (right, wrong, missing) | `.venv/bin/python ./scripts/sheet_io.py export mapping`, open `data/ai/authoring/mapping.xlsx` (one line per AI area x subcategory, mapped or not, with the Playbook text; a Coverage sheet), edit, then `sheet_io.py import mapping`. Then accept it: `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`. |
 | Review the AI RMF questions | `.venv/bin/python ./scripts/sheet_io.py export area_questions` (and `foundation_questions`), open `data/ai/authoring/questions_areas.xlsx` / `questions_foundation.xlsx` (one line per question: areas covered, who it is asked of, flag, question, Playbook actions, status), edit, then `sheet_io.py import area_questions`. Changed subcategories are stored as decided by a person and a later generator run does not overwrite them. |
 | Review the CSF AI impact notes | `.venv/bin/python ./scripts/sheet_io.py export impact_notes`, open `data/ai/authoring/impact_notes.xlsx` (one line per CSF subcategory: exposure note, the two use notes, status from the notes evaluator), edit, then `sheet_io.py import impact_notes`. Changed lines are stored as decided by a person. |
 | Change the AI areas (usage and ecosystem components, their impact) | Edit `data/ai/authoring/ai_areas.xlsx` (the decision), then `.venv/bin/python ./scripts/sheet_io.py import ai_areas` (checks every row, writes `data/ai/ai_areas.json`). The model is in `docs/ai-rmf-model.md`. A change to an area makes its mapping rows, and then their questions, out of date. |
@@ -67,10 +67,10 @@ The intake is `scripts/intake.py`: it prints the numbered menus (from `data/comm
 
 1. `extract_cset_candidates.py` replays the CSET SQL migrations into `cset_candidates.json` (skipped if CSET has not changed): CSET's own CSF 2.0 set (`NCSF_V2`, one question for each of the 106 subcategories) and the maturity-model questions (ACET, CPG, SSG…) CSET maps to CSF 2.0.
 2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
-3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_csf_bank.py` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
+3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_bank.py csf-cset` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
 4. Run the build again; it writes all six `data/csf/banks/question_bank_<sector>.json` together (no bank is written while anything is pending, so the six always share one record of what they were built from).
 5. Once for all domains: each subcategory's own evidence prompt, the "Evidence Required" line of the CSF sheet
-   (`record_csf_bank.py evidence`, `data/csf/evidence_prompts.json` `by_subcategory`). A writer agent drafts it from
+   (`record_bank.py csf-evidence`, `data/csf/evidence_prompts.json` `by_subcategory`). A writer agent drafts it from
    NIST's implementation examples and an evaluator agent checks it; a failed draft is revised once and checked again;
    what still fails goes to you (`evidence_review.json`): write the line or keep the category's line. Your decision is
    final.
@@ -90,9 +90,9 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 **Building the banks (`/build-ai-bank`):**
 1. `check_freshness.py --ai-bank` compares the SHA-256 of the current source files with the hashes each output recorded about its inputs, one line per stage; all current means skip.
 2. `parse_ai_rmf_sources.py` turns the Playbook and the three CIS guides into `ai_rmf_core.json` (the 4 functions with their Playbook descriptions, 72 subcategories, suggested actions) and `cis_ai_safeguards.json` (153 safeguards per guide, with the CIS text: local only, CC BY-NC-ND 4.0) plus `cis_ai_safeguard_ids.json` (the same without text: committed).
-3. Mapping (agents, `prompts/ai_rmf_mapping_drafter.md` and `ai_rmf_mapping_evaluator.md`): per AI area (`data/ai/ai_areas.json`), the MAP, MEASURE and MANAGE subcategories that check it and the CIS safeguards that prove them, recorded by `record_ai_bank.py mapping` against `data/ai/mapping_rules.json`, reviewed in `mapping.xlsx` and accepted (`ai_pilot.py accept-mapping`).
-4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_ai_bank.py assemble` and `questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`ai_pilot.py accept`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
-5. AI impact notes: `prepare_ai_notes.py` joins the CIS → CSF mapping to the MCP and agents guides (48 CSF subcategories); an agent writes an exposure layer and a use layer (`prompts/ai_impact_notes_writer.md`); `record_ai_bank.py notes` stores `data/csf/ai_impact_notes.json`; a second agent reviews them (`prompts/ai_impact_notes_evaluator.md`, `record_ai_bank.py notes-review`).
+3. Mapping (agents, `prompts/ai_rmf_mapping_drafter.md` and `ai_rmf_mapping_evaluator.md`): per AI area (`data/ai/ai_areas.json`), the MAP, MEASURE and MANAGE subcategories that check it and the CIS safeguards that prove them, recorded by `record_bank.py ai-mapping` against `data/ai/mapping_rules.json`, reviewed in `mapping.xlsx` and accepted (`record_bank.py ai-accept-mapping`).
+4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_bank.py ai-assemble` and `questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`record_bank.py ai-accept-pilot`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
+5. AI impact notes: `prepare_ai_notes.py` joins the CIS → CSF mapping to the MCP and agents guides (48 CSF subcategories); an agent writes an exposure layer and a use layer (`prompts/ai_impact_notes_writer.md`); `record_bank.py ai-notes` stores `data/csf/ai_impact_notes.json`; a second agent reviews them (`prompts/ai_impact_notes_evaluator.md`, `record_bank.py ai-notes-review`).
 
 **Running an engagement (`/ai-questionnaire`, run by `/generate-questions` or alone):** `build_ai_questions.py` picks the client's questions from both banks by filtering on `ai_intake.json`: roles (`scope_rules.json` `client_roles`), producer details and, for area questions, the client's AI areas. A question shared by several of the client's areas carries "This question covers: ..." naming them. Every question is `full_discovery`: it asks what is done for AI, so it never repeats the CSF sheet or ISO 27001. It writes one draft per bank. `check_questionnaire.py` checks them and `write_questionnaire.py --framework ai` writes the AI RMF sheet of `questionnaire.xlsx`, plus an "AI systems" sheet where the client answers the inventory question (GOVERN 1.6) as a table: one row per system, which of the client's AI areas it involves, and its criticality. The layout comes from `templates/questionnaire_template.xlsx`.
 
@@ -152,10 +152,10 @@ flowchart TD
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
     SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
-    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_csf_bank.py]:::script --> JS([cset_judgements.json]):::file --> BQB
+    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_bank.py csf-cset]:::script --> JS([cset_judgements.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
-    B --> EP["record_csf_bank.py evidence prepare"]:::script
-    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_csf_bank.py evidence"]:::script --> EVP([evidence_prompts.json]):::file
+    B --> EP["record_bank.py csf-evidence-prepare"]:::script
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence"]:::script --> EVP([evidence_prompts.json]):::file
     RE -- "failed: revise once" --> EW
     RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then evidence reviewed)"]:::you --> EVP
 
@@ -176,17 +176,17 @@ flowchart TD
     CF --> PS[parse_ai_rmf_sources.py]:::script
     SRC --> PS --> CORE([ai_rmf_core.json, cis_ai_safeguards.json, cis_ai_safeguard_ids.json]):::file
 
-    CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_ai_bank.py mapping<br/><small>checks and store: ai_mapping.py</small>"]:::script --> MAP([mapping.json]):::file
-    MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then ai_pilot.py accept-mapping"]:::you
+    CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_bank.py ai-mapping<br/><small>checks and store: ai_mapping.py</small>"]:::script --> MAP([mapping.json]):::file
+    MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then record_bank.py ai-accept-mapping"]:::you
 
     U1 --> PB["prepare_ai_bank.py batch"]:::script
-    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_ai_bank.py assemble + questions<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
-    BANKS --> SQ["sheet_io.py export area_questions, foundation_questions"]:::script --> U2["you: review the pilot, then ai_pilot.py accept"]:::you
+    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_bank.py ai-assemble + questions<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
+    BANKS --> SQ["sheet_io.py export area_questions, foundation_questions"]:::script --> U2["you: review the pilot, then record_bank.py ai-accept-pilot"]:::you
 
-    BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_ai_bank.py evidence<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS
+    BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_bank.py ai-evidence<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS
 
     SRC --> BI[prepare_ai_notes.py]:::script
-    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_ai_bank.py notes + notes-review<br/><small>checks and store: ai_notes.py</small>"]:::script --> NOTES([ai_impact_notes.json]):::file
+    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_bank.py ai-notes + notes-review<br/><small>checks and store: ai_notes.py</small>"]:::script --> NOTES([ai_impact_notes.json]):::file
     NOTES --> SN["sheet_io.py export impact_notes"]:::script --> U3["you: review"]:::you
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
@@ -203,7 +203,7 @@ overwritten by an agent). Each script's own file opens with a short explanation 
 **Helpers** (used by the scripts above, never run directly): `config.py` (where every file lives, and the shared
 lists: sectors, certifications, question types), `audit.py` (the run log), `ai_bank_common.py` (shared AI bank
 helpers), `ai_mapping.py`, `ai_questions.py` and `ai_notes.py` (the checks, storing and review sheets behind
-`record_ai_bank.py` and `sheet_io.py`, one file per kind of AI bank data), `ai_priority.py` (priorities for Stage 2; not used yet).
+`record_bank.py` and `sheet_io.py`, one file per kind of AI bank data), `ai_priority.py` (priorities for Stage 2; not used yet).
 
 ### Prompts (`prompts/`)
 
@@ -245,7 +245,7 @@ data/
     ├── authoring/ai_areas.xlsx  AI areas and their impact, decided by a person (sheet_io.py import -> ai_areas.json)
     ├── ai_areas.json           generated from authoring/ai_areas.xlsx; scripts read this
     ├── mapping_rules.json      candidate CIS controls per AI area, required checks, foundation subcategories
-    ├── mapping.json            AI area x function -> subcategory, CIS safeguards, impact (record_ai_bank.py mapping)
+    ├── mapping.json            AI area x function -> subcategory, CIS safeguards, impact (record_bank.py ai-mapping)
     ├── authoring/mapping.xlsx  the mapping for review (sheet_io.py export mapping; edits back with import mapping)
     ├── authoring/questions_<areas|foundation>.xlsx  the question banks for review (sheet_io.py export area_questions / foundation_questions)
     ├── scope_rules.json        engagement policy: AI area rules for the intake, roles each client is asked as, notes
@@ -310,7 +310,7 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 | **Review sheet** | A spreadsheet in `data/ai/authoring/` for checking or editing the mapping, the questions or the impact notes (`sheet_io.py export` / `import`). |
 | **Pending file / exit 2** | A script that cannot settle an item writes a `pending_*.json` and exits 2; an agent decides it and a recording script stores the answer. |
 | **Recording** | Validating an agent's output file as a whole, storing it, and writing a write-once log of who decided what. A bad file is rejected and nothing is stored. |
-| **Pilot** | A first AI bank run on a few hand-picked subcategories, reviewed by a person. Accepting it (`ai_pilot.py accept`) approves the question generator and evaluator prompts; while they are unchanged, later rebuilds run without asking. |
+| **Pilot** | A first AI bank run on a few hand-picked subcategories, reviewed by a person. Accepting it (`record_bank.py ai-accept-pilot`) approves the question generator and evaluator prompts; while they are unchanged, later rebuilds run without asking. |
 | **Stale / incomplete** | Freshness report words. Stale: built from sources that have since changed. Incomplete: not every subcategory is in the bank yet (AI areas bank: or a mapping row changed after its questions were written). |
 | **Run folder** | `runs/<Org>_<date>/`: everything one engagement produced. It holds client data. |
 | **Profile XLS (Stage 2)** | The spreadsheet built from the answered questionnaire, one for CSF and one for AI RMF, with maturity scores. Not built yet. |

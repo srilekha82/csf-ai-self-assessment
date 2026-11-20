@@ -13,9 +13,10 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 4. **A recording script is the only door for agent output.** The agent hands in a file; the script validates the WHOLE
    file, rejects it if anything is wrong (exit 1, nothing stored), otherwise stores it and writes a write-once record
    (model, prompt hash, input hash, output snapshot). The contract lives once, in `audit.record_agent_output`; a recording
-   script supplies only its validator and its store. CSF banks: `record_csf_bank.py`. AI RMF banks:
-   `record_ai_bank.py` (mapping, questions, notes). In a client run, the agent's SoA reading is checked and recorded
-   by `compute_scope.py`, the script that uses it.
+   script supplies only its validator and its store. Both bank builds: `record_bank.py` (one mode per kind of agent
+   output; the checks live next to the data they guard: `build_question_bank.py` for CSF, `ai_mapping.py`,
+   `ai_questions.py`, `ai_notes.py` for AI RMF). In a client run, the agent's SoA reading is checked and recorded by
+   `compute_scope.py`, the script that uses it.
 5. **Everything is audited.** Every script calls `scripts/audit.py` (`begin`, then `finish` / `fail` / `pending`), which
    appends to the folder's `audit.jsonl`. Do not invent another logging scheme. Use `audit.write_once_record` for
    write-once records.
@@ -74,6 +75,6 @@ How it works, with a small example (AI area → AI RMF statement → question): 
 - **Read CIS safeguard IDs as text.** The CIS xlsx stores them as numbers, so 4.10 becomes 4.1. The guide tables drop
   IDs: rebuild them from the control number and row order.
 - **The maintainer rebuilds a bank when a source it was built from changed, or when it passes its age limit.** Editing a
-  prompt only marks it stale. The pilot (`ai_pilot.py accept`) is the one human gate.
+  prompt only marks it stale. The pilot (`record_bank.py ai-accept-pilot`) is the one human gate.
 - **AI impact notes only for CSF subcategories with a mapped CIS safeguard;** never invented.
 - **Profile XLS schemas are fixed by the Stage 2 writer;** reporting reads them as they are.

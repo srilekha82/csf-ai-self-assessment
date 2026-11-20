@@ -55,7 +55,7 @@ relay the message and stop. Add `--force` only if the user asks.
    `data/csf/bank_build/verdicts.json`.
 3. Save them (your model id):
    ```bash
-   .venv/bin/python ./scripts/record_csf_bank.py data/csf/bank_build/verdicts.json \
+   .venv/bin/python ./scripts/record_bank.py csf-cset data/csf/bank_build/verdicts.json \
        --pending data/csf/bank_build/pending_judgements.json --model <model id>
    ```
    If it lists problems, fix those entries and run it again; nothing is saved until it passes.
@@ -70,14 +70,14 @@ Each CSF subcategory gets its own evidence prompt once: the "Evidence Required" 
 every sector, stored in `data/csf/evidence_prompts.json` `by_subcategory`. The questions stay CSET's; only this line
 is written. A subcategory is asked again only while nothing is decided for it.
 
-1. `.venv/bin/python ./scripts/record_csf_bank.py evidence prepare` writes `data/csf/bank_build/evidence_input.json`
+1. `.venv/bin/python ./scripts/record_bank.py csf-evidence-prepare` writes `data/csf/bank_build/evidence_input.json`
    (subcategories with no evidence line decided, with NIST's implementation examples; it says how many). Nothing to do
    when it says 0.
 2. **Writers** (fresh subagents, Sonnet, started together): follow `prompts/csf_evidence_writer.md` with that input, one
    for GV + ID and one for PR + DE + RS + RC; write `data/csf/bank_build/work/evidence_<part>.json`.
 3. **Evaluators** (fresh subagents, Opus; they must not see the writer's prompt): follow
    `prompts/csf_evidence_evaluator.md` with the input and one writer's file; write `work/evidence_<part>_eval.json`.
-4. Record each part: `.venv/bin/python ./scripts/record_csf_bank.py evidence data/csf/bank_build/work/evidence_<part>.json
+4. Record each part: `.venv/bin/python ./scripts/record_bank.py csf-evidence data/csf/bank_build/work/evidence_<part>.json
    --review data/csf/bank_build/work/evidence_<part>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
    Passing prompts are stored; failures go to `data/csf/bank_build/evidence_revise.json` with the evaluator's reason.
 5. **Revision** (only if `evidence_revise.json` exists): one fresh writer revises every item in it (same prompt, its
@@ -87,7 +87,7 @@ is written. A subcategory is asked again only while nothing is decided for it.
 6. **A person** (only if `evidence_review.json` exists): **STOP.** Tell the user how many items it has and that each
    shows the outcome, NIST's examples and both drafts with why they failed. For each item they set `"prompt"` to their
    own line (30 to 400 characters) or `"keep_category_line": true`. When they say it is done, run
-   `.venv/bin/python ./scripts/record_csf_bank.py evidence reviewed`; if it exits 1, show what it lists and wait again.
+   `.venv/bin/python ./scripts/record_bank.py csf-evidence-reviewed`; if it exits 1, show what it lists and wait again.
    Their decisions are final: those subcategories are never asked again.
 
 Delete `evidence_input.json` and the `work/` files at the end.

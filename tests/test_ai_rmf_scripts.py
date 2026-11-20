@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
-import ai_pilot as PL  # noqa: E402
+import ai_questions as PL  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
 from ai_bank_modules import R  # noqa: E402
 from ai_bank_common import DEFAULT_PROMPTS, core_subcategories  # noqa: E402
@@ -57,7 +57,7 @@ class Recording(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         R.CSF_IMPACT_NOTES = self.tmp / "ai_impact_notes.json"
-        R.AI_BANKS, R.AI_BUILD, R.LOG_DIR = self.tmp / "banks", self.tmp / "build", self.tmp / "build" / "log"
+        R.AI_BANKS, R.AI_BUILD, R.AI_LOG_DIR = self.tmp / "banks", self.tmp / "build", self.tmp / "build" / "log"
         R.AI_MAPPING = AI_MAPPING                   # the accepted mapping, read only (other classes redirect it)
         P.AI_BANKS, P.AI_BUILD, PL.AI_BANKS = R.AI_BANKS, R.AI_BUILD, R.AI_BANKS
         self.addCleanup(setattr, P, "mapping_status", P.mapping_status)   # tests stub the accept gate
@@ -71,7 +71,7 @@ class Recording(unittest.TestCase):
         f.write_text(json.dumps(data))
         a = argparse.Namespace(file=str(f), bank=bank, model="test-model", session=None, prompt=None)
         try:
-            R.record(mode, a)
+            R.record_ai(mode, a)
             return 0
         except SystemExit as e:
             return e.code
@@ -210,7 +210,7 @@ class Recording(unittest.TestCase):
             rv.write_text(json.dumps(review))
             a = argparse.Namespace(file=str(f), bank="areas", review=str(rv), model="m", session=None, prompt=None)
             try:
-                R.record("evidence", a)
+                R.record_ai("evidence", a)
                 return 0
             except SystemExit as e:
                 return e.code
@@ -582,11 +582,11 @@ class Scope(unittest.TestCase):
 
 
 class Mapping(unittest.TestCase):
-    """prepare_ai_bank.py mapping and record_ai_bank.py mapping, on the real AI areas and mapping rules (read only)."""
+    """prepare_ai_bank.py mapping and record_bank.py ai-mapping, on the real AI areas and mapping rules (read only)."""
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        R.AI_MAPPING, R.AI_BUILD, R.LOG_DIR = self.tmp / "mapping.json", self.tmp / "build", self.tmp / "build" / "log"
+        R.AI_MAPPING, R.AI_BUILD, R.AI_LOG_DIR = self.tmp / "mapping.json", self.tmp / "build", self.tmp / "build" / "log"
         P.AI_BUILD = R.AI_BUILD
         R.AI_BUILD.mkdir(parents=True, exist_ok=True)
         self.inp = R.load_inputs()
@@ -615,7 +615,7 @@ class Mapping(unittest.TestCase):
             rv.write_text(json.dumps(review))
         a = argparse.Namespace(file=str(f), review=str(rv) if rv else None, model="test-model", session=None, prompt=None)
         try:
-            R.record("mapping", a)
+            R.record_ai("mapping", a)
             return 0
         except SystemExit as e:
             return e.code
@@ -808,7 +808,7 @@ class Mapping(unittest.TestCase):
         self.assertIn("MANAGE 1.2", reached)            # foundation subcategory, asked once for the organisation
         self.assertIn("MANAGE 1.1", unreached)          # not foundation: an area must reach it
         self.assertEqual(len(reached) + len(unreached), 72)
-        self.assertEqual(len(list(R.LOG_DIR.glob("*_mapping_mcp_tools.json"))), 1)
+        self.assertEqual(len(list(R.AI_LOG_DIR.glob("*_mapping_mcp_tools.json"))), 1)
 
 
 class FreshnessGate(unittest.TestCase):
@@ -1015,11 +1015,11 @@ class CsfBankStage(unittest.TestCase):
 
 
 class CsfBankRecording(unittest.TestCase):
-    """Characterisation of record_csf_bank.py bank mode (it shares its recording skeleton with record_ai_bank.py)."""
+    """record_bank.py csf-cset: the agent's decisions on CSET questions (checks and store in build_question_bank.py)."""
 
     def setUp(self):
-        import record_csf_bank as RJ
-        self.RJ = RJ
+        import build_question_bank as BQB
+        self.BQB = BQB
         self.cache = Path(tempfile.mkdtemp())
         q = lambda text, flags: {"question_text": text, "title": "t", "category": "c", "sub_category": "s", "model_id": "1",
                                  "model_name": "ACET", "is_answerable": None, "practice": {}, "flags": flags}
@@ -1031,9 +1031,8 @@ class CsfBankRecording(unittest.TestCase):
     def run_main(self, verdicts):
         f = self.cache / "verdicts.json"
         f.write_text(json.dumps(verdicts))
-        sys.argv = ["x", str(f), "--cache-dir", str(self.cache), "--model", "test-model", "--session", "s1"]
         try:
-            self.RJ.main()
+            self.BQB.record_cset(str(f), None, "test-model", "s1", cache=self.cache)
             return 0
         except SystemExit as e:
             return e.code

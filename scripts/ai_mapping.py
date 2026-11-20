@@ -1,9 +1,11 @@
 """
 The AI RMF mapping: which AI RMF subcategories apply to each AI area, and why. Checks a drafted area before it is
-stored, keeps what a person decided, says whether each area is up to date, and converts the mapping to and from its
-review spreadsheet.
+stored, keeps what a person decided, says whether each area is up to date, converts the mapping to and from its
+review spreadsheet, and records your approval of the whole mapping (mapping_accepted.json, with a fingerprint: change
+the mapping and it must be approved again).
 
-Called by: record_ai_bank.py (mapping, revalidate), sheet_io.py (the mapping sheet), ai_pilot.py (mapping status)
+Called by: record_bank.py (ai-mapping, ai-revalidate, ai-accept-mapping), sheet_io.py (the mapping sheet),
+           check_freshness.py (mapping status)
 Input:     data/ai/mapping.json, data/ai/ai_areas.json, data/ai/mapping_rules.json, the parsed AI RMF and CIS data
 Output:    data/ai/mapping.json
 
@@ -17,7 +19,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_AREAS, AI_MAPPING, AI_MAPPING_RULES  # noqa: E402
+from config import (AI_AREAS, AI_CORE, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_MAPPING_XLSX,  # noqa: E402
+                    AI_SAFEGUARDS, AI_SAFEGUARD_IDS)
 from ai_bank_common import (area_candidates, area_rules, check_mapping_rules, foundation_subcategories,  # noqa: E402
                             load_json)
 import audit  # noqa: E402
@@ -27,11 +30,11 @@ def mapping_inputs(inp: dict) -> dict:
     """The AI areas and the mapping rules, for the mapping validator and store."""
     for p, how in ((AI_AREAS, "sheet_io.py import ai_areas"), (AI_MAPPING_RULES, "data/ai/mapping_rules.json")):
         if not p.is_file():
-            sys.exit(f"[record_ai_bank] ERROR: {p} not found ({how})")
+            sys.exit(f"[record_bank] ERROR: {p} not found ({how})")
     rules = load_json(AI_MAPPING_RULES, "mapping_rules.json")
     problems = check_mapping_rules(rules, inp)
     if problems:
-        sys.exit("[record_ai_bank] ERROR: mapping_rules.json does not match the CIS guides:\n  - " + "\n  - ".join(problems))
+        sys.exit("[record_bank] ERROR: mapping_rules.json does not match the CIS guides:\n  - " + "\n  - ".join(problems))
     return {"areas": {a["id"]: a for a in load_json(AI_AREAS, "ai_areas.json")["ai_areas"]}, "rules": rules}
 
 
@@ -183,7 +186,7 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
                        for r in rows]}
     problems = validate_mapping(merged, inp, m, None) if kept else []
     if problems:   # a person's earlier decision no longer fits the current rules: they decide, not the script
-        print("[record_ai_bank] ERROR: merged with the rows a person decided, the area breaks the rules; nothing "
+        print("[record_bank] ERROR: merged with the rows a person decided, the area breaks the rules; nothing "
               "stored. Fix those lines in mapping.xlsx (sheet_io.py import mapping), then record again:\n  - "
               + "\n  - ".join(problems), file=sys.stderr)
         sys.exit(1)
@@ -191,7 +194,7 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
     missing = [x for x in missing if x["subcategory"] not in own and x["subcategory"] not in removed]
     doc["description"] = ("AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove "
                           "it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by "
-                          "record_ai_bank.py mapping, reviewed by a person. Model: docs/ai-rmf-model.md.")
+                          "record_bank.py ai-mapping, reviewed by a person. Model: docs/ai-rmf-model.md.")
     doc["areas"][data["area"]] = {
         "recorded_on": date.today().isoformat(), "inputs": mapping_input_hashes(inp, data["area"]),
         "rows": rows, "no_question": no_question, **({"missing": missing} if missing else {}),
@@ -417,3 +420,76 @@ def mapping_from_sheet(lines: list[dict], doc: dict, inp: dict, m: dict) -> tupl
         if removed:
             new_doc["areas"][area_id]["removed_by_human"] = sorted(removed, key=list(inp["subs"]).index)
     return new_doc, problems, changed
+
+
+# ── Your approval of the mapping ────────────────────────────────────────────
+
+def mapping_hash(doc: dict) -> str:
+    """Hash of what the mapping decides (rows, no_question, removals per area); not the sheet hash or dates."""
+    keep = {a: {k: e.get(k) for k in ("rows", "no_question", "removed_by_human")} for a, e in doc["areas"].items()}
+    return hashlib.sha256(json.dumps(keep, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+
+
+def mapping_problems(doc: dict | None) -> tuple[list[str], list[str]]:
+    """(what stops the mapping from being accepted, subcategories no area reaches)."""
+    if doc is None:
+        return ["missing (draft the areas: /build-ai-bank, Mapping)"], []
+    if not (AI_CORE.is_file() and (AI_SAFEGUARDS.is_file() or AI_SAFEGUARD_IDS.is_file())):
+        return ["cannot check (run parse_ai_rmf_sources.py first)"], []
+    from ai_bank_common import load_inputs
+    from sheet_io import sheet_status
+    inp = load_inputs()
+    m = mapping_inputs(inp)
+    problems = []
+    missing = [a for a in m["areas"] if a not in doc["areas"]]
+    if missing:
+        problems.append(f"incomplete ({len(doc['areas'])} of {len(m['areas'])} AI areas; missing: {', '.join(missing)})")
+    state = {a: mapping_freshness(e, a, inp) for a, e in doc["areas"].items()}
+    redraft = [a for a, s in state.items() if s == "redraft"]
+    recheck = [a for a, s in state.items() if s == "recheck"]
+    if redraft:
+        problems.append(f"stale, re-draft (the area's own row in the AI areas sheet or the sources changed: "
+                        f"{', '.join(redraft)})")
+    if recheck:
+        problems.append(f"to recheck (the mapping rules or other AI areas changed; record_bank.py ai-revalidate, no "
+                        f"agent needed: {', '.join(recheck)})")
+    review = sum(1 for e in doc["areas"].values() for r in e["rows"] if r.get("status") != "pass")
+    if review:
+        problems.append(f"{review} rows need human review (Status in {AI_MAPPING_XLSX.name})")
+    missing = sum(len(e.get("missing", [])) for e in doc["areas"].values())
+    if missing:
+        problems.append(f"{missing} missing rows to decide (Mapped = no lines with Status needs_human_review in "
+                        f"{AI_MAPPING_XLSX.name}: map them, or set Status to pass)")
+    if AI_MAPPING_XLSX.is_file() and not sheet_status("mapping", AI_MAPPING_XLSX, AI_MAPPING)[0]:
+        problems.append(f"{AI_MAPPING_XLSX.name} edited but not imported (sheet_io.py import mapping)")
+    return problems, mapping_coverage(doc, inp, m["rules"])[1]
+
+
+def mapping_status(mapping_file: Path | None = None, accepted_file: Path | None = None) -> tuple[bool, str]:
+    """(current?, text) for the `mapping` stage: complete, current, reviewed and accepted as it is now."""
+    mapping_file, accepted_file = mapping_file or AI_MAPPING, accepted_file or AI_MAPPING_ACCEPTED
+    doc = json.loads(mapping_file.read_text()) if mapping_file.is_file() else None
+    problems, unreached = mapping_problems(doc)
+    tail = f"; {len(unreached)} subcategories reached by no area" if doc else ""
+    if problems:
+        return False, "; ".join(problems) + tail
+    accepted = json.loads(accepted_file.read_text()) if accepted_file.is_file() else None
+    if accepted is None:
+        return False, f"not accepted (review {AI_MAPPING_XLSX.name}, then record_bank.py ai-accept-mapping){tail}"
+    if accepted["mapping_sha"] != mapping_hash(doc):
+        return False, f"changed since accepted on {accepted['accepted_on']} (accept again){tail}"
+    return True, f"accepted {accepted['accepted_on']} ({len(doc['areas'])} areas{tail})"
+
+
+def accept_mapping(note: str | None) -> str:
+    """Record that the user accepted the mapping as it is now."""
+    doc = json.loads(AI_MAPPING.read_text()) if AI_MAPPING.is_file() else None
+    problems, unreached = mapping_problems(doc)
+    if problems:
+        sys.exit("[record_bank] ERROR: the mapping cannot be accepted yet:\n  - " + "\n  - ".join(problems))
+    rows = sum(len(e["rows"]) for e in doc["areas"].values())
+    AI_MAPPING_ACCEPTED.write_text(json.dumps({
+        "accepted_on": date.today().isoformat(), "note": note, "areas": len(doc["areas"]), "rows": rows,
+        "unreached": unreached, "mapping_sha": mapping_hash(doc)}, indent=2, ensure_ascii=False))
+    return (f"mapping accepted ({len(doc['areas'])} areas, {rows} rows"
+            + (f"; reached by no area: {', '.join(unreached)}" if unreached else "") + ")")

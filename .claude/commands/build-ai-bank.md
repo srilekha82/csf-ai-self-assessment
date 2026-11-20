@@ -14,7 +14,7 @@ Builds or refreshes the AI RMF mapping, the two AI RMF question banks and the CS
   `docs/guide.md`, section "Glossary".
 
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
-`scripts/record_ai_bank.py`, which rejects a whole file if anything is wrong. The judging rules are in the prompts
+`scripts/record_bank.py` (its `ai-…` modes), which rejects a whole file if anything is wrong. The judging rules are in the prompts
 named in each step. Do not re-implement any parsing or validation inline.
 
 Use your tools (Bash, Read, Write, Agent). Working directory: repo root.
@@ -77,7 +77,7 @@ time; the first run is a pilot on one area the user names, then stop and report.
 5. Record the last draft with the last evaluation (rows still failing are stored as `needs_human_review`, subcategories
    still missing in the area's `missing` list, notes in `notes`; all three show in the review sheet):
    ```bash
-   .venv/bin/python ./scripts/record_ai_bank.py mapping data/ai/bank_build/work/mapping_<area>_draft<N>.json \
+   .venv/bin/python ./scripts/record_bank.py ai-mapping data/ai/bank_build/work/mapping_<area>_draft<N>.json \
        --review data/ai/bank_build/work/mapping_<area>_eval<N>.json --model <drafter model id> --session "evaluator=<model id>"
    ```
    If it lists problems (ids, candidates, impacts, a missing function or required check), send them back to the drafter
@@ -98,11 +98,11 @@ such a subcategory on every line ("the mapping rows changed ..."); the user eith
 now.
 
 After a change to `data/ai/mapping_rules.json` or to another AI area's row, do not re-draft: run
-`.venv/bin/python ./scripts/record_ai_bank.py revalidate` (script only). Re-draft only the areas it names (their own
+`.venv/bin/python ./scripts/record_bank.py ai-revalidate` (script only). Re-draft only the areas it names (their own
 row or the sources changed), and send the user any rule problems it lists to fix in the sheet.
 
 When every area is recorded and the user has reviewed the sheet (no row left needs_human_review, edits imported), the
-user accepts the mapping: `.venv/bin/python ./scripts/ai_pilot.py accept-mapping`. Re-drafting an area later keeps the
+user accepts the mapping: `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`. Re-drafting an area later keeps the
 user's decisions (rows decided_by human, lines they removed).
 
 ## Step 5 — Questions (subagents; needs the mapping accepted as it is now)
@@ -149,8 +149,8 @@ Work files go under `data/ai/bank_build/work/` (create it; delete the files once
    an evaluator file without a verdict on every check of every question, or a round 2 file that fails an unchanged
    question that passed round 1 on a check other than 6 and 7: send it back to the evaluator):
    ```bash
-   .venv/bin/python ./scripts/record_ai_bank.py assemble --gen1 work/... --eval1 work/... [--gen2 ... --eval2 ...] --out data/ai/bank_build/work/<tag>_record.json
-   .venv/bin/python ./scripts/record_ai_bank.py questions <foundation|areas> data/ai/bank_build/work/<tag>_record.json \
+   .venv/bin/python ./scripts/record_bank.py ai-assemble --gen1 work/... --eval1 work/... [--gen2 ... --eval2 ...] --out data/ai/bank_build/work/<tag>_record.json
+   .venv/bin/python ./scripts/record_bank.py ai-questions <foundation|areas> data/ai/bank_build/work/<tag>_record.json \
        --model <generator model id> --session "evaluator=<evaluator model id>"
    ```
    If `questions` lists problems (a row not asked, or asked more than twice, for a role; a role the area does not allow; a
@@ -172,7 +172,7 @@ evaluator prompts from this, then runs `/build-ai-bank` again for the full run.
 
 When the user says the pilot is good, record it:
 ```bash
-.venv/bin/python ./scripts/ai_pilot.py accept --note "<what the user said>"
+.venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"
 ```
 The acceptance is tied to the current generator and evaluator prompts. From then on `/generate-questions` rebuilds a
 missing or incomplete AI bank on its own, like a CSF bank. If either prompt is edited later the acceptance goes stale
@@ -204,7 +204,7 @@ Per bank (`foundation`, then `areas`):
    `work/evidence_<bank>.json`. For the area bank, split by function (MAP, MEASURE, MANAGE) if the input is large.
 3. **Evaluator** (a fresh subagent, Opus; it must not see the writer's prompt): follow
    `prompts/ai_rmf_evidence_evaluator.md` with the input and the writer's file; write `work/evidence_<bank>_eval.json`.
-4. Record: `.venv/bin/python ./scripts/record_ai_bank.py evidence <bank> data/ai/bank_build/work/evidence_<bank>.json
+4. Record: `.venv/bin/python ./scripts/record_bank.py ai-evidence <bank> data/ai/bank_build/work/evidence_<bank>.json
    --review data/ai/bank_build/work/evidence_<bank>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
    A failed prompt is not stored (the question keeps the generic line from `data/ai/evidence_prompts.json`; review
    it in the questions sheet); one pass, no revision turn. Then refresh the review sheet
@@ -224,7 +224,7 @@ It joins the CIS → CSF 2.0 mapping to the MCP and agents guide safeguards and 
 
 1. Layer 1 (exposure, only where the safeguard text supports something real for an org with no AI): write
    `data/ai/bank_build/notes_layer1.json`, then
-   `.venv/bin/python ./scripts/record_ai_bank.py notes data/ai/bank_build/notes_layer1.json --model <model id>`
+   `.venv/bin/python ./scripts/record_bank.py ai-notes data/ai/bank_build/notes_layer1.json --model <model id>`
 2. Layer 2 (use): write `data/ai/bank_build/notes_layer2.json` for the subset where use changes the reading, then
    the same command with that file.
 
@@ -233,11 +233,11 @@ Fix-and-rerun on problems. A note a person decided in the review sheet is refuse
 3. Review (a fresh subagent, Opus, `model: "opus"`; it must not see the writer's prompt): follow
    `prompts/ai_impact_notes_evaluator.md` with `impact_pending.json` and `data/csf/ai_impact_notes.json`, writing the
    flagged notes to `data/ai/bank_build/notes_review1.json`, then
-   `.venv/bin/python ./scripts/record_ai_bank.py notes-review data/ai/bank_build/notes_review1.json --model <model id>`
+   `.venv/bin/python ./scripts/record_bank.py ai-notes-review data/ai/bank_build/notes_review1.json --model <model id>`
    (every note not yet reviewed and not decided by a person gets status pass or needs_human_review).
    If notes were flagged: a fresh writer (Sonnet) follows the writer prompt's "Revision turn" with
    `impact_pending.json` and the notes file, writes `data/ai/bank_build/notes_revision.json` (every flagged
-   subcategory, complete), recorded with `record_ai_bank.py notes` (a rewritten note loses its status); then a fresh
+   subcategory, complete), recorded with `record_bank.py ai-notes` (a rewritten note loses its status); then a fresh
    evaluator reviews again into `notes_review2.json`, recorded with `notes-review`: it judges only the rewritten notes,
    the others keep their verdict. Two turns at most; what still fails goes to the user in the review sheet.
 4. Refresh the review sheet: `.venv/bin/python ./scripts/sheet_io.py export impact_notes`

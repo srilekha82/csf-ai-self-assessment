@@ -1,10 +1,11 @@
 """
 The two AI RMF question banks (foundation and areas). Checks generated questions and evidence lines before they are
-stored, combines the generator's and checker's files (assemble), says whether a bank is complete, and converts the
-banks to and from their review spreadsheets.
+stored, combines the generator's and checker's files (assemble), says whether a bank is complete, converts the
+banks to and from their review spreadsheets, and records your approval of the pilot (pilot_accepted.json, with
+fingerprints of the generator and evaluator prompts: change either and a new pilot is needed).
 
-Called by: record_ai_bank.py (questions, evidence, assemble), sheet_io.py (the question sheets),
-           check_freshness.py (bank completeness), record_csf_bank.py
+Called by: record_bank.py (ai-questions, ai-evidence, ai-assemble, ai-accept-pilot), sheet_io.py (the question
+           sheets), check_freshness.py (bank completeness, pilot status)
 Input:     data/ai/mapping.json, data/ai/question_rules.json, data/ai/scope_rules.json, the parsed AI RMF and CIS data
 Output:    data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json
 
@@ -19,8 +20,10 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_AREAS, AI_BANKS, AI_MAPPING, AI_MAPPING_RULES, AI_QUESTION_RULES, AI_SCOPE_RULES  # noqa: E402
-from ai_bank_common import area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
+from config import (AI_AREAS, AI_BANKS, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT, AI_QUESTION_BANKS, AI_QUESTION_RULES,  # noqa: E402
+                    AI_SCOPE_RULES, REPO_ROOT)
+from ai_bank_common import DEFAULT_PROMPTS, area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
+import audit  # noqa: E402
 
 
 BANK_DESCRIPTION = {
@@ -29,11 +32,11 @@ BANK_DESCRIPTION = {
               "for several areas' rows), the roles it is asked of and any producer flags; build_ai_questions.py picks a "
               "client's questions by filtering on their AI areas, role and producer flags. rows_sha is the hash of the "
               "subcategory's mapping rows the questions were written for; rows gives each row's area and impact (for the "
-              "covers note and the evidence prompt). Recorded by record_ai_bank.py questions."),
+              "covers note and the evidence prompt). Recorded by record_bank.py ai-questions."),
     "foundation": ("AI RMF foundation questions: every question that could be asked once for the organisation (GOVERN "
                    "and the foundation subcategories of mapping_rules.json), keyed by subcategory, each with the roles "
-                   "it is asked of (none, consumer, producer) and any producer flags. Recorded by record_ai_bank.py "
-                   "questions."),
+                   "it is asked of (none, consumer, producer) and any producer flags. Recorded by record_bank.py "
+                   "ai-questions."),
 }
 TEXT_LIMITS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]   # data/ai/question_rules.json
 MIN_QUESTION_CHARS = TEXT_LIMITS["min_chars"]
@@ -48,7 +51,7 @@ def question_context(inp: dict) -> dict:
     the foundation subcategories and the question rules."""
     for p, how in ((AI_MAPPING, "record and accept the mapping first"), (AI_AREAS, "sheet_io.py import ai_areas")):
         if not p.is_file():
-            sys.exit(f"[record_ai_bank] ERROR: {p} not found ({how})")
+            sys.exit(f"[record_bank] ERROR: {p} not found ({how})")
     qrules = load_json(AI_QUESTION_RULES, "question_rules.json")
     scope_rules = load_json(AI_SCOPE_RULES, "scope_rules.json")
     areas = {a["id"]: a for a in load_json(AI_AREAS, "ai_areas.json")["ai_areas"]}
@@ -415,7 +418,7 @@ def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], li
     (`starts_with`), and a
     `complete` verdict per subcategory (number 0)."""
     if not isinstance(verdicts, list):
-        sys.exit(f"[record_ai_bank] ERROR: {name} must be a JSON list of verdicts")
+        sys.exit(f"[record_bank] ERROR: {name} must be a JSON list of verdicts")
     want = {(sid, n) for sid, v in gen.items() for n in range(len(v["questions"]) + 1)}
     got, problems = {}, []
     for v in verdicts:
@@ -442,7 +445,7 @@ def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], li
         got[key] = [(c, str(reasons[c]).strip()) for c in fails]
     problems += [f"no verdict for {k}" for k in sorted(want - set(got), key=str)]
     if problems:
-        sys.exit(f"[record_ai_bank] ERROR: {name}:\n  - " + "\n  - ".join(problems))
+        sys.exit(f"[record_bank] ERROR: {name}:\n  - " + "\n  - ".join(problems))
     return {k: f for k, f in got.items() if f}
 
 
@@ -455,22 +458,22 @@ def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out
     (gen2) replaces the subcategories it covers."""
     g1 = load_json(gen1, "generator output")
     if not isinstance(g1, dict):
-        sys.exit("[record_ai_bank] ERROR: generator output has the wrong JSON type")
+        sys.exit("[record_bank] ERROR: generator output has the wrong JSON type")
     if bool(gen2) != bool(eval2):
-        sys.exit("[record_ai_bank] ERROR: --gen2 and --eval2 go together")
+        sys.exit("[record_bank] ERROR: --gen2 and --eval2 go together")
     f1 = verdict_failures(g1, load_json(eval1, "evaluator verdicts"), "turn 1 verdicts")
     final, last_fail, turns = {sid: v["questions"] for sid, v in g1.items()}, f1, {sid: 1 for sid in g1}
     if gen2:
         g2 = load_json(gen2, "revision output")
         if not isinstance(g2, dict) or set(g2) - set(final):
-            sys.exit("[record_ai_bank] ERROR: revision output must be an object of turn 1 subcategories")
+            sys.exit("[record_bank] ERROR: revision output must be an object of turn 1 subcategories")
         f2 = verdict_failures(g2, load_json(eval2, "second evaluation"), "turn 2 verdicts")
         flipped = [f"{sid} Q{n} check {c}" for (sid, n), fails in f2.items() if n
                    and g2[sid]["questions"][n - 1] in g1[sid]["questions"]
                    and (sid, g1[sid]["questions"].index(g2[sid]["questions"][n - 1]) + 1) not in f1
                    for c, _ in fails if c not in TURN_TWO_RECHECKS]
         if flipped:
-            sys.exit("[record_ai_bank] ERROR: turn 2 verdicts fail questions that are unchanged and passed turn 1 (only "
+            sys.exit("[record_bank] ERROR: turn 2 verdicts fail questions that are unchanged and passed turn 1 (only "
                      f"checks {sorted(TURN_TWO_RECHECKS)} may change): {', '.join(flipped)}")
         for sid, v in g2.items():
             final[sid], turns[sid] = v["questions"], 2
@@ -531,3 +534,31 @@ def store_evidence(data: dict, args, inp: dict) -> tuple[Path, str]:
     left = len(evidence_targets(args.bank))
     return path, (f"{args.bank} bank: {stored} evidence prompts stored, {len(failed)} failed the check (not "
                   f"stored); {left} questions still without one. Refresh the review sheet (sheet_io.py export).")
+
+
+# ── Your approval of the pilot ──────────────────────────────────────────────
+
+def pilot_status(pilot_file: Path | None = None) -> tuple[bool, str]:
+    """(current?, text) for the `pilot` stage: accepted, and the generator and evaluator prompts unchanged since."""
+    pilot_file = pilot_file or AI_PILOT
+    pilot = json.loads(pilot_file.read_text()) if pilot_file.is_file() else None
+    if pilot is None:
+        return False, "missing (run /build-ai-bank and review the pilot)"
+    same = pilot["prompts"] == {p: audit.sha(REPO_ROOT / p) for p in DEFAULT_PROMPTS["questions"]}
+    return same, (f"accepted {pilot['accepted_on']}" if same
+                  else "stale (generator or evaluator prompt changed since the pilot was accepted)")
+
+
+def accept_pilot(note: str | None) -> str:
+    """Record that the user accepted the pilot. Needs at least one recorded subcategory in each bank."""
+    recorded = {}
+    for bank in AI_QUESTION_BANKS:
+        path = AI_BANKS / f"question_bank_ai_rmf_{bank}.json"
+        recorded[bank] = len(load_json(path, path.name)["subcategories"]) if path.is_file() else 0
+    if not all(recorded.values()):
+        sys.exit(f"[record_bank] ERROR: run the pilot first; recorded subcategories per bank: {recorded}")
+    prompts = DEFAULT_PROMPTS["questions"]
+    AI_PILOT.write_text(json.dumps({
+        "accepted_on": date.today().isoformat(), "note": note, "recorded": recorded,
+        "prompts": {p: audit.sha(REPO_ROOT / p) for p in prompts}}, indent=2, ensure_ascii=False))
+    return f"pilot accepted ({recorded}); the generator and evaluator prompts are now locked to this acceptance"

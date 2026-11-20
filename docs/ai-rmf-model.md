@@ -169,7 +169,7 @@ fails padding.
 4. The evaluator agent (fresh context) goes through every subcategory too and returns findings only, each with a kind:
    `row` (a row fails), `missing` (a subcategory that should be a row, named), `note` (a remark that does not block,
    e.g. the area's impacts look too narrow; the person decides the areas). One revision turn.
-5. `record_ai_bank.py mapping` (checks in `ai_mapping.py`) validates the whole file (ids, safeguards from the
+5. `record_bank.py ai-mapping` (checks in `ai_mapping.py`) validates the whole file (ids, safeguards from the
    candidates, impacts belong to the area, required checks met, every function has rows or a reason), stores the
    mapping JSON and a write-once record.
 6. The mapping goes to a spreadsheet for review (`sheet_io.py export mapping` -> `data/ai/authoring/mapping.xlsx`): one
@@ -183,11 +183,11 @@ fails padding.
    subcategory there unfolds it. A folded subcategory counts as reached: it is asked and scored through the row it is
    folded into, so a fold is allowed only when that row's question fully asks the folded outcome. A row with folds
    cannot be set to Mapped = no until its folds are mapped on their own lines.
-7. Approval (person): `ai_pilot.py accept-mapping`, tied to a fingerprint of the mapping's content; the `mapping` line
+7. Approval (person): `record_bank.py ai-accept-mapping`, tied to a fingerprint of the mapping's content; the `mapping` line
    of `check_freshness.py --ai-bank` reports it. A re-drafted area keeps the person's decisions, and the merged area is
    checked against the rules again before it is stored. **A change is a delta:** an area is re-drafted only when its
    own row in the AI areas sheet or the sources change; when only the mapping rules or other areas change,
-   `record_ai_bank.py revalidate` checks every recorded area against the current rules (no agent), marks the ones that
+   `record_bank.py ai-revalidate` checks every recorded area against the current rules (no agent), marks the ones that
    pass current and lists the problems of the rest.
 8. Questions (generator, evaluator) -> the foundation and area banks (section 7).
 
@@ -226,14 +226,14 @@ check.
 - **Evaluator consistency:** the evaluator writes a verdict on every check of every question, not only failures, and
   quotes the start of the question each verdict is for, so a verdict cannot land on the wrong question. Round 2 gets
   round 1's questions and verdicts; an unchanged question that passed keeps its pass except on checks 6 and 7 (clash or
-  duplicate with a rewrite). `record_ai_bank.py assemble` rejects a file that breaks either. When the person overrides
+  duplicate with a rewrite). `record_bank.py ai-assemble` rejects a file that breaks either. When the person overrides
   the evaluator because of what a mapping row says, the row's why is edited to match, so later runs agree.
-- **Recording** (`record_ai_bank.py questions`, checks in `ai_questions.py`) checks coverage mechanically (rows, roles,
+- **Recording** (`record_bank.py ai-questions`, checks in `ai_questions.py`) checks coverage mechanically (rows, roles,
   producer details, safeguards of the covered rows, folds cited, foundation count and roles); the evaluator judges
   quality, sharing and audience. Each area entry stores a fingerprint of the rows it was written for and each row's area
   and impact (for the covers note and the evidence prompt).
 - **Evidence lines.** Each bank question may carry its own `evidence_prompt`, written once by an evidence writer and
-  checked by an evidence evaluator (`/build-ai-bank` Step 6b, `record_ai_bank.py evidence`). A prompt the evaluator
+  checked by an evidence evaluator (`/build-ai-bank` Step 6b, `record_bank.py ai-evidence`). A prompt the evaluator
   fails is not stored and there is no revision turn: the question keeps the generic line of
   `data/ai/evidence_prompts.json`. Editable in the question review sheets (a blank cell keeps the bank's prompt).
 - **Selection** (`build_ai_questions.py`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,

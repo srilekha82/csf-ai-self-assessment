@@ -35,5 +35,5 @@ One JSON object to the file the command names: subcategory id -> evidence prompt
 {"PR.DS-11": "The backup schedule for critical data and the systems it covers, the latest restore test result, and where offline or offsite copies are kept."}
 ```
 
-A script (`record_csf_bank.py evidence`) rejects the whole file on a subcategory that is not in your input, a missing
+A script (`record_bank.py csf-evidence`) rejects the whole file on a subcategory that is not in your input, a missing
 one in a revision, or a prompt shorter than 30 or longer than 400 characters.
