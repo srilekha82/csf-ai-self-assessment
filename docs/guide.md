@@ -91,7 +91,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 1. `check_freshness.py --ai-bank` compares the SHA-256 of the current source files with the hashes each output recorded about its inputs, one line per stage; all current means skip.
 2. `parse_ai_rmf_sources.py` turns the Playbook and the three CIS guides into `ai_rmf_core.json` (the 4 functions with their Playbook descriptions, 72 subcategories, suggested actions) and `cis_ai_safeguards.json` (153 safeguards per guide, with the CIS text: local only, CC BY-NC-ND 4.0) plus `cis_ai_safeguard_ids.json` (the same without text: committed).
 3. Mapping (agents, `prompts/ai_rmf_mapping_drafter.md` and `ai_rmf_mapping_evaluator.md`): per AI area (`data/ai/ai_areas.json`), the MAP, MEASURE and MANAGE subcategories that check it and the CIS safeguards that prove them, recorded by `record_bank.py ai-mapping` against `data/ai/mapping_rules.json`, reviewed in `mapping.xlsx` and accepted (`record_bank.py ai-accept-mapping`).
-4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_bank.py ai-assemble` and `questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`record_bank.py ai-accept-pilot`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
+4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_bank.py ai-assemble` and `ai-questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`record_bank.py ai-accept-pilot`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
 5. AI impact notes: `prepare_ai_notes.py` joins the CIS → CSF mapping to the MCP and agents guides (48 CSF subcategories); an agent writes an exposure layer and a use layer (`prompts/ai_impact_notes_writer.md`); `record_bank.py ai-notes` stores `data/csf/ai_impact_notes.json`; a second agent reviews them (`prompts/ai_impact_notes_evaluator.md`, `record_bank.py ai-notes-review`).
 
 **Running an engagement (`/ai-questionnaire`, run by `/generate-questions` or alone):** `build_ai_questions.py` picks the client's questions from both banks by filtering on `ai_intake.json`: roles (`scope_rules.json` `client_roles`), producer details and, for area questions, the client's AI areas. A question shared by several of the client's areas carries "This question covers: ..." naming them. Every question is `full_discovery`: it asks what is done for AI, so it never repeats the CSF sheet or ISO 27001. It writes one draft per bank. `check_questionnaire.py` checks them and `write_questionnaire.py --framework ai` writes the AI RMF sheet of `questionnaire.xlsx`, plus an "AI systems" sheet where the client answers the inventory question (GOVERN 1.6) as a table: one row per system, which of the client's AI areas it involves, and its criticality. The layout comes from `templates/questionnaire_template.xlsx`.
@@ -152,12 +152,12 @@ flowchart TD
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
     SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
-    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ[record_bank.py csf-cset]:::script --> JS([cset_judgements.json]):::file --> BQB
+    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ["record_bank.py csf-cset<br/><small>checks and store: build_question_bank.py</small>"]:::script --> JS([cset_judgements.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
     B --> EP["record_bank.py csf-evidence-prepare"]:::script
-    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence"]:::script --> EVP([evidence_prompts.json]):::file
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence<br/><small>checks and store: build_question_bank.py</small>"]:::script --> EVP([evidence_prompts.json]):::file
     RE -- "failed: revise once" --> EW
-    RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then evidence reviewed)"]:::you --> EVP
+    RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then record_bank.py csf-evidence-reviewed)"]:::you --> EVP
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
     classDef script fill:#dbeafe,stroke:#2563eb,color:#111
@@ -180,13 +180,13 @@ flowchart TD
     MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then record_bank.py ai-accept-mapping"]:::you
 
     U1 --> PB["prepare_ai_bank.py batch"]:::script
-    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_bank.py ai-assemble + questions<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
+    MAP --> PB --> AQ["agents: question generator + checker"]:::agent --> RQ["record_bank.py ai-assemble + ai-questions<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS([question_bank_ai_rmf_foundation.json, ..._areas.json]):::file
     BANKS --> SQ["sheet_io.py export area_questions, foundation_questions"]:::script --> U2["you: review the pilot, then record_bank.py ai-accept-pilot"]:::you
 
     BANKS --> PE["prepare_ai_bank.py evidence"]:::script --> AE["agents: evidence writer + checker"]:::agent --> RE["record_bank.py ai-evidence<br/><small>checks and store: ai_questions.py</small>"]:::script --> BANKS
 
     SRC --> BI[prepare_ai_notes.py]:::script
-    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_bank.py ai-notes + notes-review<br/><small>checks and store: ai_notes.py</small>"]:::script --> NOTES([ai_impact_notes.json]):::file
+    CORE --> BI --> AN["agents: notes writer + checker"]:::agent --> RN["record_bank.py ai-notes + ai-notes-review<br/><small>checks and store: ai_notes.py</small>"]:::script --> NOTES([ai_impact_notes.json]):::file
     NOTES --> SN["sheet_io.py export impact_notes"]:::script --> U3["you: review"]:::you
 
     classDef cmd fill:#e5e7eb,stroke:#6b7280,color:#111
