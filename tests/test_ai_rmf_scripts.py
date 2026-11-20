@@ -979,6 +979,14 @@ class CsfBankStage(unittest.TestCase):
         self.bank.write_text(json.dumps({"cset_commit": commit,
                                          "inputs_sha": inputs or bank_inputs_sha(CF.BANK_BUILD)}))
 
+    def test_a_given_cset_commit_is_used_without_fetching_again(self):
+        self.write_bank(self.base)
+        missing = self.tmp / "no-cset-here"                      # git would fail on this path if it were used
+        (stage, ok, text), notes = CF.csf_bank_stage("finance", missing, (self.base, [], ""))
+        self.assertEqual((ok, text, notes), (True, "current", []))
+        (stage, ok, text), _ = CF.csf_bank_stage("finance", missing, (None, [], "cannot check against CSET (x)"))
+        self.assertEqual((ok, text), (False, "cannot check against CSET (x)"))
+
     def test_changed_judgements_or_csf_core_make_the_bank_stale(self):
         self.write_bank(self.base, inputs={"cset_judgements": "old", "csf2_core": "old"})
         ok, text, _ = self.stage()
