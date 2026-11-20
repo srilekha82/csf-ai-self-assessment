@@ -14,9 +14,12 @@ implementation examples ("Ex1: ...") and its informative references, one per lin
 ("ISO/IEC 27001:2022: Annex A Controls: 5.1", "PCI DSS: 12.1.1").
 
 csf2_core.json holds the subcategories with their implementation examples. Each crosswalk says which controls of one
-certification map to each subcategory (csf_to_controls) and the reverse (control_to_csf). NIST's file says which
-controls relate to a subcategory, not how (subset, equal, ...), so a crosswalk lists coverage only. The refresh date
-is what check_freshness.py --csf reads.
+certification map to each subcategory: {"csf_to_controls": {"GV.OC-01": ["Mandatory Clause: 4.1", ...]}}, listing only
+the subcategories with a mapping. NIST's file says which controls relate to a subcategory, not how (subset, equal,
+...), so a crosswalk lists coverage only. The refresh date is what check_freshness.py --csf reads.
+
+Read by: compute_scope.py (which CSF questions a certification covers), build_question_bank.py (the ISO mapping shown
+in each bank entry).
 """
 import argparse
 import json
@@ -36,18 +39,29 @@ SOURCE = {"source_url": "https://www.nist.gov/cyberframework/csf-20-informative-
           "author": "NIST (CPRT export)"}
 
 
+def clean_control_id(line: str, prefix: str) -> str:
+    """The control id without its standard's prefix and stray spaces or commas:
+    "ISO/IEC 27001:2022: Mandatory Clause:  4.1" -> "Mandatory Clause: 4.1"; "PCI DSS: 12.1.1" -> "12.1.1"."""
+    return re.sub(r" {2,}", " ", line[len(prefix):].strip().rstrip(",").strip())
+
+
 def parse_references(text: str) -> dict:
-    """{cert: sorted control ids} from one Informative References cell. The standard's prefix is dropped
-    ("ISO/IEC 27001:2022: Mandatory Clause:  4.1" -> "Mandatory Clause: 4.1"); a bare heading with no id is skipped."""
+    """{cert: sorted control ids} from one Informative References cell (one reference per line). A line that is only
+    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:") is skipped."""
     found = {cert: set() for cert in CERT_NIST}
     for line in (text or "").splitlines():
         for cert, (_, prefix) in CERT_NIST.items():
             if line.strip().startswith(prefix):
-                control = re.sub(r" {2,}", " ", line.strip()[len(prefix):].strip().rstrip(",").strip())
+                control = clean_control_id(line.strip(), prefix)
                 if len(control) > 1 and not control.endswith(":"):
                     found[cert].add(control)
                 break
     return {cert: sorted(ids) for cert, ids in found.items()}
+
+
+def parse_examples(text: str) -> list[str]:
+    """NIST's implementation examples cell as a list, one item per "Ex1:", "Ex2:", ..."""
+    return [p.strip() for p in re.split(r"(?=Ex\d+:)", (text or "").strip()) if p.strip()]
 
 
 def parse_xlsx(path: Path) -> list[dict]:
@@ -73,36 +87,16 @@ def parse_xlsx(path: Path) -> list[dict]:
                 "category_id": category[0], "category_text": category[1],
                 "subcategory_id": m.group(1) if m else None,
                 "subcategory_text": text[m.end():].strip() if m else text,
-                "implementation_examples": [p.strip() for p in re.split(r"(?=Ex\d+:)", str(examples or "").strip())
-                                            if p.strip()],
+                "implementation_examples": parse_examples(str(examples) if examples else ""),
                 "mappings": parse_references(str(refs) if refs else ""),
             })
     return records
 
 
-def crosswalk(records: list[dict], cert: str, source_file: str) -> dict:
-    """The crosswalk file of one certification: subcategory -> controls, and control -> subcategories."""
-    mapped = [r for r in records if r["mappings"][cert]]
-    unmapped = [r["subcategory_id"] for r in records if not r["mappings"][cert] and r["subcategory_id"]]
-    csf_to_controls = {
-        r["subcategory_id"]: {"subcategory_text": r["subcategory_text"], "function_id": r["function_id"],
-                              "category_id": r["category_id"], "implementation_examples": r["implementation_examples"],
-                              "controls": r["mappings"][cert], "has_mapping": bool(r["mappings"][cert])}
-        for r in records if r["subcategory_id"]}
-    control_to_csf = {}
-    for r in records:
-        for control in r["mappings"][cert]:
-            control_to_csf.setdefault(control, []).append(
-                {"subcategory_id": r["subcategory_id"], "subcategory_text": r["subcategory_text"],
-                 "function_id": r["function_id"], "category_id": r["category_id"]})
-    return {
-        "meta": {"framework": CERT_NIST[cert][0], "focal_document": "NIST CSF 2.0", **SOURCE, "source_file": source_file},
-        "summary": {"total_subcategories": len(records), "subcategories_with_mapping": len(mapped),
-                    "subcategories_without_mapping": len(records) - len(mapped),
-                    "unique_controls_mapped": len(control_to_csf), "unmapped_subcategory_ids": sorted(unmapped)},
-        "csf_to_controls": csf_to_controls,
-        "control_to_csf": control_to_csf,
-    }
+def build_csf_to_controls(records: list[dict], cert: str) -> dict:
+    """{subcategory id: control ids} for one certification, only the subcategories with a mapping.
+    Given GV.OC-01: which ISO 27001 controls cover it?"""
+    return {r["subcategory_id"]: r["mappings"][cert] for r in records if r["subcategory_id"] and r["mappings"][cert]}
 
 
 def record_refresh(metadata_path: Path, counts: dict) -> str:
@@ -128,14 +122,18 @@ def main():
     records = parse_xlsx(input_path)
     written, counts = [], {}
     for cert, filename in CERT_FILES.items():
-        doc = crosswalk(records, cert, input_path.name)
+        mapping = build_csf_to_controls(records, cert)
+        doc = {"meta": {"framework": CERT_NIST[cert][0], "focal_document": "NIST CSF 2.0", **SOURCE,
+                        "source_file": input_path.name},
+               "csf_to_controls": mapping}
         out = crosswalk_path(filename, base=output_dir)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(doc, indent=2))
         written.append(out)
-        counts[filename] = doc["summary"]["subcategories_with_mapping"]
-        print(f"[parse_csf_source] {out}: {counts[filename]} of {len(records)} subcategories mapped, "
-              f"{doc['summary']['unique_controls_mapped']} controls")
+        counts[filename] = len(mapping)
+        controls = {c for ids in mapping.values() for c in ids}
+        print(f"[parse_csf_source] {out}: {len(mapping)} of {len(records)} subcategories mapped, "
+              f"{len(controls)} controls")
 
     core_path = output_dir / "csf" / "csf2_core.json"
     core_path.parent.mkdir(parents=True, exist_ok=True)
