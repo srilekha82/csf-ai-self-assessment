@@ -16,7 +16,7 @@ import ai_pilot as PL  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
 from ai_bank_modules import R  # noqa: E402
 from ai_bank_common import DEFAULT_PROMPTS, core_subcategories  # noqa: E402
-from paths import AI_AREAS, AI_CORE, AI_MAPPING, AI_SAFEGUARDS, REPO_ROOT  # noqa: E402
+from config import AI_AREAS, AI_CORE, AI_MAPPING, AI_SAFEGUARDS, REPO_ROOT  # noqa: E402
 
 
 class ParsedSources(unittest.TestCase):
@@ -35,7 +35,7 @@ class ParsedSources(unittest.TestCase):
         self.assertEqual({s["function"] for s in subs}, {"GOVERN", "MAP", "MEASURE", "MANAGE"})
 
     def test_safeguards(self):
-        from paths import AI_SAFEGUARD_IDS
+        from config import AI_SAFEGUARD_IDS
         ids_doc = json.loads(AI_SAFEGUARD_IDS.read_text())              # committed, without CIS text
         self.assertFalse({"title", "base_text", "ai_applicability"} & {k for r in ids_doc["safeguards"] for k in r})
         if not AI_SAFEGUARDS.is_file():
@@ -1135,7 +1135,7 @@ class BankAge(unittest.TestCase):
         self.assertIn("CSF bank finance is missing: run /build-csf-bank", self.problems())
 
     def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
-        from paths import METADATA, bank_path
+        from config import METADATA, bank_path
         limits = json.loads(METADATA.read_text())["question_banks"]
         self.assertEqual(BA.bank_problems("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
                                           csf_file=bank_path("finance")), [])

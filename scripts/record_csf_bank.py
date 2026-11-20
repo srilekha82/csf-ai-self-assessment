@@ -37,8 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_question_bank import REWRITE_FLAGS, text_hash  # noqa: E402
-from options import DOMAINS  # noqa: E402
-from paths import BANK_BUILD, CSF_CORE, EVIDENCE_PROMPTS, REPO_ROOT  # noqa: E402
+from config import BANK_BUILD, CSF_CORE, DOMAINS, EVIDENCE_PROMPTS, REPO_ROOT  # noqa: E402
 import audit  # noqa: E402
 from audit import sha  # noqa: E402
 

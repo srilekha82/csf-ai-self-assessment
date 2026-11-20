@@ -21,8 +21,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, DOMAINS, load_csf_intake  # noqa: E402
-from paths import AI_BANKS, DATA_AUDIT, METADATA, bank_path  # noqa: E402
+from config import AI_BANKS, AI_QUESTION_BANKS, DATA_AUDIT, DOMAINS, METADATA, bank_path, load_csf_intake  # noqa: E402
 import audit  # noqa: E402
 
 

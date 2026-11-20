@@ -200,7 +200,7 @@ flowchart TD
 `sheet_io.py import` takes your edits from any review spreadsheet back into the data (lines you change are never
 overwritten by an agent). Each script's own file opens with a short explanation of what it does.
 
-**Helpers** (used by the scripts above, never run directly): `paths.py` (where every file lives), `options.py` (shared
+**Helpers** (used by the scripts above, never run directly): `config.py` (where every file lives, and the shared
 lists: sectors, certifications, question types), `audit.py` (the run log), `ai_bank_common.py` (shared AI bank
 helpers), `ai_mapping.py`, `ai_questions.py` and `ai_notes.py` (the checks, storing and review sheets behind
 `record_ai_bank.py` and `sheet_io.py`, one file per kind of AI bank data), `ai_priority.py` (priorities for Stage 2; not used yet).

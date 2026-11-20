@@ -24,7 +24,7 @@ from pathlib import Path
 import pdfplumber
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI, AI_BUILD, AI_CORE, AI_PARSE_CONFIG, AI_SAFEGUARD_IDS, AI_SAFEGUARDS, AI_SOURCE  # noqa: E402
+from config import AI, AI_BUILD, AI_CORE, AI_PARSE_CONFIG, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE  # noqa: E402
 import audit  # noqa: E402
 
 SUB_RE = re.compile(r"^((GOVERN|MAP|MEASURE|MANAGE) (\d+)\.(\d+))\s*$")

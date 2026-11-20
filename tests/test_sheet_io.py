@@ -15,7 +15,7 @@ import openpyxl
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import sheet_io as S  # noqa: E402
-from paths import AI_AREAS, AI_AREAS_XLSX  # noqa: E402
+from config import AI_AREAS, AI_AREAS_XLSX  # noqa: E402
 
 
 class AiAreasSheet(unittest.TestCase):
@@ -386,7 +386,7 @@ class QuestionSheets(unittest.TestCase):
 
     def setUp(self):
         from ai_bank_modules import R  # noqa: E402
-        from paths import AI_MAPPING
+        from config import AI_MAPPING
         self.R = R
         real = R.AI_MAPPING
         R.AI_MAPPING = AI_MAPPING                   # the accepted mapping, read only (other tests redirect it)

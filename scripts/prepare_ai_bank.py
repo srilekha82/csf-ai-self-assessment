@@ -32,11 +32,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import (AI_AREA_LABELS, AI_AREAS, AI_BANKS, AI_BUILD, AI_CORE, AI_MAPPING, AI_MAPPING_RULES,  # noqa: E402
-                   AI_QUESTION_RULES, AI_SAFEGUARDS, AI_SCOPE_RULES, ai_bank_path)
+from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_CORE, AI_FUNCTION_ORDER, AI_MAPPING,  # noqa: E402
+                     AI_MAPPING_RULES, AI_QUESTION_BANKS as QUESTION_BANKS, AI_QUESTION_RULES, AI_SAFEGUARDS,
+                     AI_SCOPE_RULES, ai_bank_path)
 from ai_bank_common import (area_candidates, area_roles, area_rules, check_mapping_rules,  # noqa: E402
                             foundation_subcategories, load_inputs, load_json, rel, require_cis_text, row_id)
-from options import AI_FUNCTION_ORDER, AI_QUESTION_BANKS as QUESTION_BANKS  # noqa: E402
 from ai_pilot import mapping_status  # noqa: E402
 
 MAX_ACTIONS, ACTION_CHARS, AI_TEXT_CHARS = 6, 220, 260   # how much Playbook and CIS text the mapping drafter sees

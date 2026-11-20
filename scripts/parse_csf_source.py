@@ -31,8 +31,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import CERT_FILES, CERT_NIST  # noqa: E402
-from paths import CSF_SOURCE, crosswalk_path  # noqa: E402
+from config import CERT_FILES, CERT_NIST, CSF_SOURCE, crosswalk_path  # noqa: E402
 import audit  # noqa: E402
 
 SOURCE = {"source_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",

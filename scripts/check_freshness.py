@@ -27,11 +27,10 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, CERT_FILES, DOMAINS  # noqa: E402
-from paths import (AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE,  # noqa: E402
-                   AI_PARSE_CONFIG, AI_PILOT, AI_SAFEGUARD_IDS, AI_SAFEGUARDS, AI_SOURCE, AI_AREAS, AI_AREAS_XLSX, CSF_IMPACT_NOTES,
-                   AI_IMPACT_NOTES_XLSX, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX, BANK_BUILD, DATA_AUDIT, METADATA,
-                   bank_path)
+from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE, AI_IMPACT_NOTES_XLSX,  # noqa: E402
+                     AI_PARSE_CONFIG, AI_PILOT, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX,
+                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, BANK_BUILD, CERT_FILES,
+                     CSF_IMPACT_NOTES, DATA_AUDIT, DOMAINS, METADATA, bank_path)
 import audit  # noqa: E402
 from sheet_io import sheet_status  # noqa: E402
 from extract_cset_candidates import DEFAULT_CSET_PATH, git, sql_changed  # noqa: E402

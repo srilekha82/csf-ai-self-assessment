@@ -11,9 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import intake as IN  # noqa: E402
-import options as OPT  # noqa: E402
+import config as OPT  # noqa: E402
 import write_questionnaire as WQ  # noqa: E402
-from paths import AI_AREAS, AI_SCOPE_RULES  # noqa: E402
+from config import AI_AREAS, AI_SCOPE_RULES  # noqa: E402
 
 
 def args(**over):
@@ -324,7 +324,7 @@ class Workbook(unittest.TestCase):
 
     def test_the_ai_system_inventory_sheet_shows_only_when_asked(self):
         import openpyxl
-        from paths import AI_QUESTION_RULES
+        from config import AI_QUESTION_RULES
         tmp = Path(tempfile.mkdtemp())
         ai, out = tmp / "ai.json", tmp / "questionnaire.xlsx"
         ai.write_text(json.dumps(self.entries("GOVERN", "GOVERN 1.1", "How is AI governed?", bank="foundation")))
@@ -342,7 +342,7 @@ class Workbook(unittest.TestCase):
 
     def area_columns_shown(self, usage):
         import openpyxl
-        from paths import AI_AREA_LABELS, AI_QUESTION_RULES
+        from config import AI_AREA_LABELS, AI_QUESTION_RULES
         tmp = Path(tempfile.mkdtemp())
         (tmp / "ai_intake.json").write_text(json.dumps(usage))
         inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
@@ -355,7 +355,7 @@ class Workbook(unittest.TestCase):
         return {c.value for c in ws[2] if c.value in labels.values() and not ws.column_dimensions[c.column_letter].hidden}
 
     def test_the_ai_systems_sheet_shows_only_the_clients_ai_areas(self):
-        from paths import AI_AREA_LABELS
+        from config import AI_AREA_LABELS
         labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
         some = {"ai_in_use": "some", "ai_areas": ["customer_facing", "invisible_usage"]}
         self.assertEqual(self.area_columns_shown(some), {labels["customer_facing"], labels["invisible_usage"]})
@@ -365,7 +365,7 @@ class Workbook(unittest.TestCase):
     def test_the_template_matches_the_data(self):
         """The questionnaire template is laid out by hand in Excel: fail if it drifts from the data it shows."""
         import openpyxl
-        from paths import AI_AREAS, AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE
+        from config import AI_AREAS, AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE
         wb = openpyxl.load_workbook(QUESTIONNAIRE_TEMPLATE)
         for framework, spec in WQ.FRAMEWORKS.items():
             heads = {c.value for c in wb[spec["sheet"]][1]}

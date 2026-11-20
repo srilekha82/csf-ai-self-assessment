@@ -33,9 +33,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import (AI_AREA_LABELS, AI_AREAS, AI_CORE, AI_EVIDENCE_PROMPTS, AI_QUESTION_RULES, AI_SCOPE_RULES,  # noqa: E402
-                   ai_bank_path)
-from options import AI_FUNCTION_ORDER, AI_QUESTION_BANKS  # noqa: E402
+from config import (AI_AREAS, AI_AREA_LABELS, AI_CORE, AI_EVIDENCE_PROMPTS, AI_FUNCTION_ORDER,  # noqa: E402
+                     AI_QUESTION_BANKS, AI_QUESTION_RULES, AI_SCOPE_RULES, ai_bank_path)
 from ai_bank_common import core_subcategories  # noqa: E402
 import audit  # noqa: E402
 

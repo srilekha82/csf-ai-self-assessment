@@ -31,8 +31,8 @@ from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_FUNCTION_ORDER, AI_QUESTION_BANKS, CSF_FUNCTION_ORDER  # noqa: E402
-from paths import AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE  # noqa: E402
+from config import (AI_AREA_LABELS, AI_FUNCTION_ORDER, AI_QUESTION_BANKS, AI_QUESTION_RULES,  # noqa: E402
+                     CSF_FUNCTION_ORDER, QUESTIONNAIRE_TEMPLATE)
 import audit  # noqa: E402
 
 FRAMEWORKS = {"csf": {"sheet": "CSF Questionnaire", "order": CSF_FUNCTION_ORDER},

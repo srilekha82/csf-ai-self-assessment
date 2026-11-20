@@ -34,8 +34,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_AREAS, AI_SCOPE_RULES, RUNS  # noqa: E402
-from options import INTAKE_QUESTIONS  # noqa: E402
+from config import AI_AREAS, AI_SCOPE_RULES, INTAKE_QUESTIONS, RUNS  # noqa: E402
 import audit  # noqa: E402
 
 BY_KEY = {q["key"]: q for q in INTAKE_QUESTIONS}
