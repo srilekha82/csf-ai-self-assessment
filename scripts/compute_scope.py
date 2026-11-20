@@ -104,7 +104,7 @@ def validate_judgements(judgements: dict, soa: dict, rules: dict) -> list[str]:
 def cert_state(cert: str, sid: str, olir: dict, soa: dict | None, judgements: dict,
                rules: dict, rank) -> tuple[str, str, list]:
     """(state, deciding_control, mapped_controls) for one cert and one subcategory."""
-    controls = olir.get("csf_to_controls", {}).get(sid, {}).get("controls", [])
+    controls = olir["csf_to_controls"].get(sid, [])
     if not controls:
         return "no_mapping", "", []
     if cert == "iso27001" and soa is not None:
@@ -152,8 +152,8 @@ def main():
             ev.reject(errors, "soa_judgements.json", ev_inputs)
 
         # only controls that map to an active CSF subcategory need reading
-        mapped = {normalize_soa_id(c) for sid, info in olirs["iso27001"].get("csf_to_controls", {}).items()
-                  for c in info.get("controls", [])}
+        mapped = {normalize_soa_id(c) for ids in olirs["iso27001"]["csf_to_controls"].values()
+                  for c in ids}
         pending = [c for c in sorted(mapped & soa.keys())
                    if needs_judgement(soa[c]) and soa_control_state(soa[c], judgements.get(c), rules) is None]
         if pending:
@@ -179,7 +179,7 @@ def main():
             continue
 
         cert_controls = sorted({c for cert in certs
-                                for c in olirs[cert].get("csf_to_controls", {}).get(sid, {}).get("controls", [])})
+                                for c in olirs[cert]["csf_to_controls"].get(sid, [])})
         fixed = rules["function_states"].get(sid[:2])
         if fixed:
             state, cert, ctl, controls = fixed, "", "", cert_controls

@@ -47,7 +47,7 @@ IMPLEMENTED_YES, IMPLEMENTED_NO = set(RULES["implemented_yes"]), set(RULES["impl
 
 
 def normalize_control_id(raw: str) -> str:
-    """Map SoA control ID to the format used in olir_iso27001.json control_to_csf keys."""
+    """Map SoA control ID to the format used in olir_iso27001.json."""
     raw = raw.strip()
     if ANNEX_A_RANGE.match(raw):
         return f"Annex A Controls: {raw}"

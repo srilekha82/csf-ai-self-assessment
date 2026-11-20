@@ -28,7 +28,7 @@ line for the CSF banks against CSET. Show the user both.
 
 Reference data flagged stale or seed: ask the user whether to refresh it before building. NIST blocks automated downloads, so they
 download it: go to https://www.nist.gov/cyberframework/csf-20-informative-references, click "Download English (xlsx)",
-save as `data/csf/source/csf2.xlsx`, and tell you. Then run `.venv/bin/python ./scripts/parse_crosswalk.py --output ./data`;
+save as `data/csf/source/csf2.xlsx`, and tell you. Then run `.venv/bin/python ./scripts/parse_csf_source.py --output ./data`;
 it also records the refresh in `data/metadata.json`. If they decline, note it and continue. A banks line that says stale
 means CSET changed since they were built; steps 2 and 3 rebuild them.
 

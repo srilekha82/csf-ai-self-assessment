@@ -23,6 +23,7 @@ WEIGHT_KEY = {d["value"]: d["weight_key"] for d in _common["domains"]}     # key
 _certs = [c for c in _common["certs"] if "file" in c]     # the certifications: every option but "None" has a crosswalk
 CERT_LABELS = {c["value"]: c["label"] for c in _certs}
 CERT_FILES = {c["value"]: c["file"] for c in _certs}
+CERT_NIST = {c["value"]: (c["framework"], c["nist_reference_prefix"]) for c in _certs}   # for parse_csf_source.py
 SEVERITY_ORDER = _common["severity_order"]       # question types, least to most demanding
 _menus = {"domains": _common["domains"], "certs": _common["certs"]}
 INTAKE_QUESTIONS = [{**q, "options": _menus[q["options"]] if isinstance(q["options"], str) else q["options"]}

@@ -257,7 +257,7 @@ def main():
     active = {s["subcategory_id"]: s for s in csf_core["subcategories"]
               if not s["subcategory_text"].startswith("[Withdrawn")}
     olir_iso = load_json(CROSSWALK_DIRS["olir_iso27001.json"] / "olir_iso27001.json")
-    iso_lookup = {k: v.get("controls", []) for k, v in olir_iso.get("csf_to_controls", {}).items()}
+    iso_lookup = olir_iso["csf_to_controls"]
     build_inputs = [cache / "cset_candidates.json", cache / "cset_judgements.json", CSF_CORE]
 
     # Route every sector first: the banks are built together, from the same CSET collection and judgements.

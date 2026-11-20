@@ -21,7 +21,7 @@ INTAKE_OPTIONS = COMMON / "intake_options.json"   # intake menus, domains, certs
 
 # CSF track
 CSF = DATA / "csf"
-CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_crosswalk.py (refreshed ~yearly)
+CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_csf_source.py (refreshed ~yearly)
 CSF_CORE = CSF / "csf2_core.json"
 DOMAIN_WEIGHTS = CSF / "domain_weights.json"
 CSF_BANK_RULES = CSF / "bank_rules.json"   # how CSET questions are flagged and routed when a CSF bank is built
