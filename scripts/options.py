@@ -30,9 +30,9 @@ INTAKE_QUESTIONS = [{**q, "options": _menus[q["options"]] if isinstance(q["optio
                     for q in _common["questions"]]     # menus with their options spelled out
 
 
-def load_intake(run_dir) -> dict:
-    """<run_dir>/intake.json (written by intake.py): org, date, domain, certs. Exits with a pointer if it is missing."""
-    path = Path(run_dir) / "intake.json"
+def load_csf_intake(run_dir) -> dict:
+    """<run_dir>/csf_intake.json (written by intake.py): org, date, domain, certs. Exits with a pointer if it is missing."""
+    path = Path(run_dir) / "csf_intake.json"
     if not path.is_file():
         raise SystemExit(f"ERROR: {path} not found. Run scripts/intake.py first (it records org, domain and certifications).")
     return json.loads(path.read_text())

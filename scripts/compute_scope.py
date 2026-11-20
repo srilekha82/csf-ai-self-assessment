@@ -2,7 +2,7 @@
 Decides how each CSF subcategory is asked for this organisation, from its certifications and ISO 27001 SoA.
 
 Called by: /csf-questionnaire (step 3)
-Input:     <run_dir>/intake.json, soa_parsed.json and soa_judgements.json (if any), data/csf/scope_rules.json,
+Input:     <run_dir>/csf_intake.json, soa_parsed.json and soa_judgements.json (if any), data/csf/scope_rules.json,
            the crosswalks
 Output:    <run_dir>/csf_scope.json (a question type per subcategory, and why), or soa_pending.json (exit 2)
 
@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from paths import CSF_CORE, CROSSWALK_DIRS, DOMAIN_WEIGHTS, SCOPE_RULES  # noqa: E402
-from options import CERT_FILES, CSF_FUNCTION_ORDER, SEVERITY_ORDER, WEIGHT_KEY, load_intake  # noqa: E402
+from options import CERT_FILES, CSF_FUNCTION_ORDER, SEVERITY_ORDER, WEIGHT_KEY, load_csf_intake  # noqa: E402
 import audit  # noqa: E402
 
 
@@ -124,10 +124,10 @@ def main():
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
-    intake = load_intake(run_dir)
+    intake = load_csf_intake(run_dir)
     domain, certs = intake["domain"], intake["certs"]
     ev = audit.begin(audit.run_log(run_dir), "compute_scope", {"domain": domain, "certs": certs})
-    ev_inputs = [run_dir / "intake.json", CSF_CORE, SCOPE_RULES, DOMAIN_WEIGHTS]
+    ev_inputs = [run_dir / "csf_intake.json", CSF_CORE, SCOPE_RULES, DOMAIN_WEIGHTS]
 
     rules = load_rules()
     order = SEVERITY_ORDER

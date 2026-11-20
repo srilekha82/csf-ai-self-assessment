@@ -120,8 +120,7 @@ class IntakeDate(unittest.TestCase):
         runs = Path(tempfile.mkdtemp())
         for bad in ("2026-13-01", "../x", "2026-1-5"):
             p = subprocess.run([sys.executable, str(ROOT / "scripts" / "intake.py"), "write", "--org", "Acme",
-                                "--domain", "1", "--certs", "1", "--ai-in-use", "1", "--csf-assessment-done", "2",
-                                "--iso42001-held", "2", "--date", bad, "--runs-dir", str(runs)],
+                                "--domain", "1", "--certs", "1", "--ai-in-use", "1", "--date", bad, "--runs-dir", str(runs)],
                                capture_output=True, text=True)
             self.assertEqual(p.returncode, 1, bad)
             self.assertIn("YYYY-MM-DD", p.stderr + p.stdout)

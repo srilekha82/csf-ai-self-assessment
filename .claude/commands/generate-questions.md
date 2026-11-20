@@ -22,14 +22,13 @@ role is Build or Both (the menu says so); the two "How / What" menus may be left
 
 ```bash
 .venv/bin/python ./scripts/intake.py write --org "<name>" --domain N --certs "N N" --ai-in-use N \
-    [--role N [--built-on-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"] \
-    --csf-assessment-done N --iso42001-held N
+    [--role N [--built-on-existing-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
 ```
 
 It maps the numbers to values, rejects anything not on a menu (exit 1: ask the user again for those questions only; if it
 says the run folder already has an intake, ask whether to replace it and add `--replace`, knowing the old drafts are then
 stale) and
-prints the run folder (`runs/<Org>_<date>`) with `intake.json` and `ai_usage.json` in it. Use that folder for every
+prints the run folder (`runs/<Org>_<date>`) with `csf_intake.json` and `ai_intake.json` in it. Use that folder for every
 later step; nothing else needs the answers repeated.
 
 ## 2 — Check the banks are recent enough

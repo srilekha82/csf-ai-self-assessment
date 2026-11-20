@@ -24,9 +24,8 @@ class CheckQuestionnaire(unittest.TestCase):
         cls.tmp = Path(tempfile.mkdtemp())
         # a financial org with PCI DSS that builds and uses AI: customer-facing, vendor AI, MCP tools
         script("intake.py", "write", "--org", "Testbank", "--domain", "1", "--certs", "3", "--ai-in-use", "2",
-               "--role", "3", "--built-on-model", "1", "--given-to-others", "2", "--ai-usage", "3 4",
-               "--ai-components", "2", "--csf-assessment-done", "1", "--iso42001-held", "2",
-               "--date", "2026-11-17", "--runs-dir", cls.tmp / "runs")
+               "--role", "3", "--built-on-existing-model", "1", "--given-to-others", "2", "--ai-usage", "3 4",
+               "--ai-components", "2", "--date", "2026-11-17", "--runs-dir", cls.tmp / "runs")
         cls.clean = cls.tmp / "runs" / "Testbank_2026-11-17"
         for step in ("compute_scope.py", "build_questions.py", "build_ai_questions.py"):
             script(step, cls.clean)
@@ -87,9 +86,9 @@ class CheckQuestionnaire(unittest.TestCase):
         self.assertIn("not in the bank", text)
 
     def test_ai_question_for_an_area_the_client_does_not_have_is_caught(self):
-        usage = json.loads((self.run / "ai_usage.json").read_text())
+        usage = json.loads((self.run / "ai_intake.json").read_text())
         usage["ai_areas"] = [a for a in usage["ai_areas"] if a != "customer_facing"]
-        (self.run / "ai_usage.json").write_text(json.dumps(usage))   # the drafts still hold customer-facing rows
+        (self.run / "ai_intake.json").write_text(json.dumps(usage))   # the drafts still hold customer-facing rows
         self.assertIn("outside the client's AI areas", "\n".join(self.problems("ai")))
 
     def test_cli_exits_1_and_lists_problems(self):

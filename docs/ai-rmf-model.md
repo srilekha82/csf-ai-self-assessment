@@ -45,15 +45,14 @@ The intake asks only what the organisation has; every control is assessed by the
   (turns on the release questions: clients, partners, an API, devices, open weights).
 - "How do you use AI?" (pick all): internal process, code generation, customer-facing application, vendor AI.
 - "What does your AI include?" (pick all): RAG / knowledge graph, MCP / tools, agents, a model you host.
-- Whether a CSF assessment is part of the engagement and ISO 42001 is held; ISO 27001 comes from the certifications.
 
-`intake.py` writes the client's areas to `ai_usage.json` (`ai_areas`): the ones ticked, plus the automatic ones in
+`intake.py` writes the client's areas to `ai_intake.json` (`ai_areas`): the ones ticked, plus the automatic ones in
 `data/ai/scope_rules.json` `ai_area_rules`:
 - always (even with no AI in use): invisible AI usage
 - any AI in use: input, output
 - role producer or both: model building, model, test / tuning / evaluation data; agents add MCP / tools.
 
-`ai_usage.json` holds `role`, `producer` (`built_on_existing_model`, `given_to_others`; null for a consumer) and
+`ai_intake.json` holds `role`, `producer` (`built_on_existing_model`, `given_to_others`; null for a consumer) and
 `ai_areas`. Question selection reads these (section 7).
 
 ## 3. Controls: GOVERN is the foundation; MAP, MEASURE and MANAGE are asked per AI area
