@@ -77,7 +77,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 ### Running an engagement (`/generate-questions`)
 
 1. `intake.py` asks once, as numbered choices: org, domain, certs, the AI usage profile (AI in use none / some / unsure, then "How do you use AI?" and "What does your AI include?", which give the client's AI areas), for an organisation that builds its own model the two producer details, and whether a CSF assessment is part of the engagement and ISO 42001 is held. It writes `intake.json` and `ai_usage.json`; every later step, including the AI RMF track, reads them.
-2. `check_freshness.py --bank-age --run <run>` checks the build date of the CSF bank of the domain and the two AI RMF banks against the limits in `data/metadata.json` (`question_banks`: CSF 365 days, AI 90). If a bank is missing or too old the run stops and names the command to rebuild it (`/build-csf-bank`, `/build-ai-bank`); a client run never rebuilds a bank. It needs no source files.
+2. `check_bank_age.py --run <run>` checks the build date of the CSF bank of the domain and the two AI RMF banks against the limits in `data/metadata.json` (`question_banks`: CSF 365 days, AI 90). If a bank is missing or too old the run stops and names the command to rebuild it (`/build-csf-bank`, `/build-ai-bank`); a client run never rebuilds a bank. It needs no source files.
 3. `/csf-questionnaire`: `parse_soa.py <run> <soa>` extracts the SoA and prints the sheet and columns it picked; the user confirms them (a wrong pick is corrected with `--sheet` / `--id-col` / ...). If any excluded control needs reading, `compute_scope.py` exits 2 and the agent classifies it with `prompts/soa_exclusion_judge.md`. `compute_scope.py` gives each subcategory a type: `full_discovery`, `gap` (cert covers it, ask what goes beyond), `confirmatory` (cert should cover it, ask for evidence) or `skip`; policy is in `data/csf/scope_rules.json`. `build_questions.py` picks questions from the bank and words them for the certs held, producing `csf_questions_draft.json`.
 4. `/ai-questionnaire`: see below.
 5. Each of the two commands ends with `check_questionnaire.py`, which checks the picked questions against the intake and the banks (nothing missing, right question types and flags, every question from the bank, nothing for a role, AI area or certification the org does not have). Only if it passes does `write_questionnaire.py` write that framework's sheet of `questionnaire.xlsx` (each replaces only its own sheet). Questions are reviewed once, when the banks are built, never per run.
@@ -110,7 +110,7 @@ flowchart TD
     GQ["/generate-questions"]:::cmd --> IN[intake.py]:::script
     IN --> INT([intake.json]):::file
     IN --> USE([ai_usage.json]):::file
-    INT --> AGE["check_freshness.py --bank-age<br/><small>also reads: the banks' build dates</small>"]:::script
+    INT --> AGE["check_bank_age.py<br/><small>also reads: the banks' build dates</small>"]:::script
     AGE -- "a bank is missing or too old" --> STOP["stop: run /build-csf-bank or /build-ai-bank first"]:::stop
     AGE -- ok --> CQ["/csf-questionnaire"]:::cmd
     AGE -- ok --> AQ["/ai-questionnaire"]:::cmd

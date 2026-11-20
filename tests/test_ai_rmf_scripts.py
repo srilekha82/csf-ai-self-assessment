@@ -395,6 +395,7 @@ class Recording(unittest.TestCase):
 
 import build_ai_questions as BQ  # noqa: E402
 import check_freshness as CF  # noqa: E402
+import check_bank_age as BA  # noqa: E402
 
 
 class Scope(unittest.TestCase):
@@ -1067,7 +1068,7 @@ if __name__ == "__main__":
 
 
 class BankAge(unittest.TestCase):
-    """check_freshness.bank_age_stages: a client run checks only each bank's build date against its limit."""
+    """check_bank_age.py: a client run checks only each bank's build date against its limit."""
 
     def setUp(self):
         from datetime import date
@@ -1080,12 +1081,12 @@ class BankAge(unittest.TestCase):
         path.write_text(json.dumps({"built_on": built_on}))
 
     def stages(self):
-        return {s: (ok, text) for s, ok, text in CF.bank_age_stages(
+        return {s: (ok, text) for s, ok, text in BA.bank_age_stages(
             "finance", today=self.today, limits=self.limits, csf_file=self.csf, ai_dir=self.tmp)}
 
     def write_all(self, csf, ai):
         self.write(self.csf, csf)
-        for bank in CF.AI_QUESTION_BANKS:
+        for bank in BA.AI_QUESTION_BANKS:
             self.write(self.tmp / f"question_bank_ai_rmf_{bank}.json", ai)
 
     def test_banks_within_their_limit_are_ok(self):
@@ -1108,7 +1109,7 @@ class BankAge(unittest.TestCase):
     def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
         from paths import METADATA, bank_path
         limits = json.loads(METADATA.read_text())["question_banks"]
-        for stage, ok, text in CF.bank_age_stages("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
+        for stage, ok, text in BA.bank_age_stages("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
                                                   csf_file=bank_path("finance")):
             self.assertTrue(ok, (stage, text))
         self.assertTrue({"csf_max_age_days", "ai_max_age_days"} <= set(limits))

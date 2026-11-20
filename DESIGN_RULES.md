@@ -37,7 +37,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    **Questions are reviewed once, when a bank is built, never per client run.** A client run only picks from the banks;
    `check_questionnaire.py` then checks the picks against the intake and the banks (a script, no agent), and the
    workbook is written only if it passes.
-   **A client run never builds or rebuilds a bank.** It checks only the banks' age (`check_freshness.py --bank-age`,
+   **A client run never builds or rebuilds a bank.** It checks only the banks' age (`check_bank_age.py`,
    limits in `data/metadata.json`) and stops if one is missing or too old, naming the build command to run.
 8. **Few scripts, small files, one job each.** Reuse by importing a shared helper when the logic is the same; do not
    copy it, and do not merge scripts that do different jobs. Add a script only for a genuinely new deterministic job, and

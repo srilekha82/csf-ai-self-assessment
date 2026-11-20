@@ -120,6 +120,6 @@
   "question_banks": {
     "csf_max_age_days": 365,
     "ai_max_age_days": 90,
-    "notes": "Age limits for a client run (check_freshness.py --bank-age): a bank built longer ago than this must be rebuilt (/build-csf-bank, /build-ai-bank) before a questionnaire is made from it. The age is the bank's built_on date."
+    "notes": "Age limits for a client run (check_bank_age.py): a bank built longer ago than this must be rebuilt (/build-csf-bank, /build-ai-bank) before a questionnaire is made from it. The age is the bank's built_on date."
   }
 }
