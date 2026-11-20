@@ -46,7 +46,8 @@ class Options(unittest.TestCase):
 
     def test_every_domain_has_a_weight_key_and_every_cert_a_file(self):
         self.assertEqual(set(OPT.WEIGHT_KEY), set(OPT.DOMAINS))
-        self.assertEqual(set(OPT.CERT_FILES), set(OPT.CERTS))
+        menu = [o["value"] for o in next(q for q in OPT.INTAKE_QUESTIONS if q["key"] == "certs")["options"]]
+        self.assertEqual(set(OPT.CERT_FILES), set(menu) - {"none"})
 
 
 class Intake(unittest.TestCase):
