@@ -32,7 +32,7 @@ def bank_age_stages(domain: str, today: date | None = None, limits: dict | None 
     today = today or date.today()
     limits = limits or json.loads(METADATA.read_text())["question_banks"]
     ai_dir = ai_dir or AI_BANKS
-    banks = [(f"CSF bank {domain}", csf_file or bank_path(domain), limits["csf_max_age_days"], "/build-csf-bank " + domain)]
+    banks = [(f"CSF bank {domain}", csf_file or bank_path(domain), limits["csf_max_age_days"], "/build-csf-bank")]
     banks += [(f"AI bank {b}", ai_dir / f"question_bank_ai_rmf_{b}.json", limits["ai_max_age_days"], "/build-ai-bank")
               for b in AI_QUESTION_BANKS]
     stages = []

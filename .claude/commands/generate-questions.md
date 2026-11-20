@@ -40,7 +40,7 @@ the limits in `data/metadata.json` (`question_banks`). It needs no source files.
 
 - Exit 0: go on.
 - Exit 1: a bank is missing or too old. **Stop.** Show the user its lines and tell them to run the command each line
-  names (`/build-csf-bank <domain>`, `/build-ai-bank`) first, then run `/generate-questions` again. Never build or
+  names (`/build-csf-bank`, `/build-ai-bank`) first, then run `/generate-questions` again. Never build or
   rebuild a bank yourself here.
 
 ## 3 — CSF questions

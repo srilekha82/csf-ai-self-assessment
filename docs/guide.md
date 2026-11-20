@@ -17,7 +17,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Generate a questionnaire for a client | `/generate-questions`. It asks the intake once (numbered choices), checks the banks are recent enough (it stops if one is missing or too old, and never rebuilds), then runs the CSF and AI commands, and writes one `questionnaire.xlsx` (CSF sheet + AI RMF sheet). |
 | Generate only the CSF part, or only the AI part | On an existing run folder: `/csf-questionnaire` or `/ai-questionnaire`. Each checks its questions and writes its own sheet; either can run in any order. |
 | See what the bank builds need to redo (maintainer) | `.venv/bin/python ./scripts/check_freshness.py --csf` (NIST's reference data and every CSF bank against CSET) or `--ai-bank` (each part of the AI RMF build against its sources). |
-| Build or refresh the CSF bank for a domain | `/build-csf-bank`. `/generate-questions` stops and names it when a bank is missing or too old. |
+| Build or refresh the CSF banks | `/build-csf-bank` (all six sectors together). `/generate-questions` stops and names it when a bank is missing or too old. |
 | Build or refresh the AI RMF mapping, the question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank`: pilot first; after you accept the pilot (`ai_pilot.py accept`) later rebuilds run on their own. |
 | Use a new Playbook, CIS guide or CSF download | Replace the file (`data/ai/source/` or `data/csf/source/csf2.xlsx`, links in `data/metadata.json`). The freshness check sees the change; rebuild with the commands above. |
 | Change how many questions per type, or when a question is `gap` | `data/csf/scope_rules.json` (CSF). AI: `data/ai/scope_rules.json` says which roles each client is asked as; every AI question is `full_discovery` (they ask what is done for AI, so they never repeat general security; no gap rule). No code change. |
@@ -56,7 +56,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | `/generate-questions` | The whole flow: intake (numbered choices) → bank age check (stops if a bank is missing or too old) → `/csf-questionnaire` → `/ai-questionnaire` → one `questionnaire.xlsx`. Stops at the SoA question and to confirm the SoA columns. Send the XLSX to control owners. |
 | `/csf-questionnaire` | The CSF sheet for a run folder: SoA question (and confirming its columns), scope, questions from the bank, check, sheet. Writes `csf_scope.json`, `csf_questions_draft.json` and the CSF sheet of `questionnaire.xlsx`. |
 | `/ai-questionnaire` | The AI RMF sheet for a run folder: picks the client's questions by role, producer details and AI areas from `ai_usage.json`, checks them, writes the sheet. Writes `ai_scope.json`, `ai_questions_draft_<foundation|areas>.json` and the AI RMF sheet of `questionnaire.xlsx`. |
-| `/build-csf-bank` | Builds the CSF question bank for one domain from the CSET repo (occasional; reused by every engagement). |
+| `/build-csf-bank` | Builds the six CSF question banks, all sectors together, from the CSET repo (occasional; reused by every engagement). |
 | `/build-ai-bank` | Builds the AI RMF mapping (AI area x subcategory), the two question banks (foundation, areas) and the CSF AI impact notes from the Playbook and CIS companion guides (quarterly, or when a source changes). Pilot first, then full run. |
 
 The intake is `scripts/intake.py`: it prints the numbered menus (from `data/common/intake_options.json`), turns the typed numbers into values, and writes `intake.json` (org, domain, certs) and `ai_usage.json` in the run folder. Every later step reads those files.
@@ -66,9 +66,9 @@ The intake is `scripts/intake.py`: it prints the numbered menus (from `data/comm
 ### Building a bank (`/build-csf-bank`)
 
 1. `extract_cset_candidates.py` replays the CSET SQL migrations into `cset_candidates.json` (skipped if CSET has not changed): CSET's own CSF 2.0 set (`NCSF_V2`, one question for each of the 106 subcategories) and the maturity-model questions (ACET, CPG, SSG…) CSET maps to CSF 2.0.
-2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for the domain: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
+2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
 3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_judgements.py` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
-4. Run the build again; it writes `data/csf/banks/question_bank_<domain>.json`.
+4. Run the build again; it writes all six `data/csf/banks/question_bank_<sector>.json` together (no bank is written while anything is pending, so the six always share one record of what they were built from).
 5. Once for all domains: each subcategory's own evidence prompt (`record_judgements.py evidence`, writer and evaluator
    agents, `data/csf/evidence_prompts.json` `by_subcategory`); a subcategory without one keeps its category's line.
 

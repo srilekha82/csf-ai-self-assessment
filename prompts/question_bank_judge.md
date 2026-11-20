@@ -1,6 +1,6 @@
 You are judging CSET questions for a NIST CSF 2.0 question bank. Python has already done everything that
 can be decided from the CSET schema. You only see the questions it could not decide. Each item in
-`pending_judgements_<domain>.json` lists what it `needs`: any of `domains`, `rewrite`, `fit`.
+`pending_judgements.json` lists what it `needs`: any of `domains`, `rewrite`, `fit`.
 
 Judge only from the item's own fields (question text or practice fields, source model, the mapped
 subcategory outcomes). Do not read other files. Do not invent facts about any organisation.

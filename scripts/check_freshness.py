@@ -16,9 +16,9 @@ Usage: .venv/bin/python ./scripts/check_freshness.py --ai-bank
                the source files as they are now (compared by fingerprint), complete, and approved where an approval is
                needed. Needs the source PDFs.
   --csf        for the maintainer (/build-csf-bank): the age of NIST's CSF reference data (csf2_core.json and the ISO
-               27001 and PCI DSS crosswalks), and each of the six CSF banks against CSET (it runs git fetch once on your
-               CSET copy, default ~/workstuff/cset, and says so if that fails). CSET's questions are collected for every
-               sector at once, so every bank is checked against the same CSET commit.
+               27001 and PCI DSS crosswalks, from data/metadata.json), and the CSF banks against CSET (it runs git fetch
+               on your CSET copy, default ~/workstuff/cset, and says so if that fails). The six banks are built
+               together, so they share one record of what they were built from, and one line reports them.
 
 Exit 0: everything checked is current. Exit 1: something needs work (listed).
 """
@@ -147,74 +147,49 @@ def csf_bank_stage(domain: str, cset_path: Path, upstream: tuple | None = None) 
     return (stage, True, "current (CSET moved, no SQL changed)"), notes
 
 
-def reference_table() -> tuple[list[str], list[str]]:
-    """Print the age table of NIST's CSF reference data (csf2_core.json and every crosswalk); (files, files needing
-    attention)."""
+def reference_lines() -> list[tuple[str, bool, str]]:
+    """(file, ok?, text) per NIST CSF reference file (csf2_core.json and every crosswalk), by its age in metadata.json.
+    These files are downloaded by hand (NIST blocks automated downloads), so their age is a reminder to check NIST."""
     metadata = json.loads(METADATA.read_text())
-
-    relevant = ["csf2_core.json", *CERT_FILES.values()]
-
-    today = date.today()
-    needs_attention = []
-
-    col_w = [22, 14, 9, 11, 45]
-    sep = "─" * (sum(col_w) + len(col_w) * 3 - 1)
-    header = f"{'File':<{col_w[0]}} {'Last updated':<{col_w[1]}} {'Age':<{col_w[2]}} {'Threshold':<{col_w[3]}} {'Status':<{col_w[4]}}"
-    print("\nNIST CSF reference data:")
-    print(sep)
-    print(header)
-    print(sep)
-
-    for fname in relevant:
-        info = metadata.get(fname, {})
-        last_refreshed = info.get("last_refreshed")
-        threshold = info.get("refresh_threshold_days")
-        is_placeholder = info.get("is_placeholder", False)
-
-        if last_refreshed is None:
-            age_days = 9999
-            age_str = "never"
-            last_str = "—"
+    lines = []
+    for name in ["csf2_core.json", *CERT_FILES.values()]:
+        info = metadata.get(name, {})
+        refreshed, limit = info.get("last_refreshed"), info.get("refresh_threshold_days")
+        if info.get("is_placeholder") or refreshed is None:
+            lines.append((name, False, "seed data, never refreshed: download it from NIST"))
+            continue
+        age = (date.today() - date.fromisoformat(refreshed)).days
+        if limit and age > limit:
+            lines.append((name, False, f"stale: refreshed {refreshed}, {age} days ago, limit {limit}"))
         else:
-            last_date = date.fromisoformat(last_refreshed)
-            age_days = (today - last_date).days
-            age_str = f"{age_days}d"
-            last_str = last_refreshed
+            lines.append((name, True, f"ok: refreshed {refreshed}, {age} days ago" + (f", limit {limit}" if limit else "")))
+    return lines
 
-        thresh_str = f"{threshold}d" if threshold else "—"
 
-        if is_placeholder:
-            status = "seed data — replace before first real run"
-            needs_attention.append(fname)
-        elif threshold is None:
-            status = "ok (static)"
-        elif age_days > threshold:
-            status = "STALE — recommend updating"
-            needs_attention.append(fname)
-        elif age_days > threshold * 0.75:
-            status = "aging — worth checking"
-        else:
-            status = "ok"
-
-        print(f"{fname:<{col_w[0]}} {last_str:<{col_w[1]}} {age_str:<{col_w[2]}} {thresh_str:<{col_w[3]}} {status}")
-
-    print(sep)
-
-    return relevant, needs_attention
+def csf_banks_line(cset_path: Path, upstream: tuple) -> tuple[str, bool, str]:
+    """One line for the six CSF banks: missing ones, banks built from different records, or the shared record against
+    CSET (csf_bank_stage)."""
+    banks = {d: load(bank_path(d)) for d in DOMAINS}
+    missing = [d for d, b in banks.items() if b is None]
+    if missing:
+        return "CSF banks", False, f"missing: {', '.join(missing)} (run /build-csf-bank)"
+    records = {(b.get("cset_commit"), json.dumps(b.get("inputs_sha"), sort_keys=True)) for b in banks.values()}
+    if len(records) > 1:
+        return "CSF banks", False, "built from different CSET versions or judgements (run /build-csf-bank)"
+    (_, ok, text), _ = csf_bank_stage(DOMAINS[0], cset_path, upstream)
+    return "CSF banks", ok, text
 
 
 def check_csf(cset_path: Path) -> None:
     """NIST's CSF reference data and every sector's CSF bank against CSET, in one report."""
     ev = audit.begin(DATA_AUDIT, "check_freshness_csf", {"cset_path": str(cset_path)})
-    _, files = reference_table()
     upstream = cset_upstream(cset_path)
-    stages = [csf_bank_stage(domain, cset_path, upstream)[0] for domain in DOMAINS]
-    print()
+    stages = [*reference_lines(), csf_banks_line(cset_path, upstream)]
     for stage, ok, text in stages:
-        print(f"{stage + ':':<28}{text}")
+        print(f"{stage + ':':<22}{text}")
     for note in upstream[1]:
         print(f"note: {note}")
-    todo = files + [stage for stage, ok, _ in stages if not ok]
+    todo = [stage for stage, ok, _ in stages if not ok]
     if todo:
         print(f"\nNeeds work: {', '.join(todo)}")
         ev.finish("stale", detail=f"needs work: {', '.join(todo)}", stages={s: t for s, _, t in stages},

@@ -1075,6 +1075,40 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class CsfBanksLine(unittest.TestCase):
+    """check_freshness --csf: the six CSF banks are built together, so one line reports them."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        real = CF.bank_path
+        self.addCleanup(setattr, CF, "bank_path", real)
+        CF.bank_path = lambda domain: self.tmp / f"{domain}.json"
+        from build_question_bank import bank_inputs_sha
+        self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha(CF.BANK_BUILD)}
+
+    def write_all(self, **change):
+        for d in CF.DOMAINS:
+            (self.tmp / f"{d}.json").write_text(json.dumps({**self.record, **(change if d == "finance" else {})}))
+
+    def line(self):
+        return CF.csf_banks_line(self.tmp / "no-cset", ("abc", [], ""))   # CSET's commit given: no git needed
+
+    def test_one_line_when_the_banks_share_their_record(self):
+        self.write_all()
+        self.assertEqual(self.line(), ("CSF banks", True, "current"))
+
+    def test_banks_built_from_different_records_are_reported(self):
+        self.write_all(cset_commit="old")
+        ok, text = self.line()[1:]
+        self.assertFalse(ok)
+        self.assertIn("different CSET versions", text)
+
+    def test_missing_banks_are_named(self):
+        self.write_all()
+        (self.tmp / "healthcare.json").unlink()
+        self.assertEqual(self.line(), ("CSF banks", False, "missing: healthcare (run /build-csf-bank)"))
+
+
 class BankAge(unittest.TestCase):
     """check_bank_age.py: a client run checks only each bank's build date against its limit."""
 
@@ -1112,7 +1146,7 @@ class BankAge(unittest.TestCase):
     def test_a_missing_bank_is_reported_with_the_command_to_build_it(self):
         s = self.stages()
         self.assertFalse(s["CSF bank finance"][0])
-        self.assertIn("missing (run /build-csf-bank finance)", s["CSF bank finance"][1])
+        self.assertIn("missing (run /build-csf-bank)", s["CSF bank finance"][1])
 
     def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
         from paths import METADATA, bank_path
