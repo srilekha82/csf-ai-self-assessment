@@ -31,13 +31,12 @@ SUB_RE = re.compile(r"^((GOVERN|MAP|MEASURE|MANAGE) (\d+)\.(\d+))\s*$")
 FUNCTION_RE = re.compile(r"^(Govern|Map|Measure|Manage)\s*$")   # function heading, followed by its one-line statement
 PAGE_NO_RE = re.compile(r"^\d+ of \d+$")
 FOOTER_RE = re.compile(r"^Control (\d+): (.+?) \d+$")
-HOSTING_RE = re.compile(r"^Model Hosting and Deployment Considerations\s*$", re.M)
-ADDITIONAL_RE = re.compile(r"^Additional .+ Considerations\s*$", re.M)
 BULLET_RE = re.compile(r"^[•▪◦·]\s*")
 SECTIONS = ("About", "Suggested Actions", "Transparency & Documentation")
 
 
 def clean(text: str) -> str:
+    """One line of text: soft hyphens (U+00AD, left by the PDFs' line breaks) removed, whitespace collapsed."""
     return re.sub(r"\s+", " ", (text or "").replace("­", "")).strip()
 
 
@@ -84,7 +83,6 @@ def parse_playbook(pdf_path: Path) -> list[dict]:
         functions[m.group(2)]["subcategories"].append({
             "subcategory_id": m.group(1),
             "function": m.group(2),
-            "category": f"{m.group(2)} {m.group(3)}",
             "outcome": outcome,
             "actions_preamble": clean(" ".join(preamble)),
             "suggested_actions": [clean(a) for a in actions if clean(a)],
@@ -108,8 +106,8 @@ def table_rows(page, table) -> list[list[str]]:
 
 
 def parse_guide(pdf_path: Path, prefix: str, app_header: str) -> tuple[list[dict], dict]:
-    """(safeguard rows, controls) for one guide."""
-    per_control_text: dict[str, list[str]] = {}
+    """(safeguard rows, controls) for one guide. A control's pages are found by their footer ("Control 8: Audit Log
+    Management 23"), which also gives the control's title."""
     rows_by_control: dict[str, list[list]] = {}
     titles: dict[str, str] = {}
     with pdfplumber.open(pdf_path) as pdf:
@@ -121,7 +119,6 @@ def parse_guide(pdf_path: Path, prefix: str, app_header: str) -> tuple[list[dict
                 continue  # front matter, appendices, conclusion
             control = fm.group(1)
             titles.setdefault(control, fm.group(2))
-            per_control_text.setdefault(control, []).append(text)
             for table in page.find_tables():
                 header = table.extract()[0]
                 if header and header[0] == "Safeguard":
@@ -129,7 +126,7 @@ def parse_guide(pdf_path: Path, prefix: str, app_header: str) -> tuple[list[dict
                         raise ValueError(f"{prefix} control {control}: unexpected table header {header}")
                     rows_by_control.setdefault(control, []).extend(table_rows(page, table))
 
-    safeguards, controls = [], {}
+    safeguards = []
     for control, rows in rows_by_control.items():
         for n, row in enumerate(rows, 1):
             sid = f"{control}.{n}"
@@ -148,29 +145,50 @@ def parse_guide(pdf_path: Path, prefix: str, app_header: str) -> tuple[list[dict
                 "has_ai_guidance": bool(clean(row[6])) and not clean(row[6]).startswith("No Additional"),
             })
 
-    for control, pages in per_control_text.items():
-        text = "\n".join(l for p in pages for l in p.split("\n") if not FOOTER_RE.match(l.strip()))
-        intro = ""
-        im = re.search(r"^" + re.escape(app_header) + r"\s*$", text, re.M)
-        sm = re.search(r"^Safeguards\s*$", text, re.M)
-        if im and sm and im.end() < sm.start():
-            intro = clean(text[im.end():sm.start()])
-        hosting = additional = ""
-        hm = HOSTING_RE.search(text)
-        if hm:
-            rest = text[hm.end():]
-            am = ADDITIONAL_RE.search(rest)
-            hosting = clean(rest[:am.start()] if am else rest)
-            additional = clean(rest[am.end():]) if am else ""
-        else:
-            am = ADDITIONAL_RE.search(text)
-            additional = clean(text[am.end():]) if am else ""
-        controls[f"{prefix}-{control}"] = {
-            "guide": prefix, "control": int(control), "title": titles[control],
-            "applicability_intro": intro, "hosting_notes": hosting, "additional_considerations": additional,
-        }
+    controls = {f"{prefix}-{c}": {"guide": prefix, "control": int(c), "title": t} for c, t in titles.items()}
     safeguards.sort(key=lambda r: (r["control"], int(r["cis_id"].split(".")[1])))
     return safeguards, controls
+
+
+# ── checks against data/ai/parse_config.json ───────────────────────────────
+
+def check_playbook(functions: list[dict], expected: dict) -> list[str]:
+    """Problems with the parsed Playbook: the functions and the subcategory count expected, no duplicate ids, every
+    function with a description, every subcategory with an outcome and suggested actions."""
+    errors = []
+    if sorted(f["id"] for f in functions) != sorted(expected["functions"]):
+        errors.append(f"Playbook: found functions {[f['id'] for f in functions]}, expected {expected['functions']}")
+    errors += [f"Playbook {f['id']}: no function description" for f in functions if len(f["description"]) < 20]
+    subs = [s for f in functions for s in f["subcategories"]]
+    if len(subs) != expected["subcategories"]:
+        errors.append(f"Playbook: found {len(subs)} subcategories, expected {expected['subcategories']}")
+    ids = [s["subcategory_id"] for s in subs]
+    if len(set(ids)) != len(ids):
+        errors.append("Playbook: duplicate subcategory ids")
+    errors += [f"Playbook {s['subcategory_id']}: no outcome text" for s in subs if len(s["outcome"]) < 20]
+    errors += [f"Playbook {s['subcategory_id']}: no suggested actions" for s in subs if not s["suggested_actions"]]
+    return errors
+
+
+def check_guide(guide: str, rows: list[dict], expected: dict) -> list[str]:
+    """Problems with one parsed CIS guide: the number of safeguards per control must match CIS v8.1."""
+    counts: dict[str, int] = {}
+    for r in rows:
+        counts[str(r["control"])] = counts.get(str(r["control"]), 0) + 1
+    bad = {c: (counts.get(c, 0), n) for c, n in expected.items() if counts.get(c, 0) != n}
+    return [f"{guide}: safeguards per control differ from expected (found, expected): {bad}"] if bad else []
+
+
+def safeguard_ids_doc(sg_doc: dict) -> dict:
+    """The safeguards without the CIS text (titles, base text, AI text are CC BY-NC-ND 4.0 and stay local): what the
+    validators, banks and questionnaires need. Control names are kept (the mapping rules name controls 1, 2, 8, 17)."""
+    keep = ("id", "cis_id", "guide", "control", "ig", "has_ai_guidance")
+    return {"description": "CIS v8.1 AI companion guide safeguards without their text (CC BY-NC-ND 4.0: the text stays "
+                           "in the local cis_ai_safeguards.json, made by parse_ai_rmf_sources.py from guides you "
+                           "download, see data/ai/source/README.md).",
+            "sources": sg_doc["sources"],
+            "controls": {k: {f: c[f] for f in ("guide", "control", "title") if f in c} for k, c in sg_doc["controls"].items()},
+            "safeguards": [{k: r[k] for k in keep if k in r} for r in sg_doc["safeguards"]]}
 
 
 def main():
@@ -190,41 +208,25 @@ def main():
         ev.fail(f"[parse_ai_rmf_sources] ERROR: source file(s) missing (see data/ai/source/README.md): {missing}")
     inputs = [playbook, *guide_files.values()]
 
-    errors = []
     try:
         functions = parse_playbook(playbook)
     except ValueError as e:
         ev.fail(f"[parse_ai_rmf_sources] ERROR: Playbook: {e}", inputs)
     order = cfg["playbook"]["functions"]
-    if sorted(f["id"] for f in functions) != sorted(order):
-        errors.append(f"Playbook: found functions {[f['id'] for f in functions]}, expected {order}")
     functions.sort(key=lambda f: order.index(f["id"]) if f["id"] in order else len(order))   # AI RMF order, not page order
-    subs = [s for f in functions for s in f["subcategories"]]
-    errors += [f"Playbook {f['id']}: no function description" for f in functions if len(f["description"]) < 20]
-    if len(subs) != cfg["playbook"]["subcategories"]:
-        errors.append(f"Playbook: found {len(subs)} subcategories, expected {cfg['playbook']['subcategories']}")
-    ids = [s["subcategory_id"] for s in subs]
-    if len(set(ids)) != len(ids):
-        errors.append("Playbook: duplicate subcategory ids")
-    errors += [f"Playbook {s['subcategory_id']}: no outcome text" for s in subs if len(s["outcome"]) < 20]
-    errors += [f"Playbook {s['subcategory_id']}: no suggested actions" for s in subs if not s["suggested_actions"]]
+    errors = check_playbook(functions, cfg["playbook"])
 
     safeguards, controls = [], {}
-    expected = cfg["cis_v81_safeguards_per_control"]
     for g, path in guide_files.items():
         try:
             rows, ctl = parse_guide(path, g, cfg["guides"][g]["applicability_header"])
         except ValueError as e:
             errors.append(str(e))
             continue
-        counts: dict[str, int] = {}
-        for r in rows:
-            counts[str(r["control"])] = counts.get(str(r["control"]), 0) + 1
-        bad = {c: (counts.get(c, 0), n) for c, n in expected.items() if counts.get(c, 0) != n}
-        if bad:
-            errors.append(f"{g}: safeguards per control differ from expected (found, expected): {bad}")
+        errors += check_guide(g, rows, cfg["cis_v81_safeguards_per_control"])
         safeguards += rows
         controls.update(ctl)
+    subs = [s for f in functions for s in f["subcategories"]]
 
     if errors:
         for e in errors:
@@ -247,18 +249,6 @@ def main():
           f"{len(safeguards)} safeguards ({per_guide}; {with_ai} with AI text) → {sg_path.name}")
     ev.finish(inputs=inputs, outputs=[core_path, sg_path, ids_path],
               detail=f"{len(subs)} subcategories, {len(safeguards)} safeguards ({per_guide}), {with_ai} with AI text")
-
-
-def safeguard_ids_doc(sg_doc: dict) -> dict:
-    """The safeguards without the CIS text (titles, base text, AI text are CC BY-NC-ND 4.0 and stay local): what the
-    validators, banks and questionnaires need. Control names are kept (the mapping rules name controls 1, 2, 8, 17)."""
-    keep = ("id", "cis_id", "guide", "control", "ig", "has_ai_guidance")
-    return {"description": "CIS v8.1 AI companion guide safeguards without their text (CC BY-NC-ND 4.0: the text stays "
-                           "in the local cis_ai_safeguards.json, made by parse_ai_rmf_sources.py from guides you "
-                           "download, see data/ai/source/README.md).",
-            "sources": sg_doc["sources"],
-            "controls": {k: {f: c[f] for f in ("guide", "control", "title") if f in c} for k, c in sg_doc["controls"].items()},
-            "safeguards": [{k: r[k] for k in keep if k in r} for r in sg_doc["safeguards"]]}
 
 
 if __name__ == "__main__":
