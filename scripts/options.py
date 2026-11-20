@@ -1,13 +1,13 @@
 """
 Shared lists every script uses: sectors (domains), certifications, intake menus, question types, the order
-of the framework functions, and the AI bank names.
+of the framework functions, and the AI bank names. Also load_csf_intake, which reads a run's csf_intake.json.
 
 Called by: most scripts (imported, never run)
-Input:     data/common/intake_options.json, data/csf/scope_rules.json, data/ai/scope_rules.json
+Input:     data/common/intake_options.json, data/csf/scope_rules.json, data/ai/scope_rules.json,
+           data/ai/question_rules.json
 Output:    -
 
-They are read once from the data files (data/common/intake_options.json and each track's scope_rules.json). To change
-one, edit the JSON; never copy a list into a script.
+They are read once from the data files. To change one, edit the JSON; never copy a list into a script.
 """
 
 import json
@@ -20,11 +20,10 @@ _common = json.loads(INTAKE_OPTIONS.read_text())
 DOMAINS = [d["value"] for d in _common["domains"]]
 DOMAIN_LABELS = {d["value"]: d["label"] for d in _common["domains"]}
 WEIGHT_KEY = {d["value"]: d["weight_key"] for d in _common["domains"]}     # key of the domain in domain_weights.json
-CERTS = [c["value"] for c in _common["certs"] if c["value"] != "none"]     # certifications with a crosswalk
-CERT_LABELS = {c["value"]: c["label"] for c in _common["certs"] if c["value"] != "none"}
-CERT_FILES = {c["value"]: c["file"] for c in _common["certs"] if c["value"] != "none"}
+_certs = [c for c in _common["certs"] if "file" in c]     # the certifications: every option but "None" has a crosswalk
+CERT_LABELS = {c["value"]: c["label"] for c in _certs}
+CERT_FILES = {c["value"]: c["file"] for c in _certs}
 SEVERITY_ORDER = _common["severity_order"]       # question types, least to most demanding
-QUESTION_TYPES = set(SEVERITY_ORDER)
 _menus = {"domains": _common["domains"], "certs": _common["certs"]}
 INTAKE_QUESTIONS = [{**q, "options": _menus[q["options"]] if isinstance(q["options"], str) else q["options"]}
                     for q in _common["questions"]]     # menus with their options spelled out
