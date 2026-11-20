@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import BANK_BUILD, CSF_BANK_RULES  # noqa: E402
+from config import BANK_BUILD, CSF_BANK_RULES  # noqa: E402
 import audit  # noqa: E402
 
 DEFAULT_CSET_PATH = "~/workstuff/cset"

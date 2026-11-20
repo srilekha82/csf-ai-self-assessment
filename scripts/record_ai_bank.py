@@ -44,9 +44,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_RULES  # noqa: E402
+from config import AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_RULES, AI_QUESTION_BANKS  # noqa: E402
 from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
-from options import AI_QUESTION_BANKS  # noqa: E402
 import audit  # noqa: E402
 from ai_mapping import mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (assemble, human_decided, question_context, store_evidence, store_questions,  # noqa: E402

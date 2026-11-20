@@ -22,8 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from options import AI_QUESTION_BANKS, CERT_LABELS, load_csf_intake  # noqa: E402
-from paths import AI_SCOPE_RULES, SCOPE_RULES  # noqa: E402
+from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, SCOPE_RULES, load_csf_intake  # noqa: E402
 from build_ai_questions import client_roles, pick  # noqa: E402
 import audit  # noqa: E402
 

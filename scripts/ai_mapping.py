@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_AREAS, AI_MAPPING, AI_MAPPING_RULES  # noqa: E402
+from config import AI_AREAS, AI_MAPPING, AI_MAPPING_RULES  # noqa: E402
 from ai_bank_common import (area_candidates, area_rules, check_mapping_rules, foundation_subcategories,  # noqa: E402
                             load_json)
 import audit  # noqa: E402

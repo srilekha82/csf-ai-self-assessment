@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_QUESTION_RULES, AI_SEVERITY_RULES as SEVERITY_RULES  # noqa: E402
+from config import AI_QUESTION_RULES, AI_SEVERITY_RULES as SEVERITY_RULES  # noqa: E402
 
 
 def load_rules() -> dict:

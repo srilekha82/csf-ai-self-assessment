@@ -32,7 +32,7 @@ from pathlib import Path
 import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import SCOPE_RULES  # noqa: E402
+from config import SCOPE_RULES  # noqa: E402
 import audit  # noqa: E402
 
 RULES = json.loads(SCOPE_RULES.read_text())["soa_reading"]   # the words used to find sheet, header row and columns

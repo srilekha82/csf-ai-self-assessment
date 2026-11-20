@@ -16,7 +16,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_BUILD, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
+from config import AI_BUILD, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
 from ai_bank_common import load_json  # noqa: E402
 import audit  # noqa: E402
 

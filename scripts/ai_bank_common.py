@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_CORE, AI_SAFEGUARD_IDS, AI_SAFEGUARDS, REPO_ROOT  # noqa: E402
+from config import AI_CORE, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, REPO_ROOT  # noqa: E402
 
 # The prompts each agent step follows. `questions` (generator and evaluator) is also what the pilot acceptance is tied to.
 DEFAULT_PROMPTS = {

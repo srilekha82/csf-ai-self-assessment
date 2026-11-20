@@ -28,10 +28,9 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import (AI_BANKS, AI_BUILD, AI_CORE, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_XLSX, AI_PILOT,  # noqa: E402
-                   AI_SAFEGUARD_IDS, AI_SAFEGUARDS, REPO_ROOT)
+from config import (AI_BANKS, AI_BUILD, AI_CORE, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_XLSX, AI_PILOT,  # noqa: E402
+                     AI_QUESTION_BANKS as BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, REPO_ROOT)
 from ai_bank_common import DEFAULT_PROMPTS, load_json  # noqa: E402
-from options import AI_QUESTION_BANKS as BANKS  # noqa: E402
 import audit  # noqa: E402
 
 

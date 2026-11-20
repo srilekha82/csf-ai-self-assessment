@@ -26,7 +26,7 @@ from pathlib import Path
 import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import AI_BUILD, AI_CIS_CSF_XLSX, AI_PARSE_CONFIG, AI_SAFEGUARDS, CSF_CORE  # noqa: E402
+from config import AI_BUILD, AI_CIS_CSF_XLSX, AI_PARSE_CONFIG, AI_SAFEGUARDS, CSF_CORE  # noqa: E402
 import audit  # noqa: E402
 
 SHEET, UNMAPPED_SHEET = "All CIS Controls & Safeguards", "Unmapped CSF"

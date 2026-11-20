@@ -43,7 +43,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 sys.path.insert(0, str(Path(__file__).parent))
-import paths  # noqa: E402
+import config  # noqa: E402
 import audit  # noqa: E402
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -54,14 +54,14 @@ README_SHEET = "Read me"
 # ── the spec ────────────────────────────────────────────────────────────────
 
 def load_spec(name: str, specs_path: Path | None = None) -> dict:
-    specs = json.loads(Path(specs_path or paths.SHEET_SPECS).read_text())["sheets"]
+    specs = json.loads(Path(specs_path or config.SHEET_SPECS).read_text())["sheets"]
     if name not in specs:
         sys.exit(f"[sheet_io] ERROR: no sheet {name!r} in sheet_specs.json (known: {sorted(specs)})")
     return dict(specs[name], name=name)
 
 
 def default_paths(spec: dict) -> tuple[Path, Path, Path]:
-    """(xlsx, json, audit log) from the constants the spec names in paths.py."""
+    """(xlsx, json, audit log) from the constants the spec names in config.py."""
     return getattr(paths, spec["xlsx"]), getattr(paths, spec["json"]), getattr(paths, spec["audit"]) / "audit.jsonl"
 
 
@@ -346,7 +346,7 @@ def sheet_status(name: str, xlsx: Path, json_path: Path) -> tuple[bool, str]:
 
 def _rel(p: Path) -> str:
     try:
-        return str(Path(p).resolve().relative_to(paths.REPO_ROOT))
+        return str(Path(p).resolve().relative_to(config.REPO_ROOT))
     except ValueError:
         return str(p)
 

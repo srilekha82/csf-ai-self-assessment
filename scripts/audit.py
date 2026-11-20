@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import REPO_ROOT  # noqa: E402
+from config import REPO_ROOT  # noqa: E402
 
 
 def sha(path) -> str | None:

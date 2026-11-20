@@ -34,8 +34,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import BANK_BUILD, CSF_BANK_RULES, CSF_BANKS, CSF_CORE, CROSSWALK_DIRS, bank_path  # noqa: E402
-from options import CSF_FUNCTION_ORDER, DOMAINS  # noqa: E402
+from config import (BANK_BUILD, CROSSWALK_DIRS, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER,  # noqa: E402
+                     DOMAINS, bank_path)
 import audit  # noqa: E402
 
 BANK_RULES = json.loads(CSF_BANK_RULES.read_text())   # the routing policy: data/csf/bank_rules.json

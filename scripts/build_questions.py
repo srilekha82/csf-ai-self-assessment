@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import CSF_CORE, EVIDENCE_PROMPTS, SCOPE_RULES, bank_path  # noqa: E402
-from options import CERT_LABELS, CSF_FUNCTION_ORDER, DOMAIN_LABELS, load_csf_intake  # noqa: E402
+from config import (CERT_LABELS, CSF_CORE, CSF_FUNCTION_ORDER, DOMAIN_LABELS, EVIDENCE_PROMPTS, SCOPE_RULES,  # noqa: E402
+                     bank_path, load_csf_intake)
 import audit  # noqa: E402
 
 RULES = json.loads(SCOPE_RULES.read_text())  # policy and wording live in scope_rules.json

@@ -36,8 +36,8 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from paths import CSF_CORE, CROSSWALK_DIRS, DOMAIN_WEIGHTS, SCOPE_RULES  # noqa: E402
-from options import CERT_FILES, CSF_FUNCTION_ORDER, SEVERITY_ORDER, WEIGHT_KEY, load_csf_intake  # noqa: E402
+from config import (CERT_FILES, CROSSWALK_DIRS, CSF_CORE, CSF_FUNCTION_ORDER, DOMAIN_WEIGHTS, SCOPE_RULES,  # noqa: E402
+                     SEVERITY_ORDER, WEIGHT_KEY, load_csf_intake)
 import audit  # noqa: E402
 
 
