@@ -33,7 +33,7 @@ prints the run folder (`runs/<Org>_<date>`) with `intake.json` and `ai_usage.jso
 later step; nothing else needs the answers repeated.
 
 ## 2 — Check the banks are recent enough
-`.venv/bin/python ./scripts/check_freshness.py --bank-age --run <run_dir>`
+`.venv/bin/python ./scripts/check_bank_age.py --run <run_dir>`
 
 It checks only the build date of the banks this run uses (the CSF bank of the domain and the two AI RMF banks) against
 the limits in `data/metadata.json` (`question_banks`). It needs no source files.
