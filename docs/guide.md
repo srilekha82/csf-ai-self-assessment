@@ -43,9 +43,9 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 - Python 3. Create the project venv once: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` (`openpyxl`, `pdfplumber`). Every command in this guide runs as `.venv/bin/python ./scripts/<script>.py`.
 - GitHub Codespaces: `.devcontainer/devcontainer.json` creates the venv and installs the requirements when the codespace is created (Python 3.12, Node for the Claude Code CLI). The licensed sources in `data/ai/source/` are not in the repo; upload them to the codespace if you need to re-parse.
 - The AI RMF sources (Playbook, CIS companion guides, CIS to CSF mapping) are not in the repo; see `data/ai/source/README.md`.
-- A clone of the public CSET repo at `~/workstuff/cset` (only for building and checking the CSF banks). The codespace
-  creates it; if it is missing (`check_freshness.py` says "cannot change to .../workstuff/cset"), clone only the SQL folder
-  with full history (the freshness check diffs commits; ~370 MB):
+- A copy of the public CSET repo at `~/workstuff/cset`, only for building and checking the CSF banks (an assessment does
+  not need it). `/build-csf-bank` clones it the first time it runs. To clone it yourself, take only the SQL folder with
+  full history (the freshness check compares commits; ~370 MB):
   `mkdir -p ~/workstuff && git clone --filter=blob:none --sparse https://github.com/cisagov/cset.git ~/workstuff/cset && git -C ~/workstuff/cset sparse-checkout set CSETWebApi/CSETWeb_Api/CSETWebCore.UpgradeLibrary/VersionUpgrader/SQL`
 - Run everything from the repo root, inside Claude Code.
 
