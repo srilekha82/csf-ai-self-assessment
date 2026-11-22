@@ -37,8 +37,7 @@
     ],
     "GV.OC-05": [
       "Annex A Controls: 5.3",
-      "Control 5.8",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.8"
     ],
     "GV.RM-01": [
       "Annex A Controls: 5.1",
@@ -68,22 +67,19 @@
       "Mandatory Clause: 6.1.2"
     ],
     "GV.RM-07": [
-      "Annex A Controls: None",
       "Mandatory Clause: 6.11"
     ],
     "GV.RR-01": [
       "Annex A Controls: 5.4",
-      "Control 5.4",
       "Mandatory Clause: 7.2"
     ],
     "GV.RR-02": [
-      "Annex A Controls: None",
-      "Control 5.2",
-      "Control 5.3",
+      "Annex A Controls: 5.2",
+      "Annex A Controls: 5.3",
       "Mandatory Clause: 7.2"
     ],
     "GV.RR-03": [
-      "Control 6.6",
+      "Annex A Controls: 6.6",
       "Mandatory Clause: 7.1, 7.2"
     ],
     "GV.RR-04": [
@@ -99,46 +95,45 @@
     ],
     "GV.PO-01": [
       "Annex A Controls: 5.1",
-      "Control 5.1",
-      "Control 5.37",
-      "Control 6.1",
-      "Control 6.2",
-      "Control 6.4",
-      "Control 6.5",
-      "Control 6.7",
-      "Control 6.8",
+      "Annex A Controls: 5.37",
+      "Annex A Controls: 6.1",
+      "Annex A Controls: 6.2",
+      "Annex A Controls: 6.4",
+      "Annex A Controls: 6.5",
+      "Annex A Controls: 6.7",
+      "Annex A Controls: 6.8",
       "Mandatory Clause: 5.2"
     ],
     "GV.PO-02": [
       "Annex A Controls: 5.1",
-      "Control 5.31",
-      "Control 5.32",
-      "Control 5.34",
+      "Annex A Controls: 5.31",
+      "Annex A Controls: 5.32",
+      "Annex A Controls: 5.34",
       "Mandatory Clause: 5.2"
     ],
     "GV.OV-01": [
       "Annex A Controls: 5.1",
       "Annex A Controls: 5.19",
-      "Control 5.24",
-      "Control 5.5",
-      "Control 5.6",
+      "Annex A Controls: 5.24",
+      "Annex A Controls: 5.5",
+      "Annex A Controls: 5.6",
       "Mandatory Clause: 9.1"
     ],
     "GV.OV-02": [
       "Annex A Controls: 5.1",
       "Annex A Controls: 5.19",
-      "Control 5.27",
-      "Control 5.35",
-      "Control 5.36",
+      "Annex A Controls: 5.27",
+      "Annex A Controls: 5.35",
+      "Annex A Controls: 5.36",
       "Mandatory Clause: 9.1"
     ],
     "GV.OV-03": [
       "Annex A Controls: 5.1",
       "Annex A Controls: 5.19",
       "Annex A Controls: 5.20",
-      "Control 8.30",
-      "Control 8.32",
-      "Control 8.34",
+      "Annex A Controls: 8.30",
+      "Annex A Controls: 8.32",
+      "Annex A Controls: 8.34",
       "Mandatory Clause: 9.1"
     ],
     "GV.SC-01": [
@@ -147,8 +142,6 @@
       "Annex A Controls: 5.20",
       "Annex A Controls: 5.21",
       "Annex A Controls: 5.22",
-      "Control 5.19",
-      "Control 5.21",
       "Mandatory Clause: 8.1"
     ],
     "GV.SC-02": [
@@ -174,7 +167,6 @@
       "Annex A Controls: 5.19",
       "Annex A Controls: 5.20",
       "Annex A Controls: 5.31",
-      "Control 5.20",
       "Mandatory Clause: 4.2 (a)"
     ],
     "GV.SC-06": [
@@ -186,15 +178,14 @@
     "GV.SC-07": [
       "Annex A Controls: 5.19",
       "Annex A Controls: 5.20",
+      "Annex A Controls: 5.22",
       "Annex A Controls: 5.31",
-      "Control 5.22",
       "Mandatory Clause: 6.1.1",
       "Mandatory Clause: 6.1.2",
       "Mandatory Clause: 6.1.3"
     ],
     "GV.SC-08": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "GV.SC-09": [
       "Annex A Controls: 5.19",
@@ -214,36 +205,30 @@
       "Mandatory Clause: 6.1.3"
     ],
     "ID.AM-01": [
-      "Annex A Controls: 5.9",
-      "Control 5.9",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.9"
     ],
     "ID.AM-02": [
-      "Annex A Controls: 5.9",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.9"
     ],
     "ID.AM-03": [
       "Annex A Controls: 5.14",
       "Annex A Controls: 8.20",
       "Annex A Controls: 8.21",
-      "Annex A Controls: 8.22",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.22"
     ],
     "ID.AM-04": [
-      "Annex A Controls: 5.22",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.22"
     ],
     "ID.AM-05": [
       "Annex A Controls: 5.12",
       "Annex A Controls: 5.13",
-      "Annex A Controls: 5.9",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.9"
     ],
     "ID.AM-07": [
-      "Annex A Controls: 5.9",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.9"
     ],
     "ID.AM-08": [
+      "Annex A Controls: 5.11",
       "Annex A Controls: 5.12",
       "Annex A Controls: 5.13",
       "Annex A Controls: 5.19",
@@ -252,20 +237,15 @@
       "Annex A Controls: 5.9",
       "Annex A Controls: 7.10",
       "Annex A Controls: 7.13",
-      "Annex A Controls: 7.14",
-      "Control 5.11",
-      "Mandatory Clause: None"
+      "Annex A Controls: 7.14"
     ],
     "ID.RA-01": [
-      "Annex A Controls: 8.8",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.8"
     ],
     "ID.RA-02": [
       "Annex A Controls: 5.22",
       "Annex A Controls: 5.7",
-      "Annex A Controls: 8.16",
-      "Control 5.7",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.16"
     ],
     "ID.RA-03": [
       "Annex A Controls: 5.22",
@@ -276,7 +256,6 @@
       "Mandatory Clause: 6.1.3"
     ],
     "ID.RA-04": [
-      "Annex A Controls: None",
       "Mandatory Clause: 6.1.1",
       "Mandatory Clause: 6.1.2",
       "Mandatory Clause: 6.1.3"
@@ -296,20 +275,17 @@
       "Mandatory Clause: 6.1.3"
     ],
     "ID.RA-08": [
-      "Annex A Controls: None",
       "Mandatory Clause: 6.1.2"
     ],
     "ID.RA-09": [
       "Annex A Controls: 5.19",
       "Annex A Controls: 5.20",
-      "Annex A Controls: 5.22",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.22"
     ],
     "ID.RA-10": [
       "Annex A Controls: 5.19",
       "Annex A Controls: 5.20",
-      "Annex A Controls: 5.22",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.22"
     ],
     "ID.IM-01": [
       "Annex A Controls: 5.35",
@@ -337,31 +313,25 @@
     ],
     "PR.AA-01": [
       "Annex A Controls: 5.15",
+      "Annex A Controls: 5.16",
       "Annex A Controls: 5.18",
       "Annex A Controls: 8.2",
-      "Annex A Controls: 8.5",
-      "Control 5.16",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.5"
     ],
     "PR.AA-02": [
       "Annex A Controls: 8.2",
       "Annex A Controls: 8.3",
-      "Annex A Controls: 8.5",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.5"
     ],
     "PR.AA-03": [
       "Annex A Controls: 5.15",
       "Annex A Controls: 5.16",
       "Annex A Controls: 5.17",
       "Annex A Controls: 5.18",
-      "Annex A Controls: 8.5",
-      "Control 5.17",
-      "Control 8.5",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.5"
     ],
     "PR.AA-04": [
-      "Annex A Controls: 5.16",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.16"
     ],
     "PR.AA-05": [
       "Annex A Controls: 5.1",
@@ -374,30 +344,18 @@
       "Annex A Controls: 8.18",
       "Annex A Controls: 8.2",
       "Annex A Controls: 8.3",
-      "Annex A Controls: 8.5",
-      "Control 5.15",
-      "Control 5.18",
-      "Control 8.18",
-      "Control 8.2",
-      "Control 8.3",
-      "Control 8.4",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.4",
+      "Annex A Controls: 8.5"
     ],
     "PR.AA-06": [
       "Annex A Controls: 7.1",
       "Annex A Controls: 7.12",
       "Annex A Controls: 7.2",
       "Annex A Controls: 7.3",
-      "Annex A Controls: 7.4",
-      "Control 7.1",
-      "Control 7.2",
-      "Control 7.3",
-      "Control 7.4",
-      "Mandatory Clause: None"
+      "Annex A Controls: 7.4"
     ],
     "PR.AT-01": [
       "Annex A Controls: 6.3",
-      "Control 6.3",
       "Mandatory Clause: 7.3"
     ],
     "PR.AT-02": [
@@ -408,35 +366,32 @@
     "PR.DS-01": [
       "Annex A Controls: 5.1",
       "Annex A Controls: 5.10",
+      "Annex A Controls: 5.12",
       "Annex A Controls: 5.13",
       "Annex A Controls: 5.14",
       "Annex A Controls: 5.15",
       "Annex A Controls: 5.3",
+      "Annex A Controls: 5.33",
       "Annex A Controls: 6.1",
       "Annex A Controls: 6.2",
       "Annex A Controls: 6.5",
       "Annex A Controls: 7.10",
       "Annex A Controls: 7.7",
+      "Annex A Controls: 7.9",
+      "Annex A Controls: 8.10",
+      "Annex A Controls: 8.11",
+      "Annex A Controls: 8.12",
+      "Annex A Controls: 8.13",
       "Annex A Controls: 8.17",
       "Annex A Controls: 8.19",
       "Annex A Controls: 8.2",
       "Annex A Controls: 8.22",
       "Annex A Controls: 8.26",
       "Annex A Controls: 8.3",
+      "Annex A Controls: 8.33",
       "Annex A Controls: 8.4",
       "Annex A Controls: 8.7",
       "Annex A Controls: 8.8",
-      "Control 5.10",
-      "Control 5.12",
-      "Control 5.13",
-      "Control 5.33",
-      "Control 7.10",
-      "Control 7.9",
-      "Control 8.10",
-      "Control 8.11",
-      "Control 8.12",
-      "Control 8.13",
-      "Control 8.33",
       "Mandatory Clause: 4.2(b)",
       "Mandatory Clause: 5.2"
     ],
@@ -453,11 +408,10 @@
       "Annex A Controls: 8.2",
       "Annex A Controls: 8.20",
       "Annex A Controls: 8.22",
+      "Annex A Controls: 8.24",
       "Annex A Controls: 8.26",
       "Annex A Controls: 8.3",
       "Annex A Controls: 8.4",
-      "Control 5.14",
-      "Control 8.24",
       "Mandatory Clause: 4.2(b)",
       "Mandatory Clause: 5.2"
     ],
@@ -466,6 +420,7 @@
       "Annex A Controls: 5.13",
       "Annex A Controls: 5.14",
       "Annex A Controls: 5.15",
+      "Annex A Controls: 5.23",
       "Annex A Controls: 5.3",
       "Annex A Controls: 6.1",
       "Annex A Controls: 6.2",
@@ -476,182 +431,140 @@
       "Annex A Controls: 8.26",
       "Annex A Controls: 8.3",
       "Annex A Controls: 8.4",
-      "Control 5.23",
       "Mandatory Clause: 4.2(b)",
       "Mandatory Clause: 5.2"
     ],
     "PR.DS-11": [
-      "Annex A Controls: 8.13",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.13"
     ],
     "PR.PS-01": [
+      "Annex A Controls: 8.8",
       "Annex A Controls: 8.9",
-      "Control 8.8",
-      "Control 8.9",
       "Mandatory Clause: 9.3"
     ],
     "PR.PS-02": [
       "Annex A Controls: 5.9",
-      "Control 8.7",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.7"
     ],
     "PR.PS-03": [
       "Annex A Controls: 5.9",
-      "Control 8.1",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.1"
     ],
     "PR.PS-04": [
       "Annex A Controls: 8.15",
-      "Annex A Controls: 8.17",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.17"
     ],
     "PR.PS-05": [
-      "Annex A Controls: 8.19",
-      "Control 8.19",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.19"
     ],
     "PR.PS-06": [
       "Annex A Controls: 8.25",
+      "Annex A Controls: 8.26",
       "Annex A Controls: 8.28",
-      "Control 8.25",
-      "Control 8.26",
-      "Control 8.28",
-      "Control 8.29",
-      "Control 8.31",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.29",
+      "Annex A Controls: 8.31"
     ],
     "PR.IR-01": [
       "Annex A Controls: 8.20",
       "Annex A Controls: 8.21",
       "Annex A Controls: 8.22",
-      "Control 8.20",
-      "Control 8.21",
-      "Control 8.22",
-      "Control 8.23",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.23"
     ],
     "PR.IR-02": [
+      "Annex A Controls: 7.11",
+      "Annex A Controls: 7.12",
+      "Annex A Controls: 7.13",
+      "Annex A Controls: 7.14",
       "Annex A Controls: 7.5",
-      "Control 7.11",
-      "Control 7.12",
-      "Control 7.13",
-      "Control 7.14",
-      "Control 7.5",
-      "Control 7.6",
-      "Control 7.7",
-      "Control 7.8",
-      "Mandatory Clause: None"
+      "Annex A Controls: 7.6",
+      "Annex A Controls: 7.7",
+      "Annex A Controls: 7.8"
     ],
     "PR.IR-03": [
       "Annex A Controls: 5.29",
       "Annex A Controls: 8.14",
-      "Control 8.14",
-      "Control 8.17",
-      "Control 8.27",
+      "Annex A Controls: 8.17",
+      "Annex A Controls: 8.27",
       "Mandatory Clause: 4.2(b)",
       "Mandatory Clause: 6.1.1"
     ],
     "PR.IR-04": [
-      "Annex A Controls: 8.6",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.6"
     ],
     "DE.CM-01": [
-      "Annex A Controls: 8.16",
-      "Control 8.15",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.15",
+      "Annex A Controls: 8.16"
     ],
     "DE.CM-02": [
-      "Annex A Controls: 7.4",
-      "Mandatory Clause: None"
+      "Annex A Controls: 7.4"
     ],
     "DE.CM-03": [
       "Annex A Controls: 7.4",
       "Annex A Controls: 8.16",
-      "Control 8.16",
       "Mandatory Clause: 9.1"
     ],
     "DE.CM-06": [
       "Annex A Controls: 5.22",
-      "Annex A Controls: 8.16",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.16"
     ],
     "DE.CM-09": [
       "Annex A Controls: 8.16",
-      "Control 8.6",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.6"
     ],
     "DE.AE-02": [
       "Annex A Controls: 5.24",
-      "Annex A Controls: 5.25",
-      "Control 5.25",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.25"
     ],
     "DE.AE-03": [
       "Annex A Controls: 8.15",
-      "Annex A Controls: 8.16",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.16"
     ],
     "DE.AE-04": [
-      "Annex A Controls: 5.25",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.25"
     ],
     "DE.AE-06": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "DE.AE-07": [
-      "Annex A Controls: 5.7",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.7"
     ],
     "DE.AE-08": [
       "Annex A Controls: 5.25",
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "RS.MA-01": [
       "Annex A Controls: 5.26",
       "Annex A Controls: 5.27",
-      "Annex A Controls: 5.28",
-      "Control 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.28"
     ],
     "RS.MA-02": [
       "Annex A Controls: 5.24",
       "Annex A Controls: 5.26",
       "Annex A Controls: 5.27",
       "Annex A Controls: 5.28",
-      "Annex A Controls: 6.8",
-      "Mandatory Clause: None"
+      "Annex A Controls: 6.8"
     ],
     "RS.MA-03": [
-      "Annex A Controls: 5.25",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.25"
     ],
     "RS.MA-04": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "RS.MA-05": [
-      "Annex A Controls: 5.25",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.25"
     ],
     "RS.AN-03": [
       "Annex A Controls: 5.25",
-      "Annex A Controls: 5.27",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.27"
     ],
     "RS.AN-06": [
-      "Annex A Controls: 5.28",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.28"
     ],
     "RS.AN-07": [
-      "Annex A Controls: 5.28",
-      "Control 5.28",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.28"
     ],
     "RS.AN-08": [
-      "Annex A Controls: 5.25",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.25"
     ],
     "RS.CO-02": [
       "Annex A Controls: 5.26",
@@ -662,46 +575,37 @@
       "Mandatory Clause: 7.4"
     ],
     "RS.MI-01": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "RS.MI-02": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "RC.RP-01": [
       "Annex A Controls: 5.26",
-      "Control 5.29",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.29"
     ],
     "RC.RP-02": [
       "Annex A Controls: 5.26",
-      "Control 5.30",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.30"
     ],
     "RC.RP-03": [
-      "Annex A Controls: 8.13",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.13"
     ],
     "RC.RP-04": [
-      "Annex A Controls: None",
       "Mandatory Clause: 8.1"
     ],
     "RC.RP-05": [
-      "Annex A Controls: 5.26",
-      "Mandatory Clause: None"
+      "Annex A Controls: 5.26"
     ],
     "RC.RP-06": [
       "Annex A Controls: 5.27",
-      "Annex A Controls: 8.13",
-      "Mandatory Clause: None"
+      "Annex A Controls: 8.13"
     ],
     "RC.CO-03": [
       "Annex A Controls: 5.28",
       "Mandatory Clause: 7.4"
     ],
     "RC.CO-04": [
-      "Annex A Controls: None",
       "Mandatory Clause: 7.4"
     ]
   }
