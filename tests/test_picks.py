@@ -1,33 +1,25 @@
-"""
-Checks the questions picked for a run are the right ones for this organisation, before the workbook is
-written. It does not judge wording: questions were reviewed when the banks were built.
-
-Why:       the questions are picked by scripts from the banks. This is the one independent check that the client gets
-           exactly what their intake calls for (nothing missing, nothing for a certification or AI area they do not
-           have), without an agent re-reading every run.
-Called by: /csf-questionnaire (step 5) and /ai-questionnaire (step 3)
-Input:     the run folder's drafts, intake and copies of the banks used
-Output:    a list of problems on screen (exit 1), or nothing (exit 0)
-
-Usage: .venv/bin/python ./scripts/check_questionnaire.py <run_dir> [--framework csf|ai]
+"""The client-run pickers (build_questions.py, build_ai_questions.py) give each client exactly the questions its intake
+calls for. Runs intake, scope and both pickers on the committed banks for typical clients, then checks every pick
+with the rules below. The pickers are fixed scripts, so this is checked here, once per code change, not in every run.
 
 CSF:    every subcategory in scope has questions and none outside it; the right question type; GOVERN always asked in
         full; "confirm with evidence" questions flagged LOW; no blank, repeated or extra questions; every question from
         the bank, with CSET's own CSF 2.0 question kept; nothing worded for a certification the organisation lacks.
 AI RMF: every question is in the bank; each is for a role, producer details and AI areas the organisation has; nothing
         the bank gives this organisation is missing.
-
-Exit 0: all good. Exit 1: problems listed; re-run the step that picked the questions (never edit the drafts by hand).
 """
-import argparse
 import json
+import shutil
+import subprocess
 import sys
+import tempfile
+import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "scripts"))
 from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, SCOPE_RULES, load_csf_intake  # noqa: E402
 from build_ai_questions import client_roles, pick  # noqa: E402
-import audit  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
 DETAIL_WORDS = {"built_on_existing_model": "built on an existing model", "given_to_others": "given to others"}
@@ -147,34 +139,90 @@ def check_ai(run_dir: Path) -> list[str]:
     return problems
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("run_dir")
-    parser.add_argument("--framework", choices=["csf", "ai"], help="check only this framework's drafts")
-    args = parser.parse_args()
-    run_dir = Path(args.run_dir)
-    if not run_dir.is_dir():
-        sys.exit(f"[check_questionnaire] ERROR: run folder not found: {run_dir}")
-    load_csf_intake(run_dir)   # exits with a clear message when the intake is missing
-    ev = audit.begin(audit.run_log(run_dir), "check_questionnaire", {"framework": args.framework})
-    frameworks = [args.framework] if args.framework else [
-        f for f, present in (("csf", (run_dir / CSF_DRAFT).is_file()),
-                             ("ai", any((run_dir / f"ai_questions_draft_{b}.json").is_file()
-                                        for b in AI_QUESTION_BANKS))) if present]
-    if not frameworks:
-        ev.fail("[check_questionnaire] ERROR: no drafts in the run folder (run /csf-questionnaire or /ai-questionnaire)")
-    problems = []
-    for f in frameworks:
-        problems += check_csf(run_dir) if f == "csf" else check_ai(run_dir)
-    if problems:
-        print("\n".join(problems))
-        print(f"\n[check_questionnaire] {len(problems)} problem(s) in {', '.join(frameworks)}: re-run the step that "
-              "wrote the draft; do not edit drafts by hand.")
-        ev.finish("rejected", detail=f"{len(problems)} problems", problems=problems)
-        sys.exit(1)
-    print(f"[check_questionnaire] {', '.join(frameworks)}: all checks pass")
-    ev.finish(detail=f"{', '.join(frameworks)}: all checks pass")
+def script(name, *args):
+    r = subprocess.run([sys.executable, str(REPO / "scripts" / name), *map(str, args)], capture_output=True, text=True)
+    assert r.returncode == 0, f"{name}: " + r.stdout + r.stderr
+    return r
+
+
+# Typical clients: intake answers as menu numbers (see data/common/intake_options.json), and an optional SoA.
+CLIENTS = {
+    "no_cert_no_ai":   ["--domain", "5", "--certs", "1", "--ai-in-use", "1"],
+    "iso_unsure_ai":   ["--domain", "2", "--certs", "2", "--ai-in-use", "3"],
+    "pci_ai_user":     ["--domain", "1", "--certs", "3", "--ai-in-use", "2", "--role", "1", "--ai-usage", "1 4",
+                        "--ai-components", "1"],
+    "iso_pci_builder": ["--domain", "4", "--certs", "2 3", "--ai-in-use", "2", "--role", "2",
+                        "--built-on-existing-model", "1", "--given-to-others", "1", "--ai-components", "3 4"],
+    "iso_soa_both":    ["--domain", "3", "--certs", "2", "--ai-in-use", "2", "--role", "3",
+                        "--built-on-existing-model", "2", "--given-to-others", "2", "--ai-usage", "3",
+                        "--ai-components", "2"],
+}
+SOA = [{"control_id": "Annex A Controls: 5.1", "control_id_raw": "5.1", "applicable": True, "applicable_raw": "Yes",
+        "exclusion_reason": None, "implemented": True},
+       {"control_id": "Annex A Controls: 5.20", "control_id_raw": "5.20", "applicable": False, "applicable_raw": "No",
+        "exclusion_reason": None, "implemented": None}]
+SOA_READING = {"Annex A Controls: 5.20": {"exclusion_class": "not_relevant", "reason": "No supplier handles data."}}
+
+
+def make_run(runs: Path, name: str) -> Path:
+    script("intake.py", "write", "--org", name, *CLIENTS[name], "--date", "2026-11-17", "--runs-dir", runs)
+    run = runs / f"{name}_2026-11-17"
+    scope = ["compute_scope.py", run]
+    if name == "iso_soa_both":
+        (run / "soa_parsed.json").write_text(json.dumps(SOA))
+        (run / "soa_judgements.json").write_text(json.dumps(SOA_READING))
+        scope += ["--model", "test"]
+    script(*scope)
+    script("build_questions.py", run)
+    script("build_ai_questions.py", run)
+    return run
+
+
+class Picks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp())
+        cls.runs = {name: make_run(cls.tmp / "runs", name) for name in CLIENTS}
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp)
+
+    def test_every_client_gets_exactly_its_questions(self):
+        for name, run in self.runs.items():
+            with self.subTest(client=name):
+                self.assertEqual(check_csf(run), [])
+                self.assertEqual(check_ai(run), [])
+
+    def test_the_clients_differ(self):
+        # guard against a check that passes on anything: the five clients really get different questionnaires
+        sizes = {n: sum(len(e["questions"]) for b in AI_QUESTION_BANKS
+                        for e in json.loads((r / f"ai_questions_draft_{b}.json").read_text())) for n, r in self.runs.items()}
+        self.assertEqual(len(set(sizes.values())), len(sizes), sizes)
+        types = {json.dumps(sorted((e["subcategory_id"], e["question_type"])
+                                   for e in json.loads((r / "csf_scope.json").read_text()))) for r in self.runs.values()}
+        self.assertGreaterEqual(len(types), 4)
+
+    def test_the_checks_catch_a_wrong_pick(self):
+        # the checks themselves must fail on a broken draft
+        run = Path(tempfile.mkdtemp()) / "run"
+        shutil.copytree(self.runs["iso_pci_builder"], run)
+        csf = json.loads((run / CSF_DRAFT).read_text())
+        csf.pop(0)
+        gv = next(e for e in csf if e["subcategory_id"].startswith("GV."))
+        gv["question_type"] = "gap"
+        (run / CSF_DRAFT).write_text(json.dumps(csf))
+        text = "\n".join(check_csf(run))
+        self.assertIn("in scope", text)
+        self.assertIn("GOVERN must be full_discovery", text)
+        ai = json.loads((run / "ai_questions_draft_foundation.json").read_text())
+        ai[0]["questions"].pop()
+        ai[1]["questions"][0]["question_text"] = "Made-up question?"
+        (run / "ai_questions_draft_foundation.json").write_text(json.dumps(ai))
+        text = "\n".join(check_ai(run))
+        self.assertIn("are missing", text)
+        self.assertIn("not in the bank", text)
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
