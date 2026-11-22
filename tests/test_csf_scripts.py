@@ -112,19 +112,13 @@ class CsetReplay(unittest.TestCase):
             EX.sql_changed = old
 
 
-class SoaJudgements(unittest.TestCase):
-    rules = {"exclusion_classes": ["covered_elsewhere", "not_relevant", "unclear"]}
-    soa = {"A": {"applicable": False}, "B": {"applicable": None}, "C": {"applicable": True}}
-
-    def test_an_excluded_control_needs_its_class_and_an_unreadable_one_its_applicability(self):
-        errs = CS.validate_judgements({"A": {"reason": "r"}, "B": {"reason": "r", "exclusion_class": "unclear"}},
-                                      self.soa, self.rules)
-        self.assertTrue(any(e.startswith("A:") and "exclusion_class" in e for e in errs))
-        self.assertTrue(any(e.startswith("B:") and "applicable" in e for e in errs))
-        ok = {"A": {"reason": "r", "exclusion_class": "not_relevant"},
-              "B": {"reason": "r", "applicable": False, "exclusion_class": "unclear"},
-              "C": {"reason": "r"}}
-        self.assertEqual(CS.validate_judgements(ok, self.soa, self.rules), [])
+class SoaControlState(unittest.TestCase):
+    def test_what_the_soa_says_gives_the_state(self):
+        row = lambda applicable, implemented=None: {"applicable": applicable, "implemented": implemented}
+        self.assertEqual([CS.soa_control_state(r) for r in (row(True, True), row(True, False), row(True), row(False),
+                                                             row(None))],
+                         ["implemented", "applicable_not_implemented", "implementation_unknown", "excluded",
+                          "unreadable"])
 
 
 class IntakeDate(unittest.TestCase):

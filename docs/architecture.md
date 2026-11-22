@@ -38,7 +38,7 @@ One intake, two tailored sheets in one workbook.
 | | CSF sheet | AI RMF sheet |
 |---|---|---|
 | Tailored by | Sector and certifications (ISO 27001, PCI DSS), plus the ISO 27001 Statement of Applicability if there is one | How the organisation uses AI: AI in use, role (uses or builds AI) and the AI areas ticked |
-| How | Each subcategory gets a question type: `full_discovery`, `gap`, `confirmatory` or `skip`, depending on what the certifications already cover (`compute_scope.py`, `build_questions.py`) | Questions are filtered from the two banks by role and AI areas (`build_ai_questions.py`). All are `full_discovery`: they ask about AI, so certifications change nothing. |
+| How | Each subcategory gets a question type: `full_discovery`, `gap` or `confirmatory`, depending on what the certifications already cover (`compute_scope.py`, `build_questions.py`) | Questions are filtered from the two banks by role and AI areas (`build_ai_questions.py`). All are `full_discovery`: they ask about AI, so certifications change nothing. |
 | Command | `/csf-questionnaire` | `/ai-questionnaire` |
 
 `/generate-questions` runs the whole stage: the intake (`intake.py`), a check that the banks are recent enough, then

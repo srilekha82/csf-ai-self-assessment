@@ -78,17 +78,12 @@ def main():
     sub_text = {s["subcategory_id"]: s["subcategory_text"] for s in csf_core["subcategories"]}
 
     output = []
-    skipped = []
     no_bank_match = []
 
     for entry in scope:
         sid = entry["subcategory_id"]
         qtype = entry["question_type"]
         fn = sid.split(".")[0]
-
-        if qtype == "skip":
-            skipped.append(sid)
-            continue
 
         bank_entry = bank["questions"].get(sid, {})
         candidates = bank_entry.get("candidates", [])
@@ -117,11 +112,9 @@ def main():
                 "cset_question_id": candidate.get("cset_question_id"),
             })
 
-        confidence_flag = (
-            "LOW — assessor verification required"
-            if str(entry.get("confidence", "")).lower() == "low" or qtype == "confirmatory"
-            else ""
-        )
+        confidence_flag = entry.get("note") or (           # the scope's note for the client, if any
+            "LOW — assessor verification required" if entry.get("confidence") == "low" or qtype == "confirmatory"
+            else "")
 
         output.append({
             "subcategory_id": sid,
@@ -147,7 +140,7 @@ def main():
 
     total_q = sum(len(e["questions"]) for e in output)
     print(f"[build_questions] {len(output)} subcategories, {total_q} questions → {out_path}", file=sys.stderr)
-    print(f"[build_questions] Skipped: {len(skipped)} | No bank match (fallback used): {len(no_bank_match)}", file=sys.stderr)
+    print(f"[build_questions] No bank match (fallback used): {len(no_bank_match)}", file=sys.stderr)
     print(f"[build_questions] By type: {by_type}", file=sys.stderr)
     ev.finish(inputs=[bank_file, run_dir / "csf_scope.json", core_path, SCOPE_RULES, EVIDENCE_PROMPTS],
               outputs=[out_path, run_dir / "csf_question_bank_used.json"],

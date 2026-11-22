@@ -1,7 +1,15 @@
 {
-  "description": "Policy for assigning a question type per CSF subcategory. compute_scope.py works out a STATE for each subcategory (a fact), then looks it up here. Change policy by editing this table, not the code.",
+  "description": "Policy for how much to ask per CSF subcategory. compute_scope.py works out each subcategory's STATE (a fact: GOVERN, no certification, no related control, what the SoA says about the related controls) and looks it up in `states`; `sector_bumps` then raise a few subcategories one step for the client's sector. When in doubt (a control the SoA excludes, or whose entry cannot be read) the subcategory is asked in full, with a `note` shown to the client. Change policy by editing this file, not the code.",
   "function_order": ["GV", "ID", "PR", "DE", "RS", "RC"],
-  "domain_bump_steps": 1,
+  "sector_bumps": {
+    "description": "Subcategories asked one step more demandingly for a sector (confirmatory -> gap -> full_discovery): the areas that matter most in that sector. Maintainer judgement.",
+    "finance": ["DE.CM-01", "GV.RM-01", "PR.DS-01", "PR.DS-02", "RS.MI-01"],
+    "healthcare": ["GV.SC-01", "ID.RA-01", "PR.DS-01", "PR.DS-02", "RC.RP-01"],
+    "manufacturing_ot": ["DE.CM-01", "PR.PS-01", "RC.RP-01", "RS.MI-01"],
+    "saas_cloud": ["GV.SC-01", "ID.AM-02", "PR.AA-01", "PR.DS-01", "PR.DS-02"],
+    "consulting": [],
+    "other": []
+  },
   "max_questions": {"full_discovery": 4, "gap": 3, "confirmatory": 2},
   "frames": {
     "gap": "{cert} covers control(s) {controls}, which partially addresses this area. Beyond that coverage: {text}",
@@ -10,7 +18,6 @@
     "fallback_question": "How does your organisation address: {outcome}? Who owns this?"
   },
   "function_states": {"GV": "govern"},
-  "exclusion_classes": ["covered_elsewhere", "not_relevant", "unclear"],
   "states": {
     "govern": {
       "type": "full_discovery", "confidence": "high",
@@ -25,11 +32,11 @@
       "reason": "{cert}: no OLIR mapping"
     },
     "no_soa": {
-      "type": "confirmatory", "confidence": "LOW",
+      "type": "confirmatory", "confidence": "low",
       "reason": "{cert}: no SoA provided, OLIR mapped — assuming coverage"
     },
     "not_in_soa": {
-      "type": "confirmatory", "confidence": "LOW",
+      "type": "confirmatory", "confidence": "low",
       "reason": "{cert}: mapped controls not in SoA (mandatory clauses only) — assuming coverage"
     },
     "implemented": {
@@ -41,20 +48,18 @@
       "reason": "{control} applicable but not implemented per SoA"
     },
     "implementation_unknown": {
-      "type": "confirmatory", "confidence": "LOW",
+      "type": "confirmatory", "confidence": "low",
       "reason": "{control} applicable but implementation status not stated in SoA — confirm with evidence"
     },
-    "covered_elsewhere": {
-      "type": "confirmatory", "confidence": "high",
-      "reason": "{control} excluded in SoA as covered elsewhere"
-    },
-    "not_relevant": {
+    "excluded": {
       "type": "full_discovery", "confidence": "high",
-      "reason": "{control} excluded in SoA as not relevant — assessor to check whether the outcome still applies"
+      "reason": "{control} excluded in the SoA ({soa_reason}): asked in full, the client may answer not applicable",
+      "note": "Excluded in your SoA ({control_no}: {soa_reason}). If this still does not apply, answer \"Not applicable\" with the reason."
     },
-    "unclear": {
+    "unreadable": {
       "type": "full_discovery", "confidence": "high",
-      "reason": "{control} excluded in SoA, reason unclear — assessor to check whether the outcome still applies"
+      "reason": "{control}: the SoA's applicability ({applicable_raw}) could not be read: asked in full",
+      "note": "Your SoA's entry for {control_no} could not be read ({applicable_raw}). If this does not apply, answer \"Not applicable\" with the reason."
     }
   },
   "soa_reading": {

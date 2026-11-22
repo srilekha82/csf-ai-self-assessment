@@ -36,15 +36,8 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `csf_i
 `.venv/bin/python ./scripts/compute_scope.py <run_dir>`
 
 It writes `csf_scope.json` and prints the count per question type. The policy is in `data/csf/scope_rules.json`: do not
-read it or re-apply it by hand.
-
-- **Exit 2**: it needs your reading of some SoA controls and wrote `<run_dir>/soa_pending.json`. Read that file and
-  `prompts/soa_exclusion_judge.md`, judge only from what they contain, write `<run_dir>/soa_judgements.json` in the
-  format the prompt gives, and run it again with your model id:
-  `.venv/bin/python ./scripts/compute_scope.py <run_dir> --model <model id>`. It keeps a record of your reading in
-  `<run_dir>/judgement_log/`. If it exits 1 it lists what is wrong with `soa_judgements.json`: fix those entries and
-  run it again.
-- Exit 0: nothing more.
+read it or re-apply it by hand. A control the SoA excludes, or whose entry cannot be read, makes its subcategories
+asked in full, with a note telling the client they may answer "Not applicable" with the reason.
 
 ## 4 — Questions from the bank
 `.venv/bin/python ./scripts/build_questions.py <run_dir>`
