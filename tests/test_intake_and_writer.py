@@ -44,8 +44,9 @@ class Options(unittest.TestCase):
         self.assertEqual(set(roles), set(menu["role"]) | {"none", "unsure"})
         self.assertTrue({r for v in roles.values() for r in v} <= set(qrules["roles"]))
 
-    def test_every_domain_has_a_weight_key_and_every_cert_a_file(self):
-        self.assertEqual(set(OPT.WEIGHT_KEY), set(OPT.DOMAINS))
+    def test_every_sector_has_its_bumps_and_every_cert_a_file(self):
+        bumps = json.loads(OPT.SCOPE_RULES.read_text())["sector_bumps"]
+        self.assertEqual(set(bumps) - {"description"}, set(OPT.DOMAINS))
         menu = [o["value"] for o in next(q for q in OPT.INTAKE_QUESTIONS if q["key"] == "certs")["options"]]
         self.assertEqual(set(OPT.CERT_FILES), set(menu) - {"none"})
 
@@ -131,32 +132,28 @@ class Intake(unittest.TestCase):
             OPT.load_csf_intake(self.tmp / "missing")
 
 
-class SoaReadingRecord(unittest.TestCase):
-    """compute_scope.py records the agent's SoA reading (soa_judgements.json) once, the first time it uses it."""
+class ScopeWhenInDoubt(unittest.TestCase):
+    """An SoA exclusion or an unreadable SoA entry: the subcategory is asked in full, with a note for the client."""
 
-    def scope(self, *more):
-        p = __import__("subprocess").run([sys.executable, str(ROOT / "scripts" / "compute_scope.py"), str(self.run), *more],
-                                         capture_output=True, text=True)
-        return p.returncode
-
-    def test_the_reading_needs_a_model_and_is_recorded_once(self):
+    def test_excluded_and_unreadable_controls_are_asked_in_full_with_a_note(self):
         runs = Path(tempfile.mkdtemp())
         IN.write(args(runs_dir=str(runs), certs="2", ai_in_use="1", role=None, ai_usage=None, ai_components=None))
-        self.run = runs / "Acme_Corp_2026-10-14"
-        (self.run / "soa_parsed.json").write_text(json.dumps([
+        run = runs / "Acme_Corp_2026-10-14"
+        (run / "soa_parsed.json").write_text(json.dumps([
             {"control_id": "Annex A Controls: 5.20", "control_id_raw": "5.20", "applicable": False,
-             "applicable_raw": "No", "exclusion_reason": None, "implemented": None}]))
-        self.assertEqual(self.scope(), 2)                                   # the exclusion needs an agent reading
-        (self.run / "soa_judgements.json").write_text(json.dumps(
-            {"Annex A Controls: 5.20": {"exclusion_class": "not_relevant", "reason": "No suppliers handle data."}}))
-        self.assertEqual(self.scope(), 1)                                   # used for the first time: --model needed
-        self.assertFalse((self.run / "csf_scope.json").exists())
-        self.assertEqual(self.scope("--model", "test-model"), 0)
-        records = list((self.run / "judgement_log").glob("*_soa_exclusions.json"))
-        self.assertEqual(len(records), 1)
-        self.assertEqual(json.loads(records[0].read_text())["model"], "test-model")
-        self.assertEqual(self.scope(), 0)                                   # already recorded: no model, no new record
-        self.assertEqual(len(list((self.run / "judgement_log").glob("*_soa_exclusions.json"))), 1)
+             "applicable_raw": "No", "exclusion_reason": "No suppliers handle data", "implemented": None},
+            {"control_id": "Annex A Controls: 5.9", "control_id_raw": "5.9", "applicable": None,
+             "applicable_raw": "tbd", "exclusion_reason": None, "implemented": None}]))
+        p = __import__("subprocess").run([sys.executable, str(ROOT / "scripts" / "compute_scope.py"), str(run)],
+                                         capture_output=True, text=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        scope = {e["subcategory_id"]: e for e in json.loads((run / "csf_scope.json").read_text())}
+        excluded = [e for e in scope.values() if e["state"] == "excluded"]
+        self.assertTrue(excluded and all(e["question_type"] == "full_discovery" for e in excluded))
+        self.assertIn('5.20: "No suppliers handle data"', excluded[0]["note"])
+        self.assertEqual((scope["ID.AM-01"]["state"], scope["ID.AM-01"]["question_type"]), ("unreadable", "full_discovery"))
+        self.assertIn('could not be read ("tbd")', scope["ID.AM-01"]["note"])
+        self.assertEqual(scope["GV.OC-01"]["note"], "")                     # only a doubt gets a note
 
 
 class EvidenceLoop(unittest.TestCase):

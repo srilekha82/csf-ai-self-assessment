@@ -161,7 +161,6 @@ SOA = [{"control_id": "Annex A Controls: 5.1", "control_id_raw": "5.1", "applica
         "exclusion_reason": None, "implemented": True},
        {"control_id": "Annex A Controls: 5.20", "control_id_raw": "5.20", "applicable": False, "applicable_raw": "No",
         "exclusion_reason": None, "implemented": None}]
-SOA_READING = {"Annex A Controls: 5.20": {"exclusion_class": "not_relevant", "reason": "No supplier handles data."}}
 
 
 def make_run(runs: Path, name: str) -> Path:
@@ -170,8 +169,6 @@ def make_run(runs: Path, name: str) -> Path:
     scope = ["compute_scope.py", run]
     if name == "iso_soa_both":
         (run / "soa_parsed.json").write_text(json.dumps(SOA))
-        (run / "soa_judgements.json").write_text(json.dumps(SOA_READING))
-        scope += ["--model", "test"]
     script(*scope)
     script("build_questions.py", run)
     script("build_ai_questions.py", run)

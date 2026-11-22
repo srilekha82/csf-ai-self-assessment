@@ -28,7 +28,7 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Review the CSF AI impact notes | `.venv/bin/python ./scripts/sheet_io.py export impact_notes`, open `data/ai/authoring/impact_notes.xlsx` (one line per CSF subcategory: exposure note, the two use notes, status from the notes evaluator), edit, then `sheet_io.py import impact_notes`. Changed lines are stored as decided by a person. |
 | Change the AI areas (usage and ecosystem components, their impact) | Edit `data/ai/authoring/ai_areas.xlsx` (the decision), then `.venv/bin/python ./scripts/sheet_io.py import ai_areas` (checks every row, writes `data/ai/ai_areas.json`). The model is in `docs/ai-rmf-model.md`. A change to an area makes its mapping rows, and then their questions, out of date. |
 | Change how an agent judges | The file in `prompts/` (see the list below). Editing the AI generator or evaluator prompt makes the accepted pilot stale. |
-| See what happened in a run | `runs/<Org>_<date>/audit.jsonl` (timeline) and `judgement_log/` (what each agent was shown and answered). |
+| See what happened in a run | `runs/<Org>_<date>/audit.jsonl` (timeline). For a bank build, also `judgement_log/` in `data/csf/bank_build/` or `data/ai/bank_build/` (what each agent was shown and answered). |
 | Change the code or add a stage | Read `DESIGN_RULES.md` first, then run the tests (`.venv/bin/python -m unittest discover -s tests`). |
 
 ## How it works
@@ -81,7 +81,7 @@ Domains: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 
 1. `intake.py` asks once, as numbered choices: org, domain, certs, the AI usage profile (AI in use none / some / unsure, then "How do you use AI?" and "What does your AI include?", which give the client's AI areas), and for an organisation that builds its own model the two producer details. It writes `csf_intake.json` (org, date, sector, certifications: the CSF sheet is picked from these) and `ai_intake.json` (the AI answers: the AI RMF sheet is picked from these); every later step reads them.
 2. `check_bank_age.py --run <run>` checks the build date of the CSF bank of the domain and the two AI RMF banks against the limits in `data/metadata.json` (`question_banks`: CSF 365 days, AI 90). If a bank is missing or too old the run stops and names the command to rebuild it (`/build-csf-bank`, `/build-ai-bank`); a client run never rebuilds a bank. It needs no source files.
-3. `/csf-questionnaire`: `parse_soa.py <run> <soa>` extracts the SoA and prints the sheet and columns it picked; the user confirms them (a wrong pick is corrected with `--sheet` / `--id-col` / ...). If any excluded control needs reading, `compute_scope.py` exits 2 and the agent classifies it with `prompts/soa_exclusion_judge.md`. `compute_scope.py` gives each subcategory a type: `full_discovery`, `gap` (cert covers it, ask what goes beyond), `confirmatory` (cert should cover it, ask for evidence) or `skip`; policy is in `data/csf/scope_rules.json`. `build_questions.py` picks questions from the bank and words them for the certs held, producing `csf_questions_draft.json`.
+3. `/csf-questionnaire`: `parse_soa.py <run> <soa>` extracts the SoA and prints the sheet and columns it picked; the user confirms them (a wrong pick is corrected with `--sheet` / `--id-col` / ...). `compute_scope.py` gives each subcategory a type: `full_discovery`, `gap` (cert covers it, ask what goes beyond) or `confirmatory` (cert should cover it, ask for evidence); policy is in `data/csf/scope_rules.json`. When in doubt (a control the SoA excludes or whose entry cannot be read) it asks in full, with a note that the client may answer "Not applicable" with the reason. `build_questions.py` picks questions from the bank and words them for the certs held, producing `csf_questions_draft.json`.
 4. `/ai-questionnaire`: see below.
 5. Each of the two commands ends with `write_questionnaire.py`, which writes that framework's sheet of `questionnaire.xlsx` (each replaces only its own sheet). Questions are reviewed once, when the banks are built, never per run; the picking is fixed rules, checked by `tests/test_picks.py` (nothing missing, right question types and flags, every question from the bank, nothing for a role, AI area or certification the org does not have).
 
@@ -123,7 +123,6 @@ flowchart TD
     OK1 -- "a pick is wrong: run again naming the column" --> SOA
     OK1 -- right --> SC["compute_scope.py<br/><small>also reads: csf_intake.json</small>"]:::script
     CQ --> SC
-    SC -- "an SoA exclusion to judge" --> J["agent: SoA judge"]:::agent -- "soa_judgements.json, run again with --model" --> SC
     SC --> SCJ([csf_scope.json]):::file --> BQ["build_questions.py<br/><small>also reads: csf_intake.json, the CSF bank</small>"]:::script
     BQ --> CD([csf_questions_draft.json]):::file
 
@@ -206,7 +205,7 @@ helpers), `ai_mapping.py`, `ai_questions.py` and `ai_notes.py` (the checks, stor
 
 ### Prompts (`prompts/`)
 
-How the agents judge and write. CSF: `question_bank_judge.md`, `csf_evidence_writer.md`, `csf_evidence_evaluator.md` (bank build), `soa_exclusion_judge.md` (client run). AI RMF: `ai_rmf_mapping_drafter.md`, `ai_rmf_mapping_evaluator.md`, `ai_rmf_question_generator.md`, `ai_rmf_question_evaluator.md`, `ai_rmf_evidence_writer.md`, `ai_rmf_evidence_evaluator.md`, `ai_impact_notes_writer.md`, `ai_impact_notes_evaluator.md` (bank build). Commands (`.claude/commands/`) say what to run; prompts say how to judge.
+How the agents judge and write. CSF: `question_bank_judge.md`, `csf_evidence_writer.md`, `csf_evidence_evaluator.md` (bank build). AI RMF: `ai_rmf_mapping_drafter.md`, `ai_rmf_mapping_evaluator.md`, `ai_rmf_question_generator.md`, `ai_rmf_question_evaluator.md`, `ai_rmf_evidence_writer.md`, `ai_rmf_evidence_evaluator.md`, `ai_impact_notes_writer.md`, `ai_impact_notes_evaluator.md` (bank build). Commands (`.claude/commands/`) say what to run; prompts say how to judge.
 
 ### Data (`data/`)
 
@@ -222,11 +221,10 @@ data/
 ├── csf/
 │   ├── source/csf2.xlsx     NIST CPRT export (refreshed about yearly)
 │   ├── csf2_core.json       CSF 2.0 subcategories and examples
-│   ├── scope_rules.json     state → question type, max questions per type, domain bump, function order; how
+│   ├── scope_rules.json     state → question type, max questions per type, sector bumps, function order; how
 │   │                        the SoA spreadsheet is read (soa_reading)
 │   ├── bank_rules.json      how CSET questions are flagged and routed when a CSF bank is built: sector of each
 │   │                        question set, reject and rewrite flags, the fan-out threshold
-│   ├── domain_weights.json  per-sector priorities
 │   ├── evidence_prompts.json  evidence hint per CSF category
 │   ├── crosswalks/          ISO 27001 and PCI DSS mappings
 │   ├── banks/               question_bank_<domain>.json
@@ -260,16 +258,15 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 | File | What |
 |---|---|
 | `inputs/soa_original.xlsx` | Client SoA (if provided) |
-| `soa_parsed.json`, `soa_pending.json`, `soa_judgements.json` | Parsed SoA, controls needing a reading, the agent's classifications |
+| `soa_parsed.json` | The parsed SoA |
 | `csf_intake.json` | Org, date, domain, certifications (from `intake.py`; read by scope, question building and the freshness check) |
 | `ai_intake.json` | The AI usage profile (AI in use, role, producer details, the client's AI areas), from the same intake |
-| `csf_scope.json` | Question type per subcategory, with the reason |
+| `csf_scope.json` | Question type per subcategory, with the reason and any note for the client |
 | `ai_scope.json`, `ai_questions_draft_<bank>.json` | The AI RMF track for the run (scope, the picked questions per bank); the AI RMF sheet goes into `questionnaire.xlsx` |
 | `csf_question_bank_used.json`, `csf_questions_draft.json` | Copy of the CSF bank used, the picked CSF questions |
 | `ai_question_bank_used_<bank>.json` | Copies of the two AI RMF banks used |
 | `questionnaire.xlsx` | The deliverable workbook with the CSF sheet and the AI RMF sheet |
 | `audit.jsonl` | Timeline of the whole run: every script and agent step, with status (`ok`, `pending`, `rejected`, `error`, `incomplete`), file hashes and the intake answers (domain, certs) |
-| `judgement_log/` | Full write-once record of each agent step (model, prompt hash, output snapshot) |
 
 ### Tests
 
@@ -292,7 +289,7 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 | **AI area** | A way AI is used (internal process, code generation, customer-facing, vendor AI, model building, invisible usage) or a part of the AI ecosystem (input, output, test, tuning and evaluation data, model, source data, MCP / tools, agent, hosting). 14 in all, decided by a person in `data/ai/authoring/ai_areas.xlsx`. |
 | **Mapping row** | One AI area x one AI RMF subcategory (MAP, MEASURE or MANAGE): why that subcategory matters for the area, its impact, and the CIS safeguards that can serve as evidence. Area questions are written per row. All rows together are the **mapping** (`data/ai/mapping.json`). |
 | **Foundation** | GOVERN and 12 other subcategories about how the organisation runs AI risk management: asked once for the organisation, never per area. |
-| **Question type** | Set per subcategory at engagement time. `full_discovery`: nothing is covered, ask everything. `gap`: a certification covers the standard part, ask what goes beyond it. `confirmatory`: a certification should cover it, ask for evidence. `skip`: not asked. Every AI RMF question is `full_discovery`: it asks about AI, so certifications change nothing there. |
+| **Question type** | Set per subcategory at engagement time. `full_discovery`: nothing is covered, ask everything. `gap`: a certification covers the standard part, ask what goes beyond it. `confirmatory`: a certification should cover it, ask for evidence. A subcategory is never skipped. Every AI RMF question is `full_discovery`: it asks about AI, so certifications change nothing there. |
 | **Domain** | The client's sector for the CSF bank: healthcare, finance, manufacturing_ot, saas_cloud, consulting, other. |
 | **SoA** | The client's ISO 27001 Statement of Applicability. It sets CSF question types for ISO-mapped subcategories. |
 | **AI in use** | `none`, `some` or `unsure`. `unsure` is asked as a consumer and as an org with no AI; the questions discover what AI is used. `none` gets the AI policy and shadow-AI questions only. |

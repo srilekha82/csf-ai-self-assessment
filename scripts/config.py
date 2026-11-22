@@ -32,7 +32,6 @@ INTAKE_OPTIONS = COMMON / "intake_options.json"   # intake menus, domains, certs
 CSF = DATA / "csf"
 CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_csf_source.py (refreshed ~yearly)
 CSF_CORE = CSF / "csf2_core.json"
-DOMAIN_WEIGHTS = CSF / "domain_weights.json"
 CSF_BANK_RULES = CSF / "bank_rules.json"   # how CSET questions are flagged and routed when a CSF bank is built
 SCOPE_RULES = CSF / "scope_rules.json"   # state -> question type policy, max questions per type
 EVIDENCE_PROMPTS = CSF / "evidence_prompts.json"   # evidence an assessor asks for, by CSF category
@@ -98,7 +97,6 @@ _common = json.loads(INTAKE_OPTIONS.read_text())
 
 DOMAINS = [d["value"] for d in _common["domains"]]
 DOMAIN_LABELS = {d["value"]: d["label"] for d in _common["domains"]}
-WEIGHT_KEY = {d["value"]: d["weight_key"] for d in _common["domains"]}     # key of the domain in domain_weights.json
 _certs = [c for c in _common["certs"] if "file" in c]     # the certifications: every option but "None" has a crosswalk
 CERT_LABELS = {c["value"]: c["label"] for c in _certs}
 CERT_FILES = {c["value"]: c["file"] for c in _certs}
