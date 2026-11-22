@@ -1,48 +1,53 @@
 """
-The only door for AI agent output, and for your approvals, when the question banks are built (CSF and AI RMF).
-Nothing gets into a store without passing its checks.
+Saves the agents' work, and your approvals, while the question banks are built. It is the only way anything an agent
+writes gets into the banks: every file is checked first, and a file with any problem is refused as a whole.
 
-Called by: /build-csf-bank (steps 4 and 5), /build-ai-bank (steps 3-7)
-Input:     an agent's file (and the evaluator's verdicts), or your decision
-Output:    the store each mode names; a write-once record of each recording in the track's judgement_log/
-           (data/csf/bank_build/ or data/ai/bank_build/: who decided, with which prompt and inputs, what they said)
+Called by: /build-csf-bank (steps 4 and 5) and /build-ai-bank (steps 3 to 7); never in a client run
+Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
+Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
-Usage: .venv/bin/python ./scripts/record_bank.py <mode> ...
-       (modes that store agent work also take --model ID [--session REF])
+Usage: .venv/bin/python ./scripts/record_bank.py <mode> <file> [options]     (--help lists the modes)
+       Modes that save an agent's file also take --model <model id> [--session <ref>].
 
-Each mode checks the whole file and rejects it if anything is wrong (exit 1, nothing stored); otherwise it stores it,
-keeps the write-once record and adds a run-log line. A line a person decided is never overwritten by an agent.
+What every mode does
+  1. Check   the whole file against the rules (the check function named below). Any problem: it lists them, saves
+             nothing and exits 1, so the agent can fix the file and hand it in again.
+  2. Save    the file into its bank file. A line a person decided is never overwritten by an agent.
+  3. Record  a write-once copy in judgement_log/ (data/csf/bank_build/ or data/ai/bank_build/): who decided, with
+             which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
-CSF bank build (checks and stores in build_question_bank.py):
-  csf-cset <verdicts.json> [--pending F]  the agent's decisions on pending CSET questions
-                                          -> data/csf/bank_build/cset_judgements.json        (validate_cset)
-  csf-evidence-prepare                    the evidence writers' input: subcategories with no evidence line decided
-  csf-evidence <file> --review F          round 1 evidence prompts -> data/csf/evidence_prompts.json; failures
-                                          -> evidence_revise.json                              (validate_evidence)
-  csf-evidence <file> --review F --revision
-                                          round 2, the revised prompts; failures -> evidence_review.json
-  csf-evidence-reviewed                   your decisions in evidence_review.json, final        (validate_review)
+CSF banks (/build-csf-bank; the checks are in build_question_bank.py)
+  csf-cset <verdicts.json> [--pending F]    the agent's decisions on CSET questions the build could not place
+                                            (sector, rewording, fit) -> cset_judgements.json   check: validate_cset
+  csf-evidence-prepare                      writes the evidence writers' input: subcategories with no evidence line
+  csf-evidence <file> --review F            round 1: passed lines -> evidence_prompts.json; failed ones are kept
+                                            for one revision                                   check: validate_evidence
+  csf-evidence <file> --review F --revision round 2: passed lines saved; lines that fail again go to you
+  csf-evidence-reviewed                     your choice for each of those (your own line, or keep the category line);
+                                            final                                              check: validate_review
 
-AI RMF bank build (checks and stores in ai_mapping.py, ai_questions.py, ai_notes.py):
-  ai-mapping <file> [--review F]          one AI area's mapping -> data/ai/mapping.json        (validate_mapping)
-  ai-questions <areas|foundation> <file> [--replace-human]
-                                          questions for some subcategories -> data/ai/banks/   (validate_questions)
-  ai-evidence <areas|foundation> <file> --review F
-                                          the evidence lines the evaluator passed -> that bank (validate_evidence)
-  ai-notes <file>                         AI impact notes -> data/csf/ai_impact_notes.json     (validate_notes)
-  ai-notes-review <file>                  the notes evaluator's findings -> the same file      (validate_notes_review)
+AI RMF banks (/build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
+  ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
+  ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
+                                            ones to redraft
+  ai-accept-mapping [--note T]              you approve the mapping as it is now (it must be approved again if it
+                                            changes)
   ai-assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F
-                                          combines the question writer's and checker's files into the file
-                                          ai-questions stores; still failing after round 2 -> needs_human_review
-  ai-revalidate                           after a change to the mapping rules or other AI areas, re-checks the
-                                          recorded areas: those that pass are marked current, the rest are listed
-  ai-accept-mapping [--note T]            you reviewed the mapping: data/ai/bank_build/mapping_accepted.json, with
-                                          its fingerprint (change the mapping and it must be approved again)
-  ai-accept-pilot [--note T]              you reviewed the pilot questions: pilot_accepted.json, with fingerprints of
-                                          the question prompts (change one and a new pilot is needed)
+                                            joins the question writer's and checker's files (up to two rounds) into
+                                            one file for ai-questions; what still fails is marked for your review
+  ai-questions <foundation|areas> <file>    questions for some subcategories -> that bank      check: validate_questions
+               [--replace-human]            (--replace-human: only when you agreed to replace your own edits)
+  ai-accept-pilot [--note T]                you approve the pilot questions (a new pilot is needed if the question
+                                            prompts change)
+  ai-evidence <foundation|areas> <file> --review F
+                                            evidence lines the evaluator passed -> that bank   check: validate_evidence
+  ai-notes <file>                           AI impact notes for the CSF sheet -> ai_impact_notes.json
+                                                                                               check: validate_notes
+  ai-notes-review <file>                    the notes evaluator's findings -> the same file
+                                                                                        check: validate_notes_review
 
 Related: prepare_ai_bank.py writes the AI agents' input; check_freshness.py reads the two approvals.
-Terms (AI area, mapping row, foundation, impact, folded subcategory, needs human review): docs/guide.md, Glossary.
+Terms (AI area, mapping row, foundation, impact notes): docs/guide.md, Glossary.
 """
 
 import argparse
