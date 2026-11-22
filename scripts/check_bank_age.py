@@ -1,6 +1,8 @@
 """
 Checks that the question banks a client run uses are there and recent enough. It never builds or rebuilds a bank.
 
+Why:       a client run never builds a bank, so it needs a quick way to stop before using one that is missing or out of
+           date, and to name the build command that fixes it.
 Called by: /generate-questions (step 2)
 Input:     the build date in each bank the run uses (the CSF bank of its sector, the two AI RMF banks); the age limits in
            data/metadata.json "question_banks"

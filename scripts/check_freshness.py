@@ -3,6 +3,8 @@ For the maintainer: says which question banks and other build outputs are out of
 build commands know what to redo. It reports only; it never rebuilds. (A client run checks only the banks' age, with
 check_bank_age.py.)
 
+Why:       the banks are built from sources (NIST, CSET, CIS, the Playbook), prompts and your approvals, which all
+           change. Without it you would work out by hand which outputs are out of date and what to redo.
 Called by: /build-ai-bank (--ai-bank), /build-csf-bank (--csf)
 Input:     the source files (AI RMF Playbook and CIS guides, NIST's CSF download, your CSET copy), the fingerprints each
            output recorded about them, data/metadata.json, the review spreadsheets

@@ -1,6 +1,8 @@
 """
 Reads NIST's CSF 2.0 download into the CSF subcategory list and the certification crosswalks.
 
+Why:       the CSF subcategories and the ISO 27001 / PCI DSS crosswalks come from NIST's spreadsheet. Turned into JSON
+           once, every script can look them up; redoing it when NIST publishes a new version is one command.
 Called by: /build-csf-bank (step 1b), when NIST publishes a new version of the file
 Input:     data/csf/source/csf2.xlsx (NIST's "Download English (xlsx)"); the certifications and the prefix of their
            references in that file (data/common/intake_options.json certs)

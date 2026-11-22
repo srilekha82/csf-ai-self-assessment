@@ -2,6 +2,9 @@
 Checks the questions picked for a run are the right ones for this organisation, before the workbook is
 written. It does not judge wording: questions were reviewed when the banks were built.
 
+Why:       the questions are picked by scripts from the banks. This is the one independent check that the client gets
+           exactly what their intake calls for (nothing missing, nothing for a certification or AI area they do not
+           have), without an agent re-reading every run.
 Called by: /csf-questionnaire (step 5) and /ai-questionnaire (step 3)
 Input:     the run folder's drafts, intake and copies of the banks used
 Output:    a list of problems on screen (exit 1), or nothing (exit 0)

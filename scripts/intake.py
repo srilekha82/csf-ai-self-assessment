@@ -1,6 +1,9 @@
 """
 The intake: asks about the organisation as numbered menus and saves the answers in a new run folder.
 
+Why:       every later step needs the same facts about the organisation. Asked once, as numbered choices a script turns
+           into values, no step asks again or reads the answers differently, and an answer outside the menus is caught
+           before anything is built.
 Called by: /generate-questions (step 1)
 Input:     your answers, typed as menu numbers
 Output:    runs/<Org>_<date>/csf_intake.json (organisation, date, sector, certifications) and ai_intake.json (how it

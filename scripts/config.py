@@ -2,6 +2,8 @@
 Where every file lives and the lists every script shares. Scripts import both from here, so no path or list is
 typed twice.
 
+Why:       a path or a shared list (sectors, certifications, bank names) typed in several scripts drifts apart. Here
+           each is defined once, and the lists come from the data files, so changing one is a data edit.
 Called by: every script (imported, never run)
 Input:     data/common/intake_options.json, data/csf/scope_rules.json, data/ai/scope_rules.json,
            data/ai/question_rules.json (the shared lists)

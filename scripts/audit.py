@@ -2,6 +2,8 @@
 The run log. Every script and agent step adds one line to an audit.jsonl, so you can read back what
 happened, who did it (script, agent or person), with which files, and how it ended.
 
+Why:       the questionnaire is built partly by AI agents, so you must be able to show afterwards what each step read,
+           wrote and decided, and who did it. One shared helper keeps every log line in the same form.
 Called by: every script (imported, never run)
 Input:     -
 Output:    audit.jsonl lines; judgement_log/ copies of agent output

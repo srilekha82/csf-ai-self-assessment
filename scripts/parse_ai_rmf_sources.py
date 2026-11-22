@@ -1,6 +1,8 @@
 """
 Reads the AI RMF sources (PDFs you download) into data the other scripts use. No judgement.
 
+Why:       the AI RMF Playbook and the CIS guides are PDFs, which scripts and agents cannot use reliably. This turns
+           them once into JSON, checked against the expected counts, so the bank build always works from the same text.
 Called by: /build-ai-bank (step 2)
 Input:     data/ai/source/: the AI RMF Playbook and the three CIS v8.1 AI companion guides
 Output:    data/ai/ai_rmf_core.json, cis_ai_safeguards.json (local only) and cis_ai_safeguard_ids.json
