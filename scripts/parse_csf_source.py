@@ -40,21 +40,27 @@ SOURCE = {"source_url": "https://www.nist.gov/cyberframework/csf-20-informative-
           "author": "NIST (CPRT export)"}
 
 
+BARE_CONTROL = re.compile(r"^Control (\d+\.\d+)$")   # NIST lists each ISO Annex A control a second time this way
+NO_CONTROL = "Mandatory Clause: None"                # NIST's placeholder for "no mandatory clause", not a control
+
+
 def clean_control_id(line: str, prefix: str) -> str:
-    """The control id without its standard's prefix and stray spaces or commas:
-    "ISO/IEC 27001:2022: Mandatory Clause:  4.1" -> "Mandatory Clause: 4.1"; "PCI DSS: 12.1.1" -> "12.1.1"."""
-    return re.sub(r" {2,}", " ", line[len(prefix):].strip().rstrip(",").strip())
+    """The control id without its standard's prefix and stray spaces or commas, in one style:
+    "ISO/IEC 27001:2022: Mandatory Clause:  4.1" -> "Mandatory Clause: 4.1"; "PCI DSS: 12.1.1" -> "12.1.1";
+    "ISO/IEC 27001:2022: Control 5.9" -> "Annex A Controls: 5.9" (the style of the other listing and of the SoA)."""
+    control = re.sub(r" {2,}", " ", line[len(prefix):].strip().rstrip(",").strip())
+    return BARE_CONTROL.sub(r"Annex A Controls: \1", control)
 
 
 def parse_references(text: str) -> dict:
     """{cert: sorted control ids} from one Informative References cell (one reference per line). A line that is only
-    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:") is skipped."""
+    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:"), or NIST's "Mandatory Clause: None", is skipped."""
     found = {cert: set() for cert in CERT_NIST}
     for line in (text or "").splitlines():
         for cert, (_, prefix) in CERT_NIST.items():
             if line.strip().startswith(prefix):
                 control = clean_control_id(line.strip(), prefix)
-                if len(control) > 1 and not control.endswith(":"):
+                if len(control) > 1 and not control.endswith(":") and control != NO_CONTROL:
                     found[cert].add(control)
                 break
     return {cert: sorted(ids) for cert, ids in found.items()}
