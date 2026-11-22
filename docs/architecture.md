@@ -42,8 +42,7 @@ One intake, two tailored sheets in one workbook.
 | Command | `/csf-questionnaire` | `/ai-questionnaire` |
 
 `/generate-questions` runs the whole stage: the intake (`intake.py`), a check that the banks are recent enough, then
-the two sheets. Each sheet's picks are checked against the intake and the banks (`check_questionnaire.py`) before
-`write_questionnaire.py` writes it into `runs/<Org>_<date>/questionnaire.xlsx`. The run
+the two sheets, which `write_questionnaire.py` writes into `runs/<Org>_<date>/questionnaire.xlsx`. The run
 folder holds client data and is never committed.
 
 ## Stage 2 and Stage 3 (later)

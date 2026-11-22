@@ -31,13 +31,7 @@ not apply). Every AI question is full discovery: they ask what is done for AI, s
 changes nothing here. Exit 1 lists what is wrong with `ai_intake.json`: tell the user, fix it with them
 (re-run `scripts/intake.py` for a new intake) and run again.
 
-## 3 — Check and write the AI RMF sheet
-`.venv/bin/python ./scripts/check_questionnaire.py <run_dir> --framework ai`
-
-It checks the picked questions against the intake and the banks (every question from the bank, for a role and AI areas
-the org has, nothing missing). Exit 1 lists the problems: show them to the user and stop; never edit the drafts by
-hand. Exit 0:
-
+## 3 — Write the AI RMF sheet
 `.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/ai_questions_draft_foundation.json <run_dir>/ai_questions_draft_areas.json <run_dir>/questionnaire.xlsx --framework ai`
 
 It fills only the AI RMF sheet, and shows the AI systems sheet with the client's own AI areas when the inventory

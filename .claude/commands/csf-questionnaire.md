@@ -52,13 +52,7 @@ read it or re-apply it by hand.
 Picks candidates from `data/csf/banks/question_bank_<domain>.json` per subcategory and writes `csf_questions_draft.json` and
 a snapshot `csf_question_bank_used.json`.
 
-## 5 — Check and write the CSF sheet
-`.venv/bin/python ./scripts/check_questionnaire.py <run_dir> --framework csf`
-
-It checks the picked questions against the scope and the bank (nothing missing, right question types and flags, every
-question from the bank, none worded for a certification the org does not hold). Exit 1 lists the problems: show them
-to the user and stop; never edit the draft by hand. Exit 0:
-
+## 5 — Write the CSF sheet
 `.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/csf_questions_draft.json <run_dir>/questionnaire.xlsx`
 
 It writes or replaces only the CSF sheet.
