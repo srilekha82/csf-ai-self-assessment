@@ -41,7 +41,7 @@ SOURCE = {"source_url": "https://www.nist.gov/cyberframework/csf-20-informative-
 
 
 BARE_CONTROL = re.compile(r"^Control (\d+\.\d+)$")   # NIST lists each ISO Annex A control a second time this way
-NO_CONTROL = "Mandatory Clause: None"                # NIST's placeholder for "no mandatory clause", not a control
+PLACEHOLDER = ": None"     # NIST writes "Mandatory Clause: None" or "Annex A Controls: None" where there is none
 
 
 def clean_control_id(line: str, prefix: str) -> str:
@@ -54,13 +54,13 @@ def clean_control_id(line: str, prefix: str) -> str:
 
 def parse_references(text: str) -> dict:
     """{cert: sorted control ids} from one Informative References cell (one reference per line). A line that is only
-    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:"), or NIST's "Mandatory Clause: None", is skipped."""
+    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:"), or a "None" placeholder, is skipped."""
     found = {cert: set() for cert in CERT_NIST}
     for line in (text or "").splitlines():
         for cert, (_, prefix) in CERT_NIST.items():
             if line.strip().startswith(prefix):
                 control = clean_control_id(line.strip(), prefix)
-                if len(control) > 1 and not control.endswith(":") and control != NO_CONTROL:
+                if len(control) > 1 and not control.endswith(":") and not control.endswith(PLACEHOLDER):
                     found[cert].add(control)
                 break
     return {cert: sorted(ids) for cert, ids in found.items()}
