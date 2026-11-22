@@ -2,6 +2,8 @@
 Collects every CSET question linked to a CSF 2.0 subcategory, from CISA's CSET SQL files. No judgement;
 the same for every sector.
 
+Why:       CSET has no plain list of its questions: they exist only as SQL changes spread over hundreds of files.
+           Replaying them gives the current questions and their CSF links, the raw material of the CSF banks.
 Called by: /build-csf-bank (step 2)
 Input:     the SQL migration files in your local CSET copy; the "truncated" rule in data/csf/bank_rules.json
 Output:    data/csf/bank_build/cset_candidates.json

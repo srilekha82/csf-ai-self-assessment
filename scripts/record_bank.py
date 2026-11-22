@@ -2,6 +2,8 @@
 Saves the agents' work, and your approvals, while the question banks are built. It is the only way anything an agent
 writes gets into the banks: every file is checked first, and a file with any problem is refused as a whole.
 
+Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
+           the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
 Called by: /build-csf-bank (steps 4 and 5) and /build-ai-bank (steps 3 to 7); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)

@@ -2,6 +2,9 @@
 Reads the organisation's ISO 27001 Statement of Applicability (an Excel file) into the run folder. It only
 copies what is there; anything it can't read for certain is left empty.
 
+Why:       with ISO 27001 held, the SoA says which controls apply and are implemented, which changes how the CSF
+           questions are asked. SoAs differ in layout, so it shows the sheet and columns it used for you to confirm
+           instead of guessing.
 Called by: /csf-questionnaire (step 2), when ISO 27001 is held
 Input:     the SoA Excel file the user gives; the words for finding its sheet and columns (data/csf/scope_rules.json
            soa_reading)

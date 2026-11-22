@@ -1,6 +1,8 @@
 """
 Writes the picked questions into the questionnaire workbook, one row per question.
 
+Why:       the client answers in Excel. Filling a fixed template (its layout edited in Excel, not in code) gives every
+           client the same workbook, with what does not apply to them hidden.
 Called by: /csf-questionnaire and /ai-questionnaire, after check_questionnaire.py passes
 Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files; <run_dir>/ai_intake.json
            (which AI areas to show); templates/questionnaire_template.xlsx (the layout)

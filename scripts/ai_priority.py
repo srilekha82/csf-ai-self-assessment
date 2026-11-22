@@ -2,6 +2,8 @@
 Works out the priority (High / Medium / Low) of each AI RMF subcategory, for the Priority column of the AI
 RMF profile. For Stage 2, which is not built yet.
 
+Why:       findings need an order of importance. Taking it from the client's own AI systems sheet (how critical each
+           system is) makes it reflect their risk, not a generic ranking. Not used until Stage 2.
 Called by: nothing yet (the Stage 2 writer will)
 Input:     the client's AI systems sheet, data/ai/severity_rules.json, data/ai/question_rules.json
 Output:    priorities returned to the caller; no files written

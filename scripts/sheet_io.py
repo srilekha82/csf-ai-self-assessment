@@ -2,6 +2,8 @@
 Lets you review and edit the AI bank data in Excel instead of JSON files: it turns the data into
 spreadsheets, and reads your edits back after checking them.
 
+Why:       a person reviews the AI mapping, questions and notes far more easily in a spreadsheet than in JSON. This
+           keeps the sheet you edit and the JSON the scripts use in step, and checks every edit before it is stored.
 Called by: /build-ai-bank (after each step that a person reviews)
 Input:     export: data/ai/ JSON (AI areas, mapping, both banks, impact notes); import: your edited spreadsheet
 Output:    export: spreadsheets in data/ai/authoring/; import: the updated JSON
