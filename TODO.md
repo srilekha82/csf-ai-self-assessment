@@ -12,8 +12,8 @@ CSF and AI RMF banks built; `/generate-questions` writes one `questionnaire.xlsx
 - Answer flow: ingest documents with metadata, retrieve per question, extract cited claims, draft the answer or record
   "no evidence found", evaluator check, confidence computed by a script, confirmation by control owners.
 - Scoring on the templates' 1–4 scale; the evidence kind (intent, design, operation, measurement) caps the level.
-- Write the two profile XLS files (`templates/`). The AI RMF profile's Priority column comes from `scripts/ai_priority.py`
-  (rules in `data/ai/severity_rules.json`, from the client's AI systems sheet).
+- Write the two profile XLS files (`templates/`). The AI RMF profile's Priority column comes from
+  `scripts/ai_priority.py` (rules in `data/ai/severity_rules.json`, from the client's AI systems sheet).
 
 ## Stage 3: reports — rebuild after Stage 2
 One report per profile XLS (CSF, AI RMF) and a page linking both, built from scratch.
