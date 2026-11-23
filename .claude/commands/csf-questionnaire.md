@@ -11,7 +11,7 @@ Picks the CSF 2.0 questions for one organisation and writes the CSF sheet of its
   questions), `csf_question_bank_used.json` (a copy of the bank used), and the CSF sheet of `questionnaire.xlsx`.
 - **Files explained:** `docs/guide.md`, section "Runs".
 
-Tools: Bash, Read, Write. Working directory: repo root. Say little: the script's summary line, and anything you need
+Tools: Bash, Read. Working directory: repo root. Say little: the script's summary line, and anything you need
 from the user.
 
 ## 1 — Run folder
@@ -29,8 +29,8 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `csf_i
   ask whether they are right.** If one is wrong, or it could not find a column (it lists the headers it saw), ask
   which sheet or header to use and run it again with `--sheet NAME`, `--id-col`, `--applicable-col`,
   `--reason-col` or `--implemented-col` followed by the header text. Never pick a column yourself.
-- no: tell the user all ISO-mapped subcategories will be `confirmatory` with `confidence: LOW`, and that re-running
-  with an SoA later gives a more precise scope.
+- no: tell the user that the subcategories ISO 27001 relates to will be asked for evidence, marked LOW in the
+  questionnaire, and that running it again with an SoA later gives a more precise scope.
 
 ## 3 — Scope
 `.venv/bin/python ./scripts/compute_scope.py <run_dir>`
