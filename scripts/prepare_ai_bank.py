@@ -43,7 +43,11 @@ from ai_mapping import area_candidates, area_rules, check_mapping_rules, mapping
 
 import audit  # noqa: E402
 
-LIMITS = json.loads(AI_MAPPING_RULES.read_text())["drafter_input"]   # data/ai/mapping_rules.json: source text per item
+
+
+def limits() -> dict:
+    """How much source text an agent input carries per item (data/ai/mapping_rules.json drafter_input)."""
+    return load_json(AI_MAPPING_RULES, "mapping_rules.json")["drafter_input"]
 
 
 def trunc(text: str, n: int) -> str:
@@ -72,12 +76,13 @@ def area_context(inp: dict, qrules: dict, items: list[dict]) -> dict:
     scope_rules = load_json(AI_SCOPE_RULES, "scope_rules.json")
     used = {r["area"] for i in items for r in i["rows"]}
     refs = sorted({c for i in items for r in i["rows"] for c in r["cis_refs"]})
+    cut = limits()["ai_text_chars"]
     return {
         "areas": {a: {"name": areas[a]["name"], "applies_to": areas[a]["applies_to"],
                       "roles_allowed": area_roles(areas[a], qrules, scope_rules), "covers": areas[a]["covers"]}
                   for a in areas if a in used},
         "cis_safeguards": {c: {"title": inp["safeguards"][c]["title"],
-                               "ai_text": trunc(inp["safeguards"][c]["ai_applicability"], LIMITS["ai_text_chars"])}
+                               "ai_text": trunc(inp["safeguards"][c]["ai_applicability"], cut)}
                            for c in refs},
     }
 
@@ -150,8 +155,8 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
     for s in inp["subs"].values():
         if s["function"] in subs and s["subcategory_id"] not in rules["foundation"]["subcategories"]:
             subs[s["function"]].append({"id": s["subcategory_id"], "outcome": s["outcome"],
-                                        "actions": [trunc(a, LIMITS["action_chars"])
-                                                    for a in s["suggested_actions"][:LIMITS["max_actions"]]]})
+                                        "actions": [trunc(a, rules["drafter_input"]["action_chars"])
+                                                    for a in s["suggested_actions"][:rules["drafter_input"]["max_actions"]]]})
     out = AI_WORK / f"mapping_input_{area_id}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
@@ -164,7 +169,7 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
         "rules": {"min_why_chars": rules["min_why_chars"], "required_checks": r["required_checks"]},
         "subcategories": subs,
         "cis_candidates": [{"id": s["id"], "title": s["title"], "lowest_ig": (s["ig"] or ["-"])[0],
-                            "ai_text": trunc(s["ai_applicability"], LIMITS["ai_text_chars"])}
+                            "ai_text": trunc(s["ai_applicability"], rules["drafter_input"]["ai_text_chars"])}
                            for s in area_candidates(inp, rules, area_id)],
     }, indent=2, ensure_ascii=False))
     return out

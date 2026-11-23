@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+import ai_fixture  # noqa: E402,F401  (the frozen AI data: tests/fixtures/ai/)
 import intake as IN  # noqa: E402
 import config as OPT  # noqa: E402
 import write_questionnaire as WQ  # noqa: E402

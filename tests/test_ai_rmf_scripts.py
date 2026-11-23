@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+import ai_fixture  # noqa: E402,F401  (the frozen AI data: tests/fixtures/ai/)
 import ai_questions as PL  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
 from ai_bank_modules import R  # noqa: E402
