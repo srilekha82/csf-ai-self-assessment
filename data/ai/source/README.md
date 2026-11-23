@@ -1,6 +1,7 @@
 # AI RMF sources
 
-Not redistributed with this repo. Download each file and save it here under the exact name below.
+`AI_RMF_Playbook.pdf` is committed (NIST, a US government work, not under copyright). The CIS files are not
+redistributed: download each and save it here under the exact name below.
 SHA-256 values and download URLs are in `data/metadata.json`; `check_freshness.py --ai-bank` compares them.
 
 | File | Where from |

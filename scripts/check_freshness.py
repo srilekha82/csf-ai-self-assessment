@@ -59,7 +59,7 @@ def ai_stages() -> list[tuple[str, bool, str]]:
     cfg = json.loads(AI_PARSE_CONFIG.read_text())
     guides = {g: audit.sha(AI_SOURCE / c["file"]) for g, c in cfg["guides"].items()}
     playbook, cis_csf = audit.sha(AI_SOURCE / cfg["playbook"]["file"]), audit.sha(AI_CIS_CSF_XLSX)
-    missing = [name for name, v in [("Playbook", playbook), ("CIS -> CSF xlsx", cis_csf), *guides.items()] if v is None]
+    missing = [name for name, v in [("Playbook", playbook), *guides.items()] if v is None]
     if missing:
         return [("sources", False, f"missing: {', '.join(missing)} (see data/ai/source/README.md)")]
 
@@ -89,6 +89,8 @@ def ai_stages() -> list[tuple[str, bool, str]]:
         stages.append((stage, ok, text))
     stage, ok, text = verdict("notes", notes, notes and notes.get("sources_sha256_16") == {
         "cis_csf": cis_csf, "MCP": guides["MCP"], "AGENT": guides["AGENT"]})
+    if cis_csf is None:
+        ok, text = False, "cannot check (the CIS -> CSF xlsx is not on this machine)"
     if ok and AI_IMPACT_NOTES_XLSX.is_file() and audit.sha(AI_IMPACT_NOTES_XLSX) != notes.get("source_sha"):
         ok, text = False, "review sheet edited but not imported (sheet_io.py import impact_notes)"
     stages.append((stage, ok, text))
