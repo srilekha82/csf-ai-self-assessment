@@ -15,7 +15,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import ai_questions as PL  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
 from ai_bank_modules import R  # noqa: E402
-from ai_bank_common import DEFAULT_PROMPTS, core_subcategories  # noqa: E402
+from ai_bank_common import core_subcategories  # noqa: E402
+from config import AI_PROMPTS  # noqa: E402
 from config import AI_AREAS, AI_CORE, AI_MAPPING, AI_SAFEGUARDS, REPO_ROOT  # noqa: E402
 
 
@@ -336,7 +337,7 @@ class Recording(unittest.TestCase):
         PL.accept_pilot("looks good")
         doc = json.loads(PL.AI_PILOT.read_text())
         self.assertEqual(doc["recorded"], {"areas": 1, "foundation": 1})
-        self.assertEqual(set(doc["prompts"]), set(DEFAULT_PROMPTS["questions"]))
+        self.assertEqual(set(doc["prompts"]), set(AI_PROMPTS["questions"]))
         self.assertTrue(all(doc["prompts"].values()))
 
     def test_assemble_turns(self):
@@ -367,7 +368,7 @@ class Recording(unittest.TestCase):
         self.assertEqual((r["A"]["status"], r["A"]["turns"]), ("pass", 1))
         self.assertEqual((r["B"]["status"], r["B"]["turns"]), ("pass", 2))
         self.assertEqual((r["C"]["status"], r["C"]["turns"]), ("needs_human_review", 2))
-        self.assertEqual(r["C"]["reason"], "Q0: row not asked; Q1: check 4: still vague")
+        self.assertEqual(r["C"]["reasons"], {"0": "row not asked", "1": "check 4: still vague"})
         R.assemble(gen1, w("e0.json", verdicts(g1, {})), None, None, out)   # nothing failed on turn 1: all pass
         self.assertTrue(all(v["status"] == "pass" and v["turns"] == 1 for v in json.loads(out.read_text()).values()))
         bad = {
@@ -430,7 +431,7 @@ class Scope(unittest.TestCase):
                                           self.q("weights access logging", ["producer"], [m28("model")]),
                                           self.q("shadow AI logging", ["none", "consumer", "producer"],
                                                  [m28("invisible_usage")])]},
-            "MANAGE 2.4": {"status": "needs_human_review", "turns": 2, "review_reason": "Q1: vague", "rows_sha": "y",
+            "MANAGE 2.4": {"status": "needs_human_review", "turns": 2, "review_reasons": {"1": "vague"}, "rows_sha": "y",
                            "rows": {"model_building|MANAGE 2.4": {"area": "model_building", "impact": ["assets"]}},
                            "questions": [self.q("withdrawing a release", ["producer"], ["model_building|MANAGE 2.4"],
                                                 flags=["given_to_others"])]}}}
@@ -645,7 +646,7 @@ class Mapping(unittest.TestCase):
         self.assertIn("audit trail", [c["name"] for c in doc["rules"]["required_checks"]])
 
     def test_mapping_rules_match_the_cis_guides(self):
-        from ai_bank_common import check_mapping_rules
+        from ai_mapping import check_mapping_rules
         rules = json.loads(R.AI_MAPPING_RULES.read_text())
         self.assertEqual(check_mapping_rules(rules, self.inp), [])
         bad = json.loads(json.dumps(rules))
@@ -663,7 +664,7 @@ class Mapping(unittest.TestCase):
                          ["required check 'inventory': ['GOVERN 1.6'] are not subcategories of a mapped function"])
 
     def test_foundation_subcategories_are_asked_once_not_per_area(self):
-        from ai_bank_common import check_mapping_rules
+        from ai_mapping import check_mapping_rules
         rules = json.loads(R.AI_MAPPING_RULES.read_text())
         self.assertEqual(rules["foundation"]["subcategories"], ["MAP 1.3", "MAP 1.5", "MAP 3.4", "MEASURE 1.1", "MEASURE 1.2", "MEASURE 3.1", "MEASURE 3.2", "MEASURE 4.1", "MANAGE 1.2", "MANAGE 1.3", "MANAGE 1.4", "MANAGE 2.1"])
         self.assertEqual(check_mapping_rules(rules, self.inp), [])
@@ -851,7 +852,7 @@ class FreshnessGate(unittest.TestCase):
 
     def accept_pilot(self):
         CF.AI_PILOT.write_text(json.dumps({"accepted_on": "2026-10-14", "prompts": {
-            p: self.audit.sha(REPO_ROOT / p) for p in DEFAULT_PROMPTS["questions"]}}))
+            p: self.audit.sha(REPO_ROOT / p) for p in AI_PROMPTS["questions"]}}))
 
     def build_everything(self, applicable=2, recorded=2):
         self.mapping_ok = True
@@ -935,7 +936,7 @@ class FreshnessGate(unittest.TestCase):
         self.assertFalse(self.states()["pilot"])
         self.accept_pilot()
         doc = json.loads(CF.AI_PILOT.read_text())
-        doc["prompts"][DEFAULT_PROMPTS["questions"][0]] = "0" * 16   # the generator prompt was edited after acceptance
+        doc["prompts"][AI_PROMPTS["questions"][0]] = "0" * 16   # the generator prompt was edited after acceptance
         CF.AI_PILOT.write_text(json.dumps(doc))
         stages = {s: (ok, text) for s, ok, text in CF.ai_stages()}
         self.assertFalse(stages["pilot"][0])

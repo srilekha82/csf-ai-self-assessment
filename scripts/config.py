@@ -62,6 +62,15 @@ AI_MAPPING_RULES = AI / "mapping_rules.json"   # candidate CIS controls per AI a
 AI_MAPPING = AI / "mapping.json"         # AI area x AI RMF function -> subcategory, CIS safeguards, impact (record_bank.py ai-mapping)
 AI_MAPPING_XLSX = AI_AUTHORING / "mapping.xlsx"   # the mapping for review: one line per area x subcategory (sheet_io.py)
 AI_MAPPING_ACCEPTED = AI / "bank_build" / "mapping_accepted.json"   # written by record_bank.py ai-accept-mapping
+# The prompts each agent step follows. `questions` (generator and evaluator) is also what the pilot acceptance is tied to;
+# record_bank.py keeps a hash of the prompts an agent followed with what it handed in.
+AI_PROMPTS = {
+    "questions": ["prompts/ai_rmf_question_generator.md", "prompts/ai_rmf_question_evaluator.md"],
+    "evidence": ["prompts/ai_rmf_evidence_writer.md", "prompts/ai_rmf_evidence_evaluator.md"],
+    "notes": ["prompts/ai_impact_notes_writer.md"],
+    "notes-review": ["prompts/ai_impact_notes_evaluator.md"],
+    "mapping": ["prompts/ai_rmf_mapping_drafter.md", "prompts/ai_rmf_mapping_evaluator.md"],
+}
 AI_QUESTION_RULES = AI / "question_rules.json"   # question banks: roles, producer flags, impacts (step 4)
 AI_SEVERITY_RULES = AI / "severity_rules.json"   # priority (High / Medium / Low) per AI RMF subcategory, Stage 2
 AI_BANK_FOUNDATION = AI_BANKS / "question_bank_ai_rmf_foundation.json"   # foundation questions (record_bank.py ai-questions)

@@ -50,8 +50,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_BANKS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
-                    AI_QUESTION_BANKS, REPO_ROOT)
-from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
+                    AI_PROMPTS, AI_QUESTION_BANKS, REPO_ROOT)
+from ai_bank_common import load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
@@ -83,7 +83,7 @@ def record_ai(mode: str, args) -> None:
     audit.record_agent_output(
         log_path=AI_BUILD / "audit.jsonl", log_dir=AI_LOG_DIR, step=f"ai_{mode}",
         args={"file": args.file, "bank": getattr(args, "bank", None)}, file=args.file,
-        validate=validate, store=store_fn, model=args.model, session=args.session, prompts=DEFAULT_PROMPTS[mode],
+        validate=validate, store=store_fn, model=args.model, session=args.session, prompts=AI_PROMPTS[mode],
         log_name=log_name, extra_record=extra)
 
 
@@ -158,7 +158,7 @@ def main():
         run_step("ai_accept_mapping", {"note": note, "by_build": args.by_build}, [AI_MAPPING], [AI_MAPPING_ACCEPTED],
                  lambda: (accept_mapping(note), False), actor="script" if args.by_build else "human")
     elif mode == "ai-accept-pilot":
-        run_step("ai_accept_pilot", {"note": args.note}, [REPO_ROOT / p for p in DEFAULT_PROMPTS["questions"]],
+        run_step("ai_accept_pilot", {"note": args.note}, [REPO_ROOT / p for p in AI_PROMPTS["questions"]],
                  [AI_PILOT], lambda: (accept_pilot(args.note), False), actor="human")
     else:
         record_ai(mode.removeprefix("ai-"), args)
