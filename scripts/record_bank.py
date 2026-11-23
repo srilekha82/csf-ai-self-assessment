@@ -18,7 +18,7 @@ What every mode does
   3. Record  a write-once copy in judgement_log/ (data/csf/bank_build/ or data/ai/bank_build/): who decided, with
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
-CSF banks (/build-csf-bank; the checks are in build_question_bank.py)
+CSF banks (/build-csf-bank; the checks are in build_csf_bank.py)
   csf-cset <verdicts.json> [--pending F]    the agent's decisions on CSET questions the build could not place
                                             (sector, rewording, fit) -> cset_judgements.json   check: validate_cset
   csf-evidence-prepare                      writes the evidence writers' input: subcategories with no evidence line
@@ -61,7 +61,7 @@ from config import (AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPP
                     AI_QUESTION_BANKS, REPO_ROOT)
 from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
-import build_question_bank as csf  # noqa: E402
+import build_csf_bank as csf  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
                           store_questions, validate_evidence, validate_questions)

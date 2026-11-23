@@ -131,7 +131,7 @@ def csf_bank_stage(domain: str, cset_path: Path, upstream: tuple | None = None) 
     bank = load(bank_path(domain))
     if bank is None:
         return (stage, False, "missing"), []
-    from build_question_bank import bank_inputs_sha
+    from build_csf_bank import bank_inputs_sha
     if bank.get("inputs_sha") != bank_inputs_sha(BANK_BUILD):
         return (stage, False, "stale (the agent judgements or csf2_core.json changed since the bank was built)"), []
     ref, notes, error = upstream or cset_upstream(cset_path)

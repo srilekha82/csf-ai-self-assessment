@@ -20,7 +20,7 @@ certification map to each subcategory: {"csf_to_controls": {"GV.OC-01": ["Mandat
 the subcategories with a mapping. NIST's file says which controls relate to a subcategory, not how (subset, equal,
 ...), so a crosswalk lists coverage only. The refresh date is what check_freshness.py --csf reads.
 
-Read by: compute_scope.py (which CSF questions a certification covers), build_question_bank.py (the ISO mapping shown
+Read by: compute_scope.py (which CSF questions a certification covers), build_csf_bank.py (the ISO mapping shown
 in each bank entry).
 """
 import argparse

@@ -1,12 +1,15 @@
 """
 Builds the six CSF question banks, one per sector, together from the collected CSET questions.
 
+Why:       CSET links many maturity-model questions to each CSF subcategory, but some are for one sector only, cut off,
+           or only loosely linked. Fixed rules settle most of them; an agent is asked only about the rest, once, and its
+           decisions are kept, so every rebuild gives the same banks.
 Called by: /build-csf-bank (step 3)
 Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions); the routing
            rules in data/csf/bank_rules.json
 Output:    data/csf/banks/question_bank_<sector>.json for every sector, or work/pending_judgements.json (exit 2)
 
-Usage: .venv/bin/python ./scripts/build_question_bank.py [--fanout-threshold N] [--allow-pending] [--output-dir DIR]
+Usage: .venv/bin/python ./scripts/build_csf_bank.py [--fanout-threshold N] [--allow-pending] [--output-dir DIR]
                                                  [--cache-dir DIR]
 
 The banks are always built together, from the same CSET collection and agent judgements, so they share one record of
@@ -390,20 +393,20 @@ def load_list(path: Path) -> list:
     try:
         return json.loads(path.read_text())
     except (OSError, ValueError) as e:
-        sys.exit(f"[build_question_bank] ERROR: cannot read {path} as JSON: {e}")
+        sys.exit(f"[build_csf_bank] ERROR: cannot read {path} as JSON: {e}")
 
 
 def evidence_prepare() -> None:
     """Round 1 input: the subcategories without an evidence line. Refused while an earlier round is unfinished."""
     for f, what in ((EVIDENCE_REVISE, "the revision round"), (EVIDENCE_REVIEW, "the review by a person")):
         if f.is_file():
-            sys.exit(f"[build_question_bank] ERROR: {f.name} exists: finish {what} first.")
+            sys.exit(f"[build_csf_bank] ERROR: {f.name} exists: finish {what} first.")
     ev = audit.begin(BANK_BUILD / "audit.jsonl", "csf_evidence_prepare", {})
     items = [{"id": sid, **t} for sid, t in evidence_targets().items()]
     EVIDENCE_INPUT.parent.mkdir(parents=True, exist_ok=True)
     EVIDENCE_INPUT.write_text(json.dumps({"items": items}, indent=2, ensure_ascii=False))
     ev.finish(inputs=[CSF_CORE, EVIDENCE_PROMPTS], outputs=[EVIDENCE_INPUT], detail=f"{len(items)} subcategories")
-    print(f"[build_question_bank] wrote {EVIDENCE_INPUT.name}: {len(items)} subcategories without an "
+    print(f"[build_csf_bank] wrote {EVIDENCE_INPUT.name}: {len(items)} subcategories without an "
           "evidence line")
 
 
@@ -459,7 +462,7 @@ def record_evidence(file: str, review_file: str, revision: bool, model: str, ses
     review = load_list(Path(review_file))
     revise = read_json(EVIDENCE_REVISE, {"items": []})["items"]
     if revision and not revise:
-        sys.exit(f"[build_question_bank] ERROR: a revision, but {EVIDENCE_REVISE.name} has nothing to revise")
+        sys.exit(f"[build_csf_bank] ERROR: a revision, but {EVIDENCE_REVISE.name} has nothing to revise")
     allowed = {i["id"] for i in revise} if revision else set(evidence_targets())
 
     def validate(data):
@@ -493,7 +496,7 @@ def store_review(data: dict) -> tuple[Path, str]:
 
 def record_review() -> None:
     if not EVIDENCE_REVIEW.is_file():
-        sys.exit(f"[build_question_bank] ERROR: {EVIDENCE_REVIEW.name} not found: nothing to review")
+        sys.exit(f"[build_csf_bank] ERROR: {EVIDENCE_REVIEW.name} not found: nothing to review")
     audit.record_agent_output(
         log_path=BANK_BUILD / "audit.jsonl", log_dir=BANK_BUILD / "judgement_log", step="csf_evidence_review",
         args={}, file=EVIDENCE_REVIEW, validate=validate_review, store=store_review, model="human", decided_by="human")
@@ -509,11 +512,11 @@ def main():
 
     cache, out_dir = Path(args.cache_dir), Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    ev = audit.begin(cache / "audit.jsonl", "build_question_bank",
+    ev = audit.begin(cache / "audit.jsonl", "build_csf_bank",
                      {"fanout_threshold": args.fanout_threshold, "allow_pending": args.allow_pending})
     candidates = load_json(cache / "cset_candidates.json")
     if candidates is None:
-        ev.fail("[build_question_bank] ERROR: cset_candidates.json not found. Run scripts/extract_cset_candidates.py first.")
+        ev.fail("[build_csf_bank] ERROR: cset_candidates.json not found. Run scripts/extract_cset_candidates.py first.")
     judgements = load_json(cache / "cset_judgements.json", {"questions": {}})
 
     csf_core = load_json(CSF_CORE)

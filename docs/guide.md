@@ -66,7 +66,7 @@ The intake is `scripts/intake.py`: it prints the numbered menus (from `data/comm
 ### Building a bank (`/build-csf-bank`)
 
 1. `extract_cset_candidates.py` replays the CSET SQL migrations into `cset_candidates.json` (skipped if CSET has not changed): CSET's own CSF 2.0 set (`NCSF_V2`, one question for each of the 106 subcategories) and the maturity-model questions (ACET, CPG, SSG…) CSET maps to CSF 2.0.
-2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
+2. `build_csf_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
 3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_bank.py csf-cset` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
 4. Run the build again; it writes all six `data/csf/banks/question_bank_<sector>.json` together (no bank is written while anything is pending, so the six always share one record of what they were built from).
 5. Once for all domains: each subcategory's own evidence prompt, the "Evidence Required" line of the CSF sheet
@@ -149,11 +149,11 @@ flowchart TD
     B["/build-csf-bank"]:::cmd --> PC["parse_csf_source.py<br/>(only when NIST's file is refreshed)"]:::script
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
-    SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
-    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ["record_bank.py csf-cset<br/><small>checks and store: build_question_bank.py</small>"]:::script --> JS([cset_judgements.json]):::file --> BQB
+    SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_csf_bank.py]:::script
+    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ["record_bank.py csf-cset<br/><small>checks and store: build_csf_bank.py</small>"]:::script --> JS([cset_judgements.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
     B --> EP["record_bank.py csf-evidence-prepare"]:::script
-    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence<br/><small>checks and store: build_question_bank.py</small>"]:::script --> EVP([evidence_prompts.json]):::file
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence<br/><small>checks and store: build_csf_bank.py</small>"]:::script --> EVP([evidence_prompts.json]):::file
     RE -- "failed: revise once" --> EW
     RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then record_bank.py csf-evidence-reviewed)"]:::you --> EVP
 

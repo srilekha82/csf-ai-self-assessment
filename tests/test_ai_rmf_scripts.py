@@ -966,7 +966,7 @@ class CsfBankStage(unittest.TestCase):
         CF.bank_path = lambda domain: self.bank
 
     def write_bank(self, commit, inputs=None):
-        from build_question_bank import bank_inputs_sha
+        from build_csf_bank import bank_inputs_sha
         self.bank.write_text(json.dumps({"cset_commit": commit,
                                          "inputs_sha": inputs or bank_inputs_sha(CF.BANK_BUILD)}))
 
@@ -1015,10 +1015,10 @@ class CsfBankStage(unittest.TestCase):
 
 
 class CsfBankRecording(unittest.TestCase):
-    """record_bank.py csf-cset: the agent's decisions on CSET questions (checks and store in build_question_bank.py)."""
+    """record_bank.py csf-cset: the agent's decisions on CSET questions (checks and store in build_csf_bank.py)."""
 
     def setUp(self):
-        import build_question_bank as BQB
+        import build_csf_bank as BQB
         self.BQB = BQB
         self.cache = Path(tempfile.mkdtemp())
         q = lambda text, flags: {"question_text": text, "title": "t", "category": "c", "sub_category": "s", "model_id": "1",
@@ -1073,7 +1073,7 @@ class CsfBanksLine(unittest.TestCase):
         real = CF.bank_path
         self.addCleanup(setattr, CF, "bank_path", real)
         CF.bank_path = lambda domain: self.tmp / f"{domain}.json"
-        from build_question_bank import bank_inputs_sha
+        from build_csf_bank import bank_inputs_sha
         self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha(CF.BANK_BUILD)}
 
     def write_all(self, **change):

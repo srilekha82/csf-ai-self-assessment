@@ -160,7 +160,7 @@ class EvidenceLoop(unittest.TestCase):
     """record_bank.py csf-evidence: round 1, one revision, then a person; a person's decision is final."""
 
     def setUp(self):
-        import build_question_bank as RC
+        import build_csf_bank as RC
         self.RC, tmp = RC, Path(tempfile.mkdtemp())
         targets = list(RC.evidence_targets()) or ["PR.AA-03", "PR.AA-04"]
         self.a, self.b = sorted(targets)[:2] if len(targets) >= 2 else ("PR.AA-03", "PR.AA-04")
@@ -256,7 +256,7 @@ class CsetCsf2Set(unittest.TestCase):
         })
 
     def test_the_csf2_question_leads_and_a_duplicate_maturity_question_is_dropped(self):
-        import build_question_bank as BQ
+        import build_csf_bank as BQ
         active = {s: {"subcategory_text": s} for s in ("GV.OV-01", "ID.AM-01", "RS.MA-02")}
         candidates = {"cset_commit": "c", "questions": {"7": {"question_text": "Are outcomes reviewed?"},
                                                         "8": {"question_text": "Is the board told?"}},
@@ -277,7 +277,7 @@ class CsfEvidencePrompts(unittest.TestCase):
                          ("own", "cat", "d"))
 
     def test_the_writer_file_and_the_review_are_validated_together(self):
-        import build_question_bank as RC
+        import build_csf_bank as RC
         ok = "The backup schedule for critical data and the latest restore test result."
         self.assertEqual(RC.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}],
                                               {"PR.DS-11"}), [])

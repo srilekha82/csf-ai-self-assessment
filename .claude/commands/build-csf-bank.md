@@ -37,7 +37,7 @@ Pulls the CSET repo, replays the SQL (reference INSERT minus DELETE, question IN
 relay the message and stop. Add `--force` only if the user asks.
 
 ## 3 — Build the bank (deterministic routing)
-`.venv/bin/python ./scripts/build_question_bank.py`
+`.venv/bin/python ./scripts/build_csf_bank.py`
 
 - **Exit 0**: all six banks written. Go to Step 5.
 - **Exit 2**: some candidates need a judgement. It wrote `data/csf/bank_build/work/pending_judgements.json` (each question
