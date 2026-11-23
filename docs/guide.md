@@ -241,7 +241,7 @@ data/
     ├── scope_rules.json        engagement policy: AI area rules for the intake, roles each client is asked as, notes
     ├── evidence_prompts.json   evidence hint per question (foundation, or by the impacts of the rows it covers)
     ├── banks/                  question_bank_ai_rmf_<foundation|areas>.json
-    └── bank_build/             mapping_accepted.json, pilot_accepted.json, audit.jsonl, judgement_log/ (write-once records of agent steps), work/ (temporary)
+    └── bank_build/             mapping_accepted.json, pilot_accepted.json, audit.jsonl, judgement_log/ (write-once records of agent steps, committed), work/ (temporary)
 ```
 
 ### Runs (`runs/<Org>_<date>/`)

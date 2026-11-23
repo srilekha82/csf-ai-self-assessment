@@ -42,6 +42,12 @@ class Options(unittest.TestCase):
         self.assertEqual(set(roles), set(menu["role"]) | {"none", "unsure"})
         self.assertTrue({r for v in roles.values() for r in v} <= set(qrules["roles"]))
 
+    def test_no_bump_names_a_subcategory_that_is_always_asked_in_full(self):
+        rules = json.loads(OPT.SCOPE_RULES.read_text())
+        always = tuple(rules["function_states"])          # e.g. GV: GOVERN is always full_discovery, a bump does nothing
+        noop = {s: [x for x in ids if x.startswith(always)] for s, ids in rules["sector_bumps"].items() if s != "description"}
+        self.assertEqual({s: x for s, x in noop.items() if x}, {})
+
     def test_every_sector_has_its_bumps_and_every_cert_a_file(self):
         bumps = json.loads(OPT.SCOPE_RULES.read_text())["sector_bumps"]
         self.assertEqual(set(bumps) - {"description"}, set(OPT.SECTORS))
