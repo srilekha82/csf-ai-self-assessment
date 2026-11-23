@@ -18,6 +18,15 @@ import sheet_io as S  # noqa: E402
 from config import AI_AREAS, AI_AREAS_XLSX  # noqa: E402
 
 
+class DefaultPaths(unittest.TestCase):
+    def test_every_sheet_names_real_config_paths(self):
+        # the command line (sheet_io.py import / export NAME) finds its files through these; the other tests pass paths
+        specs = json.loads(S.config.SHEET_SPECS.read_text())["sheets"]
+        for name in specs:
+            xlsx, js, log = S.default_paths(S.load_spec(name))
+            self.assertTrue(xlsx.suffix == ".xlsx" and js.suffix == ".json" and log.name == "audit.jsonl", name)
+
+
 class AiAreasSheet(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())

@@ -5485,19 +5485,12 @@
       "decided_by": "human"
     }
   },
-  "description": "AI RMF area questions: every question that could be asked per mapping row (AI area x subcategory, data/ai/mapping.json), keyed by subcategory. A question lists the rows it covers (one question may stand for several areas' rows), the roles it is asked of and any producer flags; build_ai_questions.py picks a client's questions by filtering on their AI areas, role and producer flags. rows_sha is the hash of the subcategory's mapping rows the questions were written for; rows gives each row's area and impact (for the covers note and the evidence prompt). Recorded by record_ai_bank.py questions.",
   "built_on": "2026-10-31",
   "playbook_sha256_16": "65d6101d80650287",
   "guide_sha256_16": {
     "LLM": "fae3d032d78cd956",
     "MCP": "4faa140a9b5f3071",
     "AGENT": "824ab8a2e829a11a"
-  },
-  "summary": {
-    "subcategories": 41,
-    "passed": 41,
-    "needs_human_review": 0,
-    "questions": 203
   },
   "source_sha": "f08c09e0c12075d3"
 }

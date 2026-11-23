@@ -64,7 +64,7 @@ def load_spec(name: str, specs_path: Path | None = None) -> dict:
 
 def default_paths(spec: dict) -> tuple[Path, Path, Path]:
     """(xlsx, json, audit log) from the constants the spec names in config.py."""
-    return getattr(paths, spec["xlsx"]), getattr(paths, spec["json"]), getattr(paths, spec["audit"]) / "audit.jsonl"
+    return getattr(config, spec["xlsx"]), getattr(config, spec["json"]), getattr(config, spec["audit"]) / "audit.jsonl"
 
 
 def json_columns(spec: dict) -> list[dict]:

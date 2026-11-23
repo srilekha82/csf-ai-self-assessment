@@ -1349,19 +1349,12 @@
       ]
     }
   },
-  "description": "AI RMF foundation questions: every question that could be asked once for the organisation (GOVERN and the foundation subcategories of mapping_rules.json), keyed by subcategory, each with the roles it is asked of (none, consumer, producer) and any producer flags. Recorded by record_ai_bank.py questions.",
   "built_on": "2026-10-31",
   "playbook_sha256_16": "65d6101d80650287",
   "guide_sha256_16": {
     "LLM": "fae3d032d78cd956",
     "MCP": "4faa140a9b5f3071",
     "AGENT": "824ab8a2e829a11a"
-  },
-  "summary": {
-    "subcategories": 31,
-    "passed": 31,
-    "needs_human_review": 0,
-    "questions": 84
   },
   "source_sha": "a963a5f8e1eb453c"
 }

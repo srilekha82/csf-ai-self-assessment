@@ -4,7 +4,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "71032c8a05d1332f",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -207,7 +207,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "2502866267e1de21",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -371,7 +371,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "d3c029e3b186c889",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -666,7 +666,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "fcd878f59fe510e5",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -875,7 +875,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "5edaa08d05776bef",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1117,7 +1117,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "edc67dc4d018b581",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1308,7 +1308,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "9f3c72762ddcb271",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1447,7 +1447,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "af79eeb1efae925f",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1797,7 +1797,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "31331fee76d0bdf4",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1970,7 +1970,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "4b50a4644e0128d4",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2087,7 +2087,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "bfada52e60156651",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2312,7 +2312,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "5c4e0bb1cd790114",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2583,7 +2583,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "189474f38c7c8d3e",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2933,7 +2933,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "68333f7b40f68baf",
-        "ai_areas": "dae379d740d2d515",
+        "ai_areas": "60f81170c8ff6fbd",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -3168,6 +3168,5 @@
       ]
     }
   },
-  "description": "AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by record_ai_bank.py mapping, reviewed by a person. Model: AI_RMF_Mapping_Sheet_Design.md.",
   "source_sha": "9dbce1f3a4015bfa"
 }
