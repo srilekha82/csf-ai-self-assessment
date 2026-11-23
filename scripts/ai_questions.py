@@ -23,28 +23,16 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_BANKS, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT, AI_QUESTION_BANKS, AI_QUESTION_RULES,  # noqa: E402
+from config import (AI_AREAS, AI_BANKS, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT, AI_PROMPTS, AI_QUESTION_BANKS,  # noqa: E402
+                    AI_QUESTION_RULES,
                     AI_SCOPE_RULES, REPO_ROOT)
-from ai_bank_common import DEFAULT_PROMPTS, area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
+from ai_bank_common import area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
 import audit  # noqa: E402
 
 
-BANK_DESCRIPTION = {
-    "areas": ("AI RMF area questions: every question that could be asked per mapping row (AI area x subcategory, "
-              "data/ai/mapping.json), keyed by subcategory. A question lists the rows it covers (one question may stand "
-              "for several areas' rows), the roles it is asked of and any producer flags; pick_questions.py (--framework ai) picks a "
-              "client's questions by filtering on their AI areas, role and producer flags. rows_sha is the hash of the "
-              "subcategory's mapping rows the questions were written for; rows gives each row's area and impact (for the "
-              "covers note and the evidence prompt). Recorded by record_bank.py ai-questions."),
-    "foundation": ("AI RMF foundation questions: every question that could be asked once for the organisation (GOVERN "
-                   "and the foundation subcategories of mapping_rules.json), keyed by subcategory, each with the roles "
-                   "it is asked of (none, consumer, producer) and any producer flags. Recorded by record_bank.py "
-                   "ai-questions."),
-}
 TEXT_LIMITS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]   # data/ai/question_rules.json
 MIN_QUESTION_CHARS = TEXT_LIMITS["min_chars"]
 PLAYBOOK_REF = re.compile(r"^((?:GOVERN|MAP|MEASURE|MANAGE) \d+\.\d+) [—–-] suggested action (\d+)$")
-REASON_PART = re.compile(r"(?:^|; )Q(\d+): ")    # assemble joins failures as "Q<n>: reason; Q<m>: reason"
 WHOLE = "Whole subcategory: "                      # how a question_number 0 failure shows on every line of the sheet
 STALE = "the mapping rows changed since these questions were written: check them against the rows, then set pass"
 
@@ -179,8 +167,10 @@ def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
             continue
         if entry.get("turns") not in (1, 2):
             errors.append(f"{sid}: turns must be 1 or 2")
-        if entry["status"] == "needs_human_review" and not str(entry.get("reason", "")).strip():
-            errors.append(f"{sid}: needs_human_review requires the evaluator's reason")
+        reasons = entry.get("reasons", {})
+        if entry["status"] == "needs_human_review" and not (
+                isinstance(reasons, dict) and reasons and all(str(r).strip() for r in reasons.values())):
+            errors.append(f"{sid}: needs_human_review requires the evaluator's reasons by question number")
         qs = entry.get("questions")
         if not isinstance(qs, list) or not qs:
             errors.append(f"{sid}: questions must be a non-empty list")
@@ -272,53 +262,35 @@ def human_decided(data, args) -> list[str]:
             "person agreed to regenerate it" for sid in data if bank.get(sid, {}).get("decided_by") == "human"]
 
 
-def split_reason(reason: str) -> dict[int, str]:
-    """{question number: reason} from a stored review_reason (0 = the whole subcategory); {} if it has no Q<n> parts."""
-    cuts = list(REASON_PART.finditer(reason or ""))
-    parts: dict[int, str] = {}
-    for m, nxt in zip(cuts, cuts[1:] + [None]):
-        text = reason[m.end():nxt.start() if nxt else None].strip()
-        parts[int(m.group(1))] = "; ".join(filter(None, [parts.get(int(m.group(1))), text]))
-    return parts
-
-
-def join_reason(parts: dict[int, str]) -> str:
-    return "; ".join(f"Q{n}: {t}" for n, t in sorted(parts.items()))[:500]
-
-
 def review_view(bank: str, entry: dict, sid: str, ctx: dict) -> dict:
     """The entry as the review sheet shows it: an area entry whose mapping rows changed since its questions were written
     is flagged for the whole subcategory (STALE) until a person sets it pass."""
     if bank != "areas" or sid not in ctx["rows"] or entry.get("rows_sha") == rows_record(ctx, sid)["rows_sha"]:
         return entry
-    parts = split_reason(entry.get("review_reason", "")) if entry["status"] != "pass" else {}
-    return dict(entry, status="needs_human_review", review_reason=join_reason({**parts, 0: STALE}))
+    reasons = entry.get("review_reasons", {}) if entry["status"] != "pass" else {}
+    return dict(entry, status="needs_human_review", review_reasons={**reasons, "0": STALE})
 
 
 def line_review(entry: dict, n: int) -> tuple[str, str]:
-    """(status, reason) of question n's sheet line: only its own failure and any whole-subcategory one. A reason
-    without Q<n> parts (written by hand) flags every line."""
+    """(status, reason) of question n's sheet line: only its own failure and any whole-subcategory one ("0")."""
     if entry["status"] == "pass":
         return "pass", ""
-    reason = entry.get("review_reason", "")
-    parts = split_reason(reason)
-    if not parts:
-        return "needs_human_review", reason
-    own = "\n".join(filter(None, [parts.get(n), WHOLE + parts[0] if 0 in parts else ""]))
+    reasons = entry.get("review_reasons", {})
+    own = "\n".join(filter(None, [reasons.get(str(n)), WHOLE + reasons["0"] if "0" in reasons else ""]))
     return ("needs_human_review" if own else "pass"), own
 
 
-def reason_from_lines(lines: list[dict]) -> dict[int, str]:
+def reason_from_lines(lines: list[dict]) -> dict[str, str]:
     """The inverse of line_review over a subcategory's lines as they are now (renumbered by position)."""
-    parts: dict[int, str] = {}
+    parts: dict[str, str] = {}
     for n, ln in enumerate(lines, 1):
         if ln["status"] != "needs_human_review":
             continue
         own, _, whole = str(ln.get("review_reason") or "").partition(WHOLE)
         if whole.strip():
-            parts[0] = whole.strip()
+            parts["0"] = whole.strip()
         if own.strip() or not whole.strip():
-            parts[n] = own.strip() or "flagged in the review sheet"
+            parts[str(n)] = own.strip() or "flagged in the review sheet"
     return parts
 
 
@@ -379,9 +351,8 @@ def questions_from_sheet(bank: str, lines: list[dict], doc: dict, inp: dict) -> 
             qs.append(q)
         parts = reason_from_lines(sub_lines)
         status = "needs_human_review" if parts else "pass"
-        data[sid] = {"status": status, "turns": old["turns"], "questions": qs,
-                     **({"reason": join_reason(parts)} if parts else {})}
-        old_parts = split_reason(old.get("review_reason", "")) if old["status"] != "pass" else {}
+        data[sid] = {"status": status, "turns": old["turns"], "questions": qs, **({"reasons": parts} if parts else {})}
+        old_parts = old.get("review_reasons", {}) if old["status"] != "pass" else {}
         if qs != old["questions"] or status != old["status"] or (old_parts and parts != old_parts):
             changed.append(sid)
     problems = validate_questions(data, bank, inp, ctx)
@@ -392,11 +363,11 @@ def questions_from_sheet(bank: str, lines: list[dict], doc: dict, inp: dict) -> 
         e = new["subcategories"][sid]
         e.update({"status": data[sid]["status"], "questions": data[sid]["questions"], "decided_by": "human"})
         if data[sid]["status"] == "pass":
-            e.pop("review_reason", None)
+            e.pop("review_reasons", None)
             if bank == "areas":
                 e.update(rows_record(ctx, sid))
         else:
-            e["review_reason"] = data[sid]["reason"]
+            e["review_reasons"] = data[sid]["reasons"]
     new.pop("summary", None)
     return new, [], len(changed)
 
@@ -478,15 +449,14 @@ def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out
         for sid, v in g2.items():
             final[sid], turns[sid] = v["questions"], 2
         last_fail = {k: f for k, f in f1.items() if k[0] not in g2} | f2
-    failing: dict[str, list[str]] = {}
+    failing: dict[str, dict[str, str]] = {}   # subcategory -> {question number ("0": the whole subcategory): reason}
     for (sid, n), fails in sorted(last_fail.items(), key=lambda kv: (kv[0][0], kv[0][1])):
-        failing.setdefault(sid, []).append(
-            f"Q{n}: " + "; ".join(r if c == "complete" else f"check {c}: {r}" for c, r in fails))
+        failing.setdefault(sid, {})[str(n)] = "; ".join(r if c == "complete" else f"check {c}: {r}" for c, r in fails)
     result = {}
     for sid in final:
         entry = {"status": "needs_human_review" if sid in failing else "pass", "turns": turns[sid], "questions": final[sid]}
         if sid in failing:
-            entry["reason"] = "; ".join(failing[sid])[:500]
+            entry["reasons"] = failing[sid]
         result[sid] = entry
     out.write_text(json.dumps(result, indent=2, ensure_ascii=False))
     return f"{len(result)} subcategories: {len(result) - len(failing)} pass, {len(failing)} need human review → {out.name}"
@@ -518,11 +488,12 @@ def store_questions(data: dict, args, inp: dict) -> tuple[Path, str]:
     for sid, entry in data.items():
         bank["subcategories"][sid] = {
             "status": entry["status"], "turns": entry["turns"],
-            **({"review_reason": entry["reason"]} if entry.get("reason") else {}),
+            **({"review_reasons": entry["reasons"]} if entry.get("reasons") else {}),
             **(rows_record(ctx, sid) if args.bank == "areas" else {}),
             "questions": entry["questions"]}
     bank["subcategories"] = {sid: bank["subcategories"][sid] for sid in inp["subs"] if sid in bank["subcategories"]}
-    bank.update({"description": BANK_DESCRIPTION[args.bank], "built_on": today,
+    bank.pop("description", None)
+    bank.update({"built_on": today,
                  "playbook_sha256_16": inp["core"]["source_sha256_16"],
                  "guide_sha256_16": {g: s["sha256_16"] for g, s in inp["sg_doc"]["sources"].items()}})
     bank.pop("summary", None)
@@ -559,7 +530,7 @@ def pilot_status(pilot_file: Path | None = None) -> tuple[bool, str]:
     pilot = json.loads(pilot_file.read_text()) if pilot_file.is_file() else None
     if pilot is None:
         return False, "missing (run /build-ai-bank and review the pilot)"
-    same = pilot["prompts"] == {p: audit.sha(REPO_ROOT / p) for p in DEFAULT_PROMPTS["questions"]}
+    same = pilot["prompts"] == {p: audit.sha(REPO_ROOT / p) for p in AI_PROMPTS["questions"]}
     return same, (f"accepted {pilot['accepted_on']}" if same
                   else "stale (generator or evaluator prompt changed since the pilot was accepted)")
 
@@ -572,7 +543,7 @@ def accept_pilot(note: str | None) -> str:
         recorded[bank] = len(load_json(path, path.name)["subcategories"]) if path.is_file() else 0
     if not all(recorded.values()):
         sys.exit(f"[record_bank] ERROR: run the pilot first; recorded subcategories per bank: {recorded}")
-    prompts = DEFAULT_PROMPTS["questions"]
+    prompts = AI_PROMPTS["questions"]
     AI_PILOT.write_text(json.dumps({
         "accepted_on": date.today().isoformat(), "note": note, "recorded": recorded,
         "prompts": {p: audit.sha(REPO_ROOT / p) for p in prompts}}, indent=2, ensure_ascii=False))

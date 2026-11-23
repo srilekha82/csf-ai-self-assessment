@@ -200,6 +200,12 @@ check.
   subcategory with mapping rows, the questions for those rows. Every question carries `roles` (`none`, `consumer`,
   `producer`) and the producer details it needs (`producer_flags` in the data: `built_on_existing_model`,
   `given_to_others`), defined in `data/ai/question_rules.json`.
+- **Bank file fields.** Per subcategory: `status` (`pass` or `needs_human_review`), `review_reasons` (the evaluator's or
+  a person's reason per question number, `"0"` for the whole subcategory), `turns`, `decided_by` (`human` after an edit
+  in the review sheet). Area bank also: `rows` (each mapping row's area and impact) and `rows_sha` (the hash of the
+  rows the questions were written for: a changed row makes them stale). Per question: `question_text`, `rows` (area
+  bank), `roles`, `producer_flags`, `playbook_refs`, `cis_refs`, `evidence_prompt`. Each bank also records
+  `built_on` and the hashes of the Playbook and guides it was built from.
 - **Area questions.** Each mapping row is asked by one question per role its area allows (the area's applies to, plus
   `none` for invisible AI usage, which every client gets), or by two when its why holds two different practices
   (`question_rules.json` `row_questions`). A question asks the core of the row's why: one practice, details only as

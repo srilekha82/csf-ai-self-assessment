@@ -24,9 +24,73 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_CORE, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_MAPPING_XLSX,  # noqa: E402
                     AI_SAFEGUARDS, AI_SAFEGUARD_IDS)
-from ai_bank_common import (area_candidates, area_rules, check_mapping_rules, foundation_subcategories,  # noqa: E402
-                            load_json)
+from ai_bank_common import foundation_subcategories, load_json  # noqa: E402
 import audit  # noqa: E402
+
+
+
+# ── mapping_rules.json: what each AI area may cite and must check ──────────────────────────────────────────────
+
+def always_controls(rules: dict) -> list[int]:
+    return sorted(int(n) for n in rules["always_cis_controls"]["controls"])
+
+
+def check_mapping_rules(rules: dict, inp: dict) -> list[str]:
+    """Problems in mapping_rules.json against the parsed CIS guides: every control number of an area (its own and the
+    always ones) must exist in each guide the area uses; the always controls' names must match the guides' titles; a
+    required check's cis_control must be an always control (so every area can cite it); every AI RMF function is either
+    mapped per area (functions) or foundation, never both; a required check names subcategories of mapped functions;
+    a foundation subcategory is a real subcategory of a mapped function and no required check names it."""
+    controls = inp["sg_doc"]["controls"]   # keyed "<guide>-<number>"
+    errors = []
+    mapped, foundation = rules["functions"], rules["foundation"]["functions"]
+    core_fns = [f["id"] for f in inp["core"]["functions"]]
+    if set(mapped) & set(foundation) or sorted(mapped + foundation) != sorted(core_fns):
+        errors.append(f"functions {mapped} and foundation {foundation} must split the AI RMF functions {core_fns} between them")
+    extra = rules["foundation"]["subcategories"]
+    bad = [s for s in extra if s not in inp["subs"] or inp["subs"][s]["function"] not in mapped]
+    if bad:
+        errors.append(f"foundation subcategories {bad}: must be subcategories of a mapped function ({mapped})")
+    for check in rules["required_checks"]:
+        bad = [s for s in check["any_of"] if s not in inp["subs"] or inp["subs"][s]["function"] not in mapped]
+        if bad:
+            errors.append(f"required check {check['name']!r}: {bad} are not subcategories of a mapped function")
+        if set(check["any_of"]) & set(extra):
+            errors.append(f"required check {check['name']!r}: names foundation subcategories {sorted(set(check['any_of']) & set(extra))}")
+    for n, name in rules["always_cis_controls"]["controls"].items():
+        for g in {g for k, v in rules["area_cis"].items() if k != "description" for g in v["guides"]}:
+            c = controls.get(f"{g}-{n}")
+            if c is None:
+                errors.append(f"always_cis_controls {n}: no control {n} in the {g} guide")
+            elif c["title"].strip().lower() != name.strip().lower():
+                errors.append(f"always_cis_controls {n}: named {name!r}, but the {g} guide calls it {c['title']!r}")
+    for area, v in rules["area_cis"].items():
+        if area == "description":
+            continue
+        for g in v["guides"]:
+            missing = [n for n in v["controls"] if f"{g}-{n}" not in controls]
+            if missing:
+                errors.append(f"area_cis {area}: controls {missing} are not in the {g} guide")
+    for check in rules["required_checks"]:
+        if "cis_control" in check and check["cis_control"] not in always_controls(rules):
+            errors.append(f"required check {check['name']!r}: cis_control {check['cis_control']} is not an always control")
+    return errors
+
+
+def area_rules(rules: dict, area_id: str) -> dict:
+    """The mapping_rules.json entries that apply to one AI area: its candidate CIS controls and guides, its required checks."""
+    cis = rules["area_cis"].get(area_id)
+    if cis is None:
+        sys.exit(f"[ai_bank] ERROR: AI area {area_id!r} has no entry in mapping_rules.json area_cis")
+    return {"controls": sorted(set(cis["controls"]) | set(always_controls(rules))), "guides": cis["guides"],
+            "required_checks": [c for c in rules["required_checks"] if c["areas"] == "all" or area_id in c["areas"]]}
+
+
+def area_candidates(inp: dict, rules: dict, area_id: str) -> list[dict]:
+    """The CIS safeguards a mapping row of this AI area may cite: its controls (plus the always ones) in its guides."""
+    r = area_rules(rules, area_id)
+    return [inp["safeguards"][s["id"]] for s in inp["sg_doc"]["safeguards"]
+            if s["guide"] in r["guides"] and s["control"] in r["controls"]]
 
 
 def mapping_inputs(inp: dict) -> dict:

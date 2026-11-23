@@ -397,7 +397,7 @@ class QuestionSheets(unittest.TestCase):
                             "playbook_refs": ["MEASURE 2.8 — suggested action 1"], "cis_refs": [],
                             "roles": ["consumer", "producer"], "producer_flags": [], **o}
         areas = {"subcategories": {"MEASURE 2.8": {
-            "status": "needs_human_review", "turns": 2, "review_reason": "Q1: vague", **R.rows_record(ctx, "MEASURE 2.8"),
+            "status": "needs_human_review", "turns": 2, "review_reasons": {"1": "vague"}, **R.rows_record(ctx, "MEASURE 2.8"),
             "questions": [q(n, rows=rids, roles=list(roles)) for n, (roles, rids) in enumerate(groups.items(), 1)]}},
             "summary": {}}
         foundation = {"subcategories": {"GOVERN 1.2": {"status": "pass", "turns": 1, "questions": [
@@ -474,13 +474,13 @@ class QuestionSheets(unittest.TestCase):
         self.assertEqual(self.do_import("areas"), 0)
         e = self.bank("areas")["MEASURE 2.8"]
         self.assertEqual(e["status"], "pass")
-        self.assertNotIn("review_reason", e)
+        self.assertNotIn("review_reasons", e)
         self.assertIn("traced", e["questions"][0]["question_text"])
 
     def test_each_line_shows_only_its_own_evaluator_reason(self):
         js = self.files["areas"][2]
         doc = json.loads(js.read_text())
-        doc["subcategories"]["MEASURE 2.8"]["review_reason"] = "Q2: chained; Q0: nothing asks retention; Q3: wrong action"
+        doc["subcategories"]["MEASURE 2.8"]["review_reasons"] = {"2": "chained", "0": "nothing asks retention", "3": "wrong action"}
         js.write_text(json.dumps(doc))
         S.export_sheet(self.files["areas"][0], self.files["areas"][1], js, self.tmp / "audit.jsonl", force=True)
         _, ws, heads = self.sheet("areas")
@@ -495,15 +495,15 @@ class QuestionSheets(unittest.TestCase):
                 self.edit("areas", line, Status="pass")
         self.assertEqual(self.do_import("areas"), 0)
         e = self.bank("areas")["MEASURE 2.8"]
-        self.assertEqual((e["status"], e["review_reason"], e["decided_by"]),
-                         ("needs_human_review", "Q0: nothing asks retention; Q3: wrong action", "human"))
+        self.assertEqual((e["status"], e["review_reasons"], e["decided_by"]),
+                         ("needs_human_review", {"0": "nothing asks retention", "3": "wrong action"}, "human"))
 
     def test_changed_mapping_rows_flag_the_subcategory_until_it_is_set_pass(self):
         js = self.files["areas"][2]
         doc = json.loads(js.read_text())
         e = doc["subcategories"]["MEASURE 2.8"]
         e.update({"status": "pass", "rows_sha": "written-for-old-rows"})
-        e.pop("review_reason")
+        e.pop("review_reasons")
         js.write_text(json.dumps(doc))
         S.export_sheet(self.files["areas"][0], self.files["areas"][1], js, self.tmp / "audit.jsonl", force=True)
         _, ws, heads = self.sheet("areas")

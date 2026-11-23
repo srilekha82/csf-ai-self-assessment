@@ -37,9 +37,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_WORK, AI_CORE, AI_FUNCTION_ORDER, AI_MAPPING,  # noqa: E402
                      AI_MAPPING_RULES, AI_QUESTION_BANKS as QUESTION_BANKS, AI_QUESTION_RULES, AI_SAFEGUARDS,
                      AI_SCOPE_RULES, ai_bank_path)
-from ai_bank_common import (area_candidates, area_roles, area_rules, check_mapping_rules,  # noqa: E402
-                            foundation_subcategories, load_inputs, load_json, rel, require_cis_text, row_id)
-from ai_mapping import mapping_status  # noqa: E402
+from ai_bank_common import (area_roles, foundation_subcategories, load_inputs, load_json, rel,  # noqa: E402
+                            require_cis_text, row_id)
+from ai_mapping import area_candidates, area_rules, check_mapping_rules, mapping_status  # noqa: E402
 
 import audit  # noqa: E402
 
