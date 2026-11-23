@@ -44,56 +44,31 @@ if a count is off. It reads nothing and says "up to date" when the outputs were 
 local CIS text file exists (`--force` reads them anyway: only after editing `data/ai/parse_config.json`).
 Agents read these files, never the PDFs.
 
-## Steps 3 and 4 — Mapping (see `docs/ai-rmf-model.md`)
+## Steps 3 and 4 — Mapping (one AI area at a time, only when the user asks; the first run is a pilot on the area they name)
 
-Maps each AI area (`data/ai/ai_areas.json`, decided by the user in `data/ai/authoring/ai_areas.xlsx`) to AI RMF
-subcategories of MAP, MEASURE and MANAGE, with the CIS safeguards that prove them. GOVERN is the foundation (asked once
-for the organisation, by role) and is never mapped to an area. Run only when the user asks for it, one AI area at a
-time; the first run is a pilot on one area the user names, then stop and report.
+Work files: `data/ai/bank_build/work/`, area `<a>`. Pass subagents paths, not content.
 
-1. Prepare the area's input:
+1. `.venv/bin/python ./scripts/prepare_ai_bank.py mapping --area <a>` → `work/mapping_input_<a>.json`.
+2. **Drafter** (fresh subagent): `prompts/ai_rmf_mapping_drafter.md` with the input → `work/mapping_<a>_draft1.json`.
+3. **Evaluator** (fresh subagent, never sees the drafter's prompt): `prompts/ai_rmf_mapping_evaluator.md` with the input
+   and the draft → `work/mapping_<a>_eval1.json`.
+4. Only if it has `row` or `missing` findings: a fresh drafter revises (input, draft1, eval1 → complete `draft2`), a fresh
+   evaluator checks it (→ `eval2`). Two turns at most.
+5. Record the last pair; if it lists problems, send them back to the drafter and record again:
    ```bash
-   .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area <area id>
+   .venv/bin/python ./scripts/record_bank.py ai-mapping data/ai/bank_build/work/mapping_<a>_draft<N>.json \
+       --review data/ai/bank_build/work/mapping_<a>_eval<N>.json --model <drafter model id> --session "evaluator=<model id>"
    ```
-   It writes `data/ai/bank_build/work/mapping_input_<area>.json`.
-2. **Drafter** (a fresh subagent): follow `prompts/ai_rmf_mapping_drafter.md` with that input; write
-   `work/mapping_<area>_draft1.json`. Pass paths, not content.
-3. **Evaluator** (another fresh subagent; it must not see the drafter's prompt): follow
-   `prompts/ai_rmf_mapping_evaluator.md` with the input and the draft; write its findings (kinds `row`, `missing`,
-   `note`) to `work/mapping_<area>_eval1.json`.
-4. If there are `row` or `missing` findings (notes alone do not need a revision): a fresh drafter revises (inputs: the input file, `draft1`, `eval1`; output the complete
-   `work/mapping_<area>_draft2.json`), and a fresh evaluator checks it into `work/mapping_<area>_eval2.json`. Two turns at
-   most.
-5. Record the last draft with the last evaluation (rows still failing are stored as `needs_human_review`, subcategories
-   still missing in the area's `missing` list, notes in `notes`; all three show in the review sheet):
-   ```bash
-   .venv/bin/python ./scripts/record_bank.py ai-mapping data/ai/bank_build/work/mapping_<area>_draft<N>.json \
-       --review data/ai/bank_build/work/mapping_<area>_eval<N>.json --model <drafter model id> --session "evaluator=<model id>"
-   ```
-   If it lists problems (ids, candidates, impacts, a missing function or required check), send them back to the drafter
-   and repeat; nothing is stored until it passes. It prints how many areas are recorded and how many AI RMF
-   subcategories are not reached yet.
+6. `.venv/bin/python ./scripts/sheet_io.py export mapping`. If it refuses (sheet edits not imported), ask the user to run
+   `sheet_io.py import mapping` first.
 
-After each area is recorded, refresh the review sheet: `.venv/bin/python ./scripts/sheet_io.py export mapping` (writes
-`data/ai/authoring/mapping.xlsx`; it refuses if the sheet has edits not yet imported: ask the user to import them first
-with `sheet_io.py import mapping`).
+After the pilot: **stop.** Show the recorded rows, what the evaluator failed, missing rows, notes and unreached
+subcategories, and point the user to `data/ai/authoring/mapping.xlsx`.
 
-After the pilot areas (the user names them): stop. Show the user the recorded rows (function, subcategory, safeguards, impact, why), what the
-evaluator failed, the missing rows and notes, the subcategories still unreached, and token use if you can see it, and point them to the review
-sheet. The user reviews before any other area is drafted.
-
-A changed mapping row makes the area questions written for it stale (Step 6 lists them). The review sheet flags
-such a subcategory on every line ("the mapping rows changed ..."); the user either has it regenerated (Step 5,
-`--ids`) or, if the questions still fit, sets its lines pass and imports, which stores them for the rows as they are
-now.
-
-After a change to `data/ai/mapping_rules.json` or to another AI area's row, do not re-draft: run
-`.venv/bin/python ./scripts/record_bank.py ai-revalidate` (script only). Re-draft only the areas it names (their own
-row or the sources changed), and send the user any rule problems it lists to fix in the sheet.
-
-When every area is recorded and the user has reviewed the sheet (no row left needs_human_review, edits imported), the
-user accepts the mapping: `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`. Re-drafting an area later keeps the
-user's decisions (rows decided_by human, lines they removed).
+- Rules or another area's row changed: `.venv/bin/python ./scripts/record_bank.py ai-revalidate` (no agent); re-draft
+  only the areas it names.
+- All areas recorded and reviewed (nothing needs human review, edits imported): the user runs
+  `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`.
 
 ## Step 5 — Questions (subagents; needs the mapping accepted as it is now)
 
