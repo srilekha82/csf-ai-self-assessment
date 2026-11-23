@@ -4,7 +4,7 @@ writes gets into the banks: every file is checked first, and a file with any pro
 
 Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
            the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
-Called by: /ai-mapping (steps 2 and 3), /build-ai-bank (steps 4 to 6); never in a client run
+Called by: /ai-mapping (steps 2 and 3), /build-ai-bank (steps 1 to 6); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
@@ -22,13 +22,15 @@ AI RMF (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questio
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
   ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
                                             ones to redraft
-  ai-accept-mapping [--note T]              you approve the mapping as it is now (it must be approved again if it
-                                            changes)
+  ai-accept-mapping [--note T] [--by-build] you approve the mapping as it is now (approved again if it changes);
+                                            --by-build: /build-ai-bank, when every row passed and nothing is left for you
   ai-assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F
                                             joins the question writer's and checker's files (up to two rounds) into
                                             one file for ai-questions; what still fails is marked for your review
   ai-questions <foundation|areas> <file>    questions for some subcategories -> that bank      check: validate_questions
                [--replace-human]            (--replace-human: only when you agreed to replace your own edits)
+  ai-confirm-current                        no agent: when the gate finds everything current, sets both banks'
+                                            built_on to today (the age a client run checks), like a CSF rebuild
   ai-accept-pilot [--note T]                you approve the pilot questions (a new pilot is needed if the question
                                             prompts change)
   ai-evidence <foundation|areas> <file> --review F
@@ -47,7 +49,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
+from config import (AI_AREAS, AI_BANKS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
                     AI_QUESTION_BANKS, REPO_ROOT)
 from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
@@ -122,8 +124,11 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument(f"--{name}", required=name in ("gen1", "eval1"))
     p.add_argument("--out", required=True)
     sub.add_parser("ai-revalidate")
+    sub.add_parser("ai-confirm-current")
     for m in ("ai-accept-mapping", "ai-accept-pilot"):
         sub.add_parser(m).add_argument("--note")
+    sub.choices["ai-accept-mapping"].add_argument(
+        "--by-build", action="store_true", help="accepted by /build-ai-bank: every row passed, nothing left for a person")
     return ap
 
 
@@ -143,9 +148,15 @@ def main():
             return (f"revalidate: {cleared} areas checked against the current rules and stamped current; "
                     f"{len(lines)} problems"), bool(lines)
         run_step("ai_revalidate_mapping", {}, [AI_AREAS, AI_MAPPING_RULES], [AI_MAPPING], do)
+    elif mode == "ai-confirm-current":
+        import check_freshness
+        from ai_questions import restamp_banks
+        run_step("ai_confirm_current", {}, [], [AI_BANKS / f"question_bank_ai_rmf_{b}.json" for b in AI_QUESTION_BANKS],
+                 lambda: restamp_banks(check_freshness.ai_stages()))
     elif mode == "ai-accept-mapping":
-        run_step("ai_accept_mapping", {"note": args.note}, [AI_MAPPING], [AI_MAPPING_ACCEPTED],
-                 lambda: (accept_mapping(args.note), False), actor="human")
+        note = args.note or ("accepted by /build-ai-bank: every row passed its evaluator" if args.by_build else None)
+        run_step("ai_accept_mapping", {"note": note, "by_build": args.by_build}, [AI_MAPPING], [AI_MAPPING_ACCEPTED],
+                 lambda: (accept_mapping(note), False), actor="script" if args.by_build else "human")
     elif mode == "ai-accept-pilot":
         run_step("ai_accept_pilot", {"note": args.note}, [REPO_ROOT / p for p in DEFAULT_PROMPTS["questions"]],
                  [AI_PILOT], lambda: (accept_pilot(args.note), False), actor="human")

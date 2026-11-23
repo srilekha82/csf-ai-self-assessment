@@ -2,7 +2,7 @@
 Prepares the small input file each AI agent reads in the AI RMF bank build, so agents never read the PDFs
 or whole banks. It decides and stores nothing.
 
-Called by: /ai-mapping (step 2), /build-ai-bank (step 4 questions, 5b evidence)
+Called by: /ai-mapping (step 2; also run by /build-ai-bank step 2), /build-ai-bank (step 4 questions, 5b evidence)
 Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks)
 Output:    data/ai/bank_build/work/mapping_input_<area>.json, batch_<bank>_<tag>.json or evidence_input_<bank>.json
 

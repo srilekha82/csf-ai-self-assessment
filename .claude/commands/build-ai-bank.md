@@ -22,17 +22,27 @@ Delete that folder at the end of the build.
 .venv/bin/python ./scripts/check_freshness.py --ai-bank
 ```
 
-One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, mapping; the last two belong to
-`/ai-mapping`): `current`, `missing`, `stale`
+One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, mapping; the last two are done in
+Step 2): `current`, `missing`, `stale`
 or `incomplete`. A
 stage is current only if it was built from the exact source files on disk (each output records the SHA-256 of its inputs).
 
-- Exit 0: everything is current and complete. Tell the user and stop, unless they ask to force a rebuild.
+- Exit 0: everything is current and complete. Run `.venv/bin/python ./scripts/record_bank.py ai-confirm-current`
+  (no agent: it re-stamps both banks' build date, as a CSF rebuild does, so a client run's age check passes), tell the
+  user and stop, unless they ask to force a rebuild.
 - Exit 1 with `sources: missing ...`: point to `data/ai/source/README.md` and stop.
 - Exit 1 otherwise: do only the stages that are not current, in the order below; a stale stage makes the ones after it
   stale too. Tell the user which stages you will run.
 
-## Step 2 — Parse the sources
+## Step 2 — Mapping
+
+If the `mapping` line of Step 1 is not `accepted`, do the mapping here without asking the user: follow
+`.claude/commands/ai-mapping.md` steps 1 and 2 for the areas the gate names (no pilot stop), then
+`.venv/bin/python ./scripts/record_bank.py ai-accept-mapping --by-build`. It accepts only when every row passed its
+evaluator and nothing is left for a person; if it refuses, stop and show the user what it lists (rows to review in
+`data/ai/authoring/mapping.xlsx`).
+
+## Step 3 — Parse the sources
 
 ```bash
 .venv/bin/python ./scripts/parse_ai_rmf_sources.py
@@ -45,10 +55,6 @@ committed) and `data/ai/cis_ai_safeguard_ids.json` (the same without the text: c
 if a count is off. It reads nothing and says "up to date" when the outputs were made from these exact PDFs and the
 local CIS text file exists (`--force` reads them anyway: only after editing `data/ai/parse_config.json`).
 Agents read these files, never the PDFs.
-
-## Step 3 — Mapping accepted?
-
-The `mapping` line of Step 1 must be `accepted`. If not, stop and tell the user to run `/ai-mapping` first.
 
 ## Step 4 — Questions (subagents)
 
