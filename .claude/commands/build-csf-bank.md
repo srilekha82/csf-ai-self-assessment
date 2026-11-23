@@ -3,13 +3,12 @@
 Builds or refreshes the CSF 2.0 question banks, all six sectors together, from CISA's CSET.
 No argument.
 
-Scripts do everything the CSET schema decides; an agent step (Step 4) judges only what the schema cannot (the sector
-of generic questions, rewording statement-only practices as questions, loose subcategory mappings). Do not
-re-implement any parsing or routing inline.
+The questions come from CSET as they are; scripts pick them by sector with the rules in `data/csf/bank_rules.json`.
+No agent touches the questions. Do not re-implement any parsing or picking inline.
 
 Tools: Bash, Read, Write, Agent. Working directory: repo root. Say little: the script summary lines and the final report.
 
-Temporary files (pending questions, verdicts, evidence inputs, agent drafts, the person's evidence review) all go in
+Temporary files (evidence inputs, agent drafts, the person's evidence review) all go in
 `data/csf/bank_build/work/` (gitignored). Delete that folder at the end of the build.
 
 ## 1 — CSET path
@@ -22,7 +21,7 @@ If that folder does not exist, clone the public repo there (only the SQL folder,
 place) prints the age of NIST's reference data (`csf2_core.json` and the ISO 27001 and PCI DSS crosswalks), then one
 line for the CSF banks against CSET. Show the user both.
 
-Reference data flagged stale or seed: ask the user whether to refresh it before building. NIST blocks automated downloads, so they
+Reference data flagged stale or never refreshed: ask the user whether to refresh it before building. NIST blocks automated downloads, so they
 download it: go to https://www.nist.gov/cyberframework/csf-20-informative-references, click "Download English (xlsx)",
 save as `data/csf/source/csf2.xlsx`, and tell you. Then run `.venv/bin/python ./scripts/parse_csf_source.py --output ./data`;
 it also records the refresh in `data/metadata.json`. If they decline, note it and continue. A banks line that says stale
@@ -36,32 +35,11 @@ Pulls the CSET repo, replays the SQL (reference INSERT minus DELETE, question IN
 `.sql` changed: only patches the stored commit. Otherwise it re-extracts. If it reports "could not update CSET repo",
 relay the message and stop. Add `--force` only if the user asks.
 
-## 3 — Build the bank (deterministic routing)
-`.venv/bin/python ./scripts/build_csf_bank.py`
+## 3 — Build the banks
+`.venv/bin/python ./scripts/build_csf_bank.py` writes all six `data/csf/banks/question_bank_<sector>.json`. Per
+subcategory: CSET's own CSF 2.0 question, then the CSET questions linked to it from the sets for that sector.
 
-- **Exit 0**: all six banks written. Go to Step 5.
-- **Exit 2**: some candidates need a judgement. It wrote `data/csf/bank_build/work/pending_judgements.json` (each question
-  once, whatever the sector) and no bank. Go to Step 4.
-
-## 4 — Judge the pending questions (agent)
-`prompts/question_bank_judge.md` is your complete instruction for this step.
-
-1. Read `data/csf/bank_build/work/pending_judgements.json`; work through `items` in batches of about 25.
-2. For each item write only the verdicts it `needs`, in the format the prompt defines, all into
-   `data/csf/bank_build/work/verdicts.json`.
-3. Save them (your model id):
-   ```bash
-   .venv/bin/python ./scripts/record_bank.py csf-cset data/csf/bank_build/work/verdicts.json \
-       --pending data/csf/bank_build/work/pending_judgements.json --model <model id>
-   ```
-   If it lists problems, fix those entries and run it again; nothing is saved until it passes.
-4. Run Step 3 again: it should now exit 0.
-
-Verdicts are stored in `data/csf/bank_build/cset_judgements.json` and reused by every domain and every later build; they
-are redone only for questions CSET has changed. Each recording also writes a write-once record to
-`data/csf/bank_build/judgement_log/`.
-
-## 5 — Evidence prompts (agents, then a person for what still fails)
+## 4 — Evidence prompts (agents, then a person for what still fails)
 Each CSF subcategory gets its own evidence prompt once: the "Evidence Required" line of the CSF sheet, the same for
 every sector, stored in `data/csf/evidence_prompts.json` `by_subcategory`. The questions stay CSET's; only this line
 is written. A subcategory is asked again only while nothing is decided for it.
@@ -86,6 +64,6 @@ is written. A subcategory is asked again only while nothing is decided for it.
    `.venv/bin/python ./scripts/record_bank.py csf-evidence-reviewed`; if it exits 1, show what it lists and wait again.
    Their decisions are final: those subcategories are never asked again.
 
-## 6 — Report
-Relay the script output: subcategories with candidates (and how many have maturity-model questions), empty ones, the routing counts (accept/schema, accept/agent,
-reject/schema, reject/agent), how many questions the agent judged, and the evidence prompts stored. Do not re-read the bank file unless the user asks.
+## 5 — Report
+Relay the build's summary line (questions and empty subcategories per sector, CSET commit) and the evidence prompts
+stored. Do not re-read the bank files unless the user asks.

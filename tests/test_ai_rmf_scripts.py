@@ -968,7 +968,7 @@ class CsfBankStage(unittest.TestCase):
     def write_bank(self, commit, inputs=None):
         from build_csf_bank import bank_inputs_sha
         self.bank.write_text(json.dumps({"cset_commit": commit,
-                                         "inputs_sha": inputs or bank_inputs_sha(CF.BANK_BUILD)}))
+                                         "inputs_sha": inputs or bank_inputs_sha()}))
 
     def test_a_given_cset_commit_is_used_without_fetching_again(self):
         self.write_bank(self.base)
@@ -978,11 +978,11 @@ class CsfBankStage(unittest.TestCase):
         (stage, ok, text), _ = CF.csf_bank_stage("finance", missing, (None, [], "cannot check against CSET (x)"))
         self.assertEqual((ok, text), (False, "cannot check against CSET (x)"))
 
-    def test_changed_judgements_or_csf_core_make_the_bank_stale(self):
-        self.write_bank(self.base, inputs={"cset_judgements": "old", "csf2_core": "old"})
+    def test_changed_rules_or_csf_core_make_the_bank_stale(self):
+        self.write_bank(self.base, inputs={"bank_rules": "old", "csf2_core": "old"})
         ok, text, _ = self.stage()
         self.assertFalse(ok)
-        self.assertIn("judgements or csf2_core.json changed", text)
+        self.assertIn("bank_rules.json or csf2_core.json changed", text)
 
     def stage(self):
         (stage, ok, text), notes = CF.csf_bank_stage("finance", self.clone)
@@ -1014,53 +1014,6 @@ class CsfBankStage(unittest.TestCase):
         self.assertTrue(notes and "could not check upstream" in notes[0])
 
 
-class CsfBankRecording(unittest.TestCase):
-    """record_bank.py csf-cset: the agent's decisions on CSET questions (checks and store in build_csf_bank.py)."""
-
-    def setUp(self):
-        import build_csf_bank as BQB
-        self.BQB = BQB
-        self.cache = Path(tempfile.mkdtemp())
-        q = lambda text, flags: {"question_text": text, "title": "t", "category": "c", "sub_category": "s", "model_id": "1",
-                                 "model_name": "ACET", "is_answerable": None, "practice": {}, "flags": flags}
-        (self.cache / "cset_candidates.json").write_text(json.dumps({
-            "cset_commit": "abc123", "questions": {"1": q("Management is accountable for risk", ["statement_only"]),
-                                                   "2": q("Is risk reviewed annually?", [])},
-            "mappings": [{"qid": 1, "subcategory_id": "GV.RM-01"}, {"qid": 2, "subcategory_id": "GV.RM-01"}]}))
-
-    def run_main(self, verdicts):
-        f = self.cache / "verdicts.json"
-        f.write_text(json.dumps(verdicts))
-        try:
-            self.BQB.record_cset(str(f), None, "test-model", "s1", cache=self.cache)
-            return 0
-        except SystemExit as e:
-            return e.code
-
-    def test_reject_then_record(self):
-        bad = {"1": {"rewrite": "too short"}, "9": {"domains": ["finance"], "reason": "x"},
-               "2": {"fit": {"GV.RM-01": {"verdict": "maybe"}}}}
-        self.assertEqual(self.run_main(bad), 1)
-        self.assertFalse((self.cache / "cset_judgements.json").exists())
-        good = {"1": {"rewrite": "Is management accountable for cybersecurity risk, and how is that shown?",
-                      "domains": ["finance", "other"], "reason": "ACET statement"},
-                "2": {"fit": {"GV.RM-01": {"verdict": "accept", "reason": "tests the outcome"}}}}
-        self.assertEqual(self.run_main(good), 0)
-        store = json.loads((self.cache / "cset_judgements.json").read_text())["questions"]
-        self.assertEqual(store["1"]["domains"], ["finance", "other"])
-        self.assertEqual(store["2"]["fit"]["GV.RM-01"]["verdict"], "accept")
-        self.assertTrue(store["1"]["text_hash"] and store["1"]["judged_on"] and store["1"]["decided_by"] == "agent")
-        logs = list((self.cache / "judgement_log").glob("*_2q.json"))
-        self.assertEqual(len(logs), 1)
-        rec = json.loads(logs[0].read_text())
-        for key in ("cset_commit", "decided_by", "model", "session", "prompts", "input_file", "store", "verdicts"):
-            self.assertIn(key, rec)
-        self.assertEqual(rec["verdicts"], good)
-        lines = [json.loads(l) for l in (self.cache / "audit.jsonl").read_text().splitlines()]
-        self.assertEqual([l["status"] for l in lines], ["rejected", "ok"])
-        self.assertEqual({l["actor"] for l in lines}, {"agent"})
-
-
 if __name__ == "__main__":
     unittest.main()
 
@@ -1074,7 +1027,7 @@ class CsfBanksLine(unittest.TestCase):
         self.addCleanup(setattr, CF, "bank_path", real)
         CF.bank_path = lambda domain: self.tmp / f"{domain}.json"
         from build_csf_bank import bank_inputs_sha
-        self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha(CF.BANK_BUILD)}
+        self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha()}
 
     def write_all(self, **change):
         for d in CF.DOMAINS:

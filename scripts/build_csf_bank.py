@@ -1,33 +1,26 @@
 """
-Builds the six CSF question banks, one per sector, together from the collected CSET questions.
+Builds the six CSF question banks, one per sector, from the CSET questions linked to CSF 2.0. No agent, no judgement:
+every question and every link is CSET's, and fixed rules decide which sector gets which question.
 
-Why:       CSET links many maturity-model questions to each CSF subcategory, but some are for one sector only, cut off,
-           or only loosely linked. Fixed rules settle most of them; an agent is asked only about the rest, once, and its
-           decisions are kept, so every rebuild gives the same banks.
+Why:       a client should get CSET's own questions for their sector, the same every time the bank is rebuilt from the
+           same CSET commit. Certifications are not applied here; a client run applies them (compute_scope.py).
 Called by: /build-csf-bank (step 3)
-Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions); the routing
-           rules in data/csf/bank_rules.json
-Output:    data/csf/banks/question_bank_<sector>.json for every sector, or work/pending_judgements.json (exit 2)
+Input:     data/csf/bank_build/cset_candidates.json (extract_cset_candidates.py), data/csf/csf2_core.json, the rules in
+           data/csf/bank_rules.json
+Output:    data/csf/banks/question_bank_<sector>.json for every sector
 
-Usage: .venv/bin/python ./scripts/build_csf_bank.py [--fanout-threshold N] [--allow-pending] [--output-dir DIR]
-                                                 [--cache-dir DIR]
+Usage: .venv/bin/python ./scripts/build_csf_bank.py [--output-dir DIR] [--cache-dir DIR]
 
-The banks are always built together, from the same CSET collection and agent judgements, so they share one record of
-what they were built from (check_freshness.py --csf checks it).
+Per CSF subcategory, in this order:
+  1. CSET's own CSF 2.0 question (the NCSF_V2 set), in every sector.
+  2. The other CSET questions CSET links to it, from a set for this sector (bank_rules.json sector_by_model, e.g. ACET
+     for finance) or a set listed for no sector (every sector). A question with a reject flag (CSET marks it not
+     answerable, or it has no text) is left out. A practice with no question text (statement_only) is shown as its
+     CSET outcome text. The same wording twice in a subcategory is kept once.
+The banks are always built together, from the same CSET collection, so they share one record of what they were built
+from (check_freshness.py --csf checks it).
 
-Each subcategory starts with CSET's own CSF 2.0 question (every sector). Each other CSET question is then:
-  rejected   not answerable, empty, or already judged unfit or not for this sector
-  accepted   its source model is for this sector (e.g. ACET for finance), or an earlier decision covers it
-  pending    needs an agent: sector unclear, text to (re)write, or linked to many subcategories
-             (--fanout-threshold; default in data/csf/bank_rules.json)
-
-Exit 2 if anything is pending in any sector: it writes one pending_judgements.json (each question once, whatever
-the sector) and no bank. An agent decides them (prompts/question_bank_judge.md), record_bank.py csf-cset stores the
-decisions, then run it again. Decisions are tied to the question's text, so they are redone only if CSET changes the
-question. --allow-pending writes the banks anyway, leaving pending questions out.
-
-This file also holds the checks and stores record_bank.py uses for the CSF bank build (sections at the end):
-  validate_cset / store_cset             the agent's decisions on pending CSET questions -> cset_judgements.json
+This file also holds the evidence prompt steps of /build-csf-bank (step 4; record_bank.py csf-evidence-*):
   validate_evidence / store_evidence     round 1 of the evidence prompts (the Evidence Required line of the CSF
                                          sheet) -> data/csf/evidence_prompts.json; failures -> evidence_revise.json
                   ... / store_revision   round 2, the revised prompts; failures -> evidence_review.json
@@ -35,7 +28,6 @@ This file also holds the checks and stores record_bank.py uses for the CSF bank 
 """
 
 import argparse
-import hashlib
 import json
 import re
 import sys
@@ -43,25 +35,15 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (BANK_BUILD, BANK_WORK, CROSSWALK_DIRS, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER,  # noqa: E402
+from config import (BANK_BUILD, BANK_WORK, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER,  # noqa: E402
                      DOMAINS, EVIDENCE_PROMPTS, bank_path)
 import audit  # noqa: E402
 
-BANK_RULES = json.loads(CSF_BANK_RULES.read_text())   # the routing policy: data/csf/bank_rules.json
+BANK_RULES = json.loads(CSF_BANK_RULES.read_text())   # data/csf/bank_rules.json
 REJECT_FLAGS = set(BANK_RULES["reject_flags"])
-CSF2_SET = "NCSF_V2"  # CSET's CSF 2.0 standard (cset_candidates.json `csf2_set`), first candidate everywhere
-# Questions whose text must be (re)written by the agent: a practice statement with no question,
-# or a question CSET left cut off mid-sentence.
-REWRITE_FLAGS = set(BANK_RULES["rewrite_flags"])
-
-# Source models that are specific to one sector. Everything else is treated as generic.
+STATEMENT_FIELD = BANK_RULES["statement_only_text"]["field"]
 SECTOR_BY_MODEL = {k: v for k, v in BANK_RULES["sector_by_model"].items() if k != "description"}
-
-
-def text_hash(q: dict) -> str:
-    """Hash of what a judgement was based on; a judgement is stale if CSET changes it."""
-    basis = json.dumps([q["question_text"], q.get("practice", {})], sort_keys=True)
-    return hashlib.sha1(basis.encode()).hexdigest()[:10]
+CSF2_SET = "NCSF_V2"  # CSET's CSF 2.0 standard (cset_candidates.json `csf2_set`), first in every subcategory
 
 
 def norm(text: str) -> str:
@@ -69,260 +51,53 @@ def norm(text: str) -> str:
 
 
 def load_json(path: Path, default=None):
-    return json.loads(path.read_text()) if path.exists() else default
+    return json.loads(path.read_text()) if path.is_file() else default
 
 
-def route_pairs(domain: str, candidates: dict, judgements: dict, active: dict[str, dict],
-                fanout_threshold: int) -> tuple[list[dict], dict[str, dict]]:
-    """
-    Route every (question, active subcategory) pair for one domain.
-    Returns (routed_pairs, pending_by_qid).
-    """
-    questions = candidates["questions"]
-    subs_of: dict[str, list[str]] = {}
-    for m in candidates["mappings"]:
-        if m["subcategory_id"] in active:
-            subs_of.setdefault(str(m["qid"]), []).append(m["subcategory_id"])
-
-    routed, pending = [], {}
-
-    def need(qid: str, kind: str, sub: str | None = None):
-        item = pending.setdefault(qid, {"needs": [], "fit_subcategories": []})
-        if kind not in item["needs"]:
-            item["needs"].append(kind)
-        if sub and sub not in item["fit_subcategories"]:
-            item["fit_subcategories"].append(sub)
-
-    for qid, subs in subs_of.items():
-        q = questions.get(qid)
-        if q is None:
-            continue
-        j = judgements.get("questions", {}).get(qid)
-        if j and j.get("text_hash") != text_hash(q):
-            j = None  # CSET changed this question since it was judged
-
-        def emit(sub, status, decided_by, reason, text=None):
-            routed.append({"qid": qid, "subcategory_id": sub, "status": status,
-                           "decided_by": decided_by, "reason": reason, "text": text})
-
-        if REJECT_FLAGS & set(q["flags"]):
-            for s in subs:
-                emit(s, "reject", "schema", f"flags: {sorted(REJECT_FLAGS & set(q['flags']))}")
-            continue
-
-        # domain
-        sector = SECTOR_BY_MODEL.get(q.get("model_name"))
-        domain_by = "schema" if sector == domain else None
-        if domain_by is None and j and "domains" in j:
-            if domain not in j["domains"] and "all" not in j["domains"]:
-                for s in subs:
-                    emit(s, "reject", "agent", f"not suited to {domain}: {j.get('reason', '')}")
-                continue
-            domain_by = "agent"
-
-        # Collect everything this question needs in one go, so the agent is asked once.
-        fanout = len(subs)
-        needs_rewrite = bool(REWRITE_FLAGS & set(q["flags"])) and not (j and "rewrite" in j)
-        fit_missing = [s for s in subs if fanout >= fanout_threshold
-                       and (j or {}).get("fit", {}).get(s) is None]
-        if domain_by is None:
-            need(qid, "domains")
-        if needs_rewrite:
-            need(qid, "rewrite")
-        for s in fit_missing:
-            need(qid, "fit", s)
-        if qid in pending:
-            for s in subs:
-                emit(s, "pending", None, "needs judgement")
-            continue
-
-        text = q["question_text"]
-        if REWRITE_FLAGS & set(q["flags"]):
-            if not j["rewrite"]:
-                for s in subs:
-                    emit(s, "reject", "agent", "agent: cannot be asked as a question")
-                continue
-            text = j["rewrite"]
-
-        for s in subs:
-            if fanout >= fanout_threshold:
-                verdict = j["fit"][s]
-                if verdict["verdict"] == "reject":
-                    emit(s, "reject", "agent", f"does not fit {s}: {verdict.get('reason', '')}")
-                else:
-                    emit(s, "accept", "agent", "fit confirmed", text)
-            else:
-                emit(s, "accept", domain_by, "domain match" if domain_by == "schema" else "agent domain verdict", text)
-    return routed, pending
+def question_text(q: dict) -> str:
+    """CSET's question text; for a practice with none, CSET's own text of the field bank_rules.json names."""
+    text = q["question_text"] or (q.get("practice") or {}).get(STATEMENT_FIELD) or ""
+    return " ".join(text.split())
 
 
-def bank_inputs_sha(cache: Path) -> dict:
-    """Hashes of the local inputs a bank is built from besides CSET (check_freshness compares them)."""
-    return {"cset_judgements": audit.sha(cache / "cset_judgements.json"), "csf2_core": audit.sha(CSF_CORE)}
+def for_sector(q: dict, sector: str) -> bool:
+    """A set listed in sector_by_model is for that sector only; any other set is for every sector."""
+    return SECTOR_BY_MODEL.get(q.get("model_name"), sector) == sector and not REJECT_FLAGS & set(q["flags"])
 
 
-def build_pending_file(pending: dict, candidates: dict, active: dict[str, dict]) -> dict:
-    items = []
-    for qid, p in sorted(pending.items(), key=lambda kv: int(kv[0])):
-        q = candidates["questions"][qid]
-        mapped = [m["subcategory_id"] for m in candidates["mappings"]
-                  if str(m["qid"]) == qid and m["subcategory_id"] in active]
-        items.append({
-            "qid": qid,
-            "needs": p["needs"],
-            "model_name": q.get("model_name"),
-            "category": q.get("category"),
-            "sub_category": q.get("sub_category"),
-            "question_text": q["question_text"],
-            "practice": q.get("practice", {}),
-            "mapped_subcategories": [{"id": s, "outcome": active[s]["subcategory_text"]} for s in sorted(mapped)],
-            "check_fit_for": sorted(p["fit_subcategories"]),
-        })
-    return {"cset_commit": candidates["cset_commit"], "count": len(items), "items": items}
+def build_bank(sector: str, candidates: dict, active: dict[str, dict]) -> dict:
+    by_sub: dict[str, list[dict]] = {sid: [] for sid in active}
+    seen: dict[str, set[str]] = {sid: set() for sid in active}
 
+    def add(sid: str, entry: dict) -> None:
+        key = norm(entry["question_text"])
+        if sid in active and key and key not in seen[sid]:
+            seen[sid].add(key)
+            by_sub[sid].append(entry)
 
-def build_bank(domain: str, routed: list[dict], candidates: dict, active: dict[str, dict],
-               iso_lookup: dict, pending_count: int) -> dict:
-    by_sub: dict[str, list[dict]] = {}
-    seen: dict[str, set[str]] = {}
-    # CSET's own CSF 2.0 question comes first in every subcategory (it is the subcategory, for every domain);
-    # the maturity-model questions CSET maps to it follow as practice detail.
     for sid, entry in candidates.get("csf2_set", {}).items():
-        if sid not in active:
-            continue
         for q in entry["questions"]:
-            seen.setdefault(sid, set()).add(norm(q["question_text"]))
-            by_sub.setdefault(sid, []).append({
-                "cset_question_id": q["question_id"],
-                "cset_set": CSF2_SET,
-                "question_text": q["question_text"],
-                "category": None,
-                "sub_category": None,
-                "model_name": CSF2_SET,
-                "decided_by": "schema",
-                "reworded": False,
-            })
-    for r in sorted(routed, key=lambda r: int(r["qid"])):
-        if r["status"] != "accept":
+            add(sid, {"cset_question_id": q["question_id"], "cset_set": CSF2_SET, "question_text": q["question_text"],
+                      "model_name": CSF2_SET})
+    links = sorted(((int(m["qid"]), m["subcategory_id"]) for m in candidates["mappings"]))
+    for qid, sid in links:
+        q = candidates["questions"].get(str(qid))
+        if q is None or not for_sector(q, sector):
             continue
-        text = r["text"]
-        key = norm(text)
-        if key in seen.setdefault(r["subcategory_id"], set()):
-            continue  # same wording already offered for this subcategory
-        seen[r["subcategory_id"]].add(key)
-        q = candidates["questions"][r["qid"]]
-        by_sub.setdefault(r["subcategory_id"], []).append({
-            "cset_question_id": int(r["qid"]),
-            "question_text": text,
-            "category": q.get("category"),
-            "sub_category": q.get("sub_category"),
-            "model_name": q.get("model_name"),
-            "decided_by": r["decided_by"],
-            "reworded": text != q["question_text"],
-        })
+        add(sid, {"cset_question_id": qid, "question_text": question_text(q), "model_name": q.get("model_name"),
+                  "category": q.get("category"), "sub_category": q.get("sub_category"),
+                  "text_from": STATEMENT_FIELD if not q["question_text"] else "question"})
 
     ordered = sorted(active, key=lambda s: (CSF_FUNCTION_ORDER.get(s[:2], 9), s))
-    questions = {
-        sid: {
-            "subcategory_text": active[sid]["subcategory_text"],
-            "iso_mapping": iso_lookup.get(sid, []),
-            "candidates": by_sub.get(sid, []),
-        }
-        for sid in ordered
-    }
-    with_candidates = sum(1 for v in questions.values() if v["candidates"])
-    with_maturity = sum(1 for v in questions.values() if any(c.get("cset_set") != CSF2_SET for c in v["candidates"]))
-    return {
-        "domain": domain,
-        "cset_commit": candidates["cset_commit"],
-        "built_on": date.today().isoformat(),
-        "total_subcategories": len(questions),
-        "with_candidates": with_candidates,
-        "empty": len(questions) - with_candidates,
-        "with_maturity_questions": with_maturity,
-        "pending_judgements": pending_count,
-        "questions": questions,
-    }
+    return {"sector": sector, "cset_commit": candidates["cset_commit"], "built_on": date.today().isoformat(),
+            "inputs_sha": bank_inputs_sha(),
+            "questions": {sid: {"subcategory_text": active[sid]["subcategory_text"], "candidates": by_sub[sid]}
+                          for sid in ordered}}
 
 
-# ── The agent's decisions on CSET questions: checked and stored by record_bank.py csf-cset ─────────────────────
-
-JUDGE_PROMPT = "prompts/question_bank_judge.md"
-VALID_DOMAINS = set(DOMAINS) | {"all"}
-
-
-def validate_cset(verdicts: dict, candidates: dict, valid_subs: set[str]) -> list[str]:
-    """The agent's decisions on pending CSET questions (verdicts.json):
-        {"<qid>": {"domains": ["finance", "other"],          # any of the six sectors, or ["all"]   (optional)
-                   "rewrite": "Question text ..." | null,    # for statement-only practices; null = cannot be asked
-                   "fit": {"GV.SC-04": {"verdict": "accept" | "reject", "reason": "..."}},          (optional)
-                   "reason": "one sentence"}}
-    Returns the problems; an empty list means the file can be stored."""
-    errors = []
-    mapped = {}
-    for m in candidates["mappings"]:
-        mapped.setdefault(str(m["qid"]), set()).add(m["subcategory_id"])
-
-    for qid, v in verdicts.items():
-        q = candidates["questions"].get(qid)
-        if q is None:
-            errors.append(f"{qid}: unknown question id")
-            continue
-        if not isinstance(v, dict) or not (v.keys() & {"domains", "rewrite", "fit"}):
-            errors.append(f"{qid}: needs at least one of domains / rewrite / fit")
-            continue
-        if "domains" in v:
-            d = v["domains"]
-            if not isinstance(d, list) or not d or not set(d) <= VALID_DOMAINS:
-                errors.append(f"{qid}: domains must be a non-empty list from {sorted(VALID_DOMAINS)}")
-        if "rewrite" in v and v["rewrite"] is not None:
-            if not isinstance(v["rewrite"], str) or len(v["rewrite"].strip()) < 20:
-                errors.append(f"{qid}: rewrite must be a question of at least 20 characters, or null")
-            elif not (REWRITE_FLAGS & set(q["flags"])):
-                errors.append(f"{qid}: rewrite given but the question is neither statement-only nor truncated")
-        for sub, fv in v.get("fit", {}).items():
-            if sub not in mapped.get(qid, set()) or sub not in valid_subs:
-                errors.append(f"{qid}: {sub} is not an active subcategory this question maps to")
-            if not isinstance(fv, dict) or fv.get("verdict") not in ("accept", "reject"):
-                errors.append(f"{qid}/{sub}: verdict must be accept or reject")
-            elif not str(fv.get("reason", "")).strip():
-                errors.append(f"{qid}/{sub}: a reason is required")
-        if not str(v.get("reason", "")).strip() and "domains" in v:
-            errors.append(f"{qid}: a reason is required with domains")
-    return errors
-
-
-def store_cset(verdicts: dict, candidates: dict, store_path: Path) -> tuple[Path, str]:
-    """Add the decisions to cset_judgements.json. A decision is tied to the question text it was made on (text_hash):
-    when CSET changes the question, its earlier decisions are dropped."""
-    store = json.loads(store_path.read_text()) if store_path.exists() else {"questions": {}}
-    for qid, v in verdicts.items():
-        entry = store["questions"].setdefault(qid, {})
-        if entry.get("text_hash") != text_hash(candidates["questions"][qid]):
-            entry.clear()
-        entry.update({k: val for k, val in v.items() if k in ("domains", "rewrite", "reason")})
-        if "fit" in v:
-            entry.setdefault("fit", {}).update(v["fit"])
-        entry.update({"text_hash": text_hash(candidates["questions"][qid]),
-                      "judged_on": date.today().isoformat(), "decided_by": "agent"})
-    store_path.write_text(json.dumps(store, indent=2, ensure_ascii=False))
-    return store_path, f"recorded {len(verdicts)} questions ({len(store['questions'])} judged in total)"
-
-
-def record_cset(file: str, pending: str | None, model: str, session: str | None, cache: Path | None = None) -> None:
-    cache = cache or BANK_BUILD
-    candidates = json.loads((cache / "cset_candidates.json").read_text())
-    valid_subs = {s["subcategory_id"] for s in json.loads(CSF_CORE.read_text())["subcategories"]
-                  if not s["subcategory_text"].startswith("[Withdrawn")}
-    audit.record_agent_output(
-        log_path=cache / "audit.jsonl", log_dir=cache / "judgement_log", step="csf_cset", args={"verdicts": file},
-        file=file, validate=lambda d: validate_cset(d, candidates, valid_subs),
-        store=lambda d: store_cset(d, candidates, cache / "cset_judgements.json"),
-        model=model, session=session, prompts=[JUDGE_PROMPT], log_name=lambda d: f"{len(d)}q",
-        extra_inputs=[pending] if pending else [],
-        extra_record={"cset_commit": candidates["cset_commit"], "pending_file": pending,
-                      "pending_sha": audit.sha(Path(pending)) if pending else None},
-        snapshot_key="verdicts")
+def bank_inputs_sha() -> dict:
+    """Hashes of the local inputs a bank is built from besides CSET (check_freshness compares them)."""
+    return {"bank_rules": audit.sha(CSF_BANK_RULES), "csf2_core": audit.sha(CSF_CORE)}
 
 
 # ── Evidence prompts: the Evidence Required line of the CSF sheet (record_bank.py csf-evidence-*) ─────────────
@@ -385,10 +160,6 @@ def store_prompts(prompts: dict) -> None:
     EVIDENCE_PROMPTS.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n")
 
 
-def read_json(path: Path, default):
-    return json.loads(path.read_text()) if path.is_file() else default
-
-
 def load_list(path: Path) -> list:
     try:
         return json.loads(path.read_text())
@@ -431,7 +202,7 @@ def store_evidence(data: dict, review: list) -> tuple[Path, str]:
     reasons = {v["subcategory_id"]: v.get("reason", "") for v in review if v["verdict"] == "fail"}
     store_prompts({sid: t for sid, t in data.items() if sid not in reasons})
     targets = evidence_targets()
-    items = read_json(EVIDENCE_REVISE, {"items": []})["items"] + [
+    items = load_json(EVIDENCE_REVISE, {"items": []})["items"] + [
         {"id": sid, **targets[sid], "draft": data[sid], "reason": reasons[sid]} for sid in sorted(reasons)]
     if items:
         EVIDENCE_REVISE.write_text(json.dumps({"items": items}, indent=2, ensure_ascii=False))
@@ -460,7 +231,7 @@ def store_revision(data: dict, review: list, revise: list) -> tuple[Path, str]:
 def record_evidence(file: str, review_file: str, revision: bool, model: str, session: str | None) -> None:
     """Round 1, or with revision=True round 2 (exactly the prompts that failed round 1)."""
     review = load_list(Path(review_file))
-    revise = read_json(EVIDENCE_REVISE, {"items": []})["items"]
+    revise = load_json(EVIDENCE_REVISE, {"items": []})["items"]
     if revision and not revise:
         sys.exit(f"[build_csf_bank] ERROR: a revision, but {EVIDENCE_REVISE.name} has nothing to revise")
     allowed = {i["id"] for i in revise} if revision else set(evidence_targets())
@@ -504,67 +275,31 @@ def record_review() -> None:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fanout-threshold", type=int, default=BANK_RULES["fanout_threshold"]["value"])
-    parser.add_argument("--allow-pending", action="store_true")
     parser.add_argument("--output-dir", default=str(CSF_BANKS))
     parser.add_argument("--cache-dir", default=str(BANK_BUILD))
     args = parser.parse_args()
 
     cache, out_dir = Path(args.cache_dir), Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    ev = audit.begin(cache / "audit.jsonl", "build_csf_bank",
-                     {"fanout_threshold": args.fanout_threshold, "allow_pending": args.allow_pending})
+    ev = audit.begin(cache / "audit.jsonl", "build_csf_bank", {})
     candidates = load_json(cache / "cset_candidates.json")
     if candidates is None:
         ev.fail("[build_csf_bank] ERROR: cset_candidates.json not found. Run scripts/extract_cset_candidates.py first.")
-    judgements = load_json(cache / "cset_judgements.json", {"questions": {}})
-
-    csf_core = load_json(CSF_CORE)
-    active = {s["subcategory_id"]: s for s in csf_core["subcategories"]
+    active = {s["subcategory_id"]: s for s in load_json(CSF_CORE)["subcategories"]
               if not s["subcategory_text"].startswith("[Withdrawn")}
-    olir_iso = load_json(CROSSWALK_DIRS["olir_iso27001.json"] / "olir_iso27001.json")
-    iso_lookup = olir_iso["csf_to_controls"]
-    build_inputs = [cache / "cset_candidates.json", cache / "cset_judgements.json", CSF_CORE]
-
-    # Route every sector first: the banks are built together, from the same CSET collection and judgements.
-    routed, pending = {}, {}
-    for domain in DOMAINS:
-        routed[domain], domain_pending = route_pairs(domain, candidates, judgements, active, args.fanout_threshold)
-        for qid, p in domain_pending.items():         # one question needs one judgement, whatever the sector
-            item = pending.setdefault(qid, {"needs": [], "fit_subcategories": []})
-            item["needs"] += [n for n in p["needs"] if n not in item["needs"]]
-            item["fit_subcategories"] += [s for s in p["fit_subcategories"] if s not in item["fit_subcategories"]]
-
-    pending_path = cache / "work" / "pending_judgements.json"
-    if pending:
-        pending_path.parent.mkdir(parents=True, exist_ok=True)
-        pending_path.write_text(json.dumps(build_pending_file(pending, candidates, active), indent=2, ensure_ascii=False))
-        print(f"{len(pending)} questions need a judgement → {pending_path}")
-        if not args.allow_pending:
-            ev.finish("pending", build_inputs, [pending_path], detail=f"{len(pending)} questions need an agent judgement; "
-                      "no bank written", cset_commit=candidates["cset_commit"])
-            sys.exit(2)
-    else:
-        pending_path.unlink(missing_ok=True)
 
     paths, details = [], []
-    for domain in DOMAINS:
-        n_pending = sum(1 for r in routed[domain] if r["status"] == "pending")
-        bank = build_bank(domain, routed[domain], candidates, active, iso_lookup, n_pending)
-        bank["inputs_sha"] = bank_inputs_sha(cache)
-        path = bank_path(domain, out_dir)
+    for sector in DOMAINS:
+        bank = build_bank(sector, candidates, active)
+        path = bank_path(sector, out_dir)
         path.write_text(json.dumps(bank, indent=2, ensure_ascii=False))
         paths.append(path)
-        by = {}
-        for r in routed[domain]:
-            by[(r["status"], r["decided_by"])] = by.get((r["status"], r["decided_by"]), 0) + 1
-        routing = ", ".join(f"{s}/{d or '-'}: {n}" for (s, d), n in sorted(by.items(), key=str))
-        print(f"Built: {path}\n  Subcategories: {bank['total_subcategories']}, with candidates: {bank['with_candidates']} "
-              f"(maturity-model questions in {bank['with_maturity_questions']}), empty: {bank['empty']}\n"
-              f"  Routing: {routing}")
-        details.append(f"{domain}: {bank['with_candidates']} of {bank['total_subcategories']} with candidates")
-    print(f"CSET commit: {candidates['cset_commit']}")
-    ev.finish(inputs=build_inputs, outputs=paths, detail="; ".join(details), cset_commit=candidates["cset_commit"])
+        n = sum(len(v["candidates"]) for v in bank["questions"].values())
+        empty = sum(1 for v in bank["questions"].values() if not v["candidates"])
+        details.append(f"{sector}: {n} questions, {empty} subcategories empty")
+    print("[build_csf_bank] " + "; ".join(details) + f" (CSET {candidates['cset_commit'][:7]})")
+    ev.finish(inputs=[cache / "cset_candidates.json", CSF_CORE, CSF_BANK_RULES], outputs=paths,
+              detail="; ".join(details), cset_commit=candidates["cset_commit"])
 
 
 if __name__ == "__main__":

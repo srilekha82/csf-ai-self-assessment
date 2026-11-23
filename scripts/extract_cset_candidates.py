@@ -16,8 +16,8 @@ has no plain question list: its SQL migration files add, change and delete rows 
 order and keeps each table's rows as they are after the last file (every INSERT, UPDATE and DELETE counts).
 
 It skips the work when CSET has not changed since the last run (same commit, or no SQL file changed). Each question
-gets flags for later steps: empty_text, truncated, not_answerable, statement_only (a practice with no question text,
-which an agent later rewrites as a question).
+gets flags for later steps: empty_text, truncated, not_answerable, statement_only (a practice with no question text;
+the bank shows its CSET outcome text instead).
 
 SQL tables read: MATURITY_REFERENCES (Gen_File_Id 692 = CSF 2.0), MATURITY_QUESTIONS, MATURITY_MODELS, and for NCSF_V2
 REQUIREMENT_QUESTIONS_SETS, NEW_REQUIREMENT, NEW_QUESTION.
