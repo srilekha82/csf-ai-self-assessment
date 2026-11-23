@@ -191,8 +191,8 @@ class Recording(unittest.TestCase):
         self.assertIn("40 of 41 subcategories missing", text)
         ctx = R.question_context(self.inp)
         for other in ctx["rows"]:                                    # as if every subcategory were recorded
-            doc["subcategories"].setdefault(other, dict(doc["subcategories"][sid], rows_sha=R.rows_sha(
-                {r: v["sig"] for r, v in ctx["rows"][other].items()})))
+            doc["subcategories"].setdefault(other, dict(doc["subcategories"][sid],
+                                                        rows_sha=R.rows_record(ctx, other)["rows_sha"]))
         self.assertTrue(R.bank_freshness("areas", doc, self.inp)[0])
         doc["subcategories"][sid]["rows_sha"] = "changed"           # a mapping row changed after the questions
         ok, text = R.bank_freshness("areas", doc, self.inp)

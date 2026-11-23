@@ -172,7 +172,7 @@ def prepare_evidence(inp: dict, bank: str) -> Path:
     """The evidence writer's input: every question of the bank with no evidence_prompt yet, numbered as in the bank,
     with its outcome, the areas and impacts it is asked for (area bank) and the titles of the safeguards it cites."""
     require_cis_text(inp, "the evidence input")
-    doc = json.loads((AI_BANKS / f"question_bank_ai_rmf_{bank}.json").read_text())
+    doc = json.loads(ai_bank_path(bank, AI_BANKS).read_text())
     names = {a["id"]: a["name"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]}
     items = {}
     for sid, e in doc["subcategories"].items():
@@ -209,7 +209,7 @@ def main():
             ev.fail("[prepare_ai_bank] ERROR: evidence needs a bank (areas|foundation)")
         out = prepare_evidence(inp, args.bank)
         n = sum(len(i["questions"]) for i in json.loads(out.read_text())["items"].values())
-        ev.finish(inputs=[AI_BANKS / f"question_bank_ai_rmf_{args.bank}.json", AI_AREAS], outputs=[out],
+        ev.finish(inputs=[ai_bank_path(args.bank, AI_BANKS), AI_AREAS], outputs=[out],
                   detail=f"prepared {out.name}: {n} questions without an evidence prompt")
         print(f"[prepare_ai_bank] wrote {rel(out)}: {n} questions without an evidence prompt")
         return

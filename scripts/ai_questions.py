@@ -15,7 +15,6 @@ Output:    data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json
 Terms (mapping row, foundation, producer details, needs human review): see docs/guide.md, Glossary.
 """
 
-import hashlib
 import json
 import re
 import sys
@@ -23,18 +22,18 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_BANKS, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT, AI_PROMPTS, AI_QUESTION_BANKS,  # noqa: E402
-                    AI_QUESTION_RULES,
-                    AI_SCOPE_RULES, REPO_ROOT)
+from config import (AI_AREAS, AI_BANKS, AI_FUNCTION_ORDER, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
+                    AI_PROMPTS, AI_QUESTION_BANKS, AI_QUESTION_RULES, AI_SCOPE_RULES, REPO_ROOT, SHEET_SPECS,
+                    ai_bank_path)
 from ai_bank_common import area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
 import audit  # noqa: E402
 
 
 TEXT_LIMITS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]   # data/ai/question_rules.json
 MIN_QUESTION_CHARS = TEXT_LIMITS["min_chars"]
-PLAYBOOK_REF = re.compile(r"^((?:GOVERN|MAP|MEASURE|MANAGE) \d+\.\d+) [—–-] suggested action (\d+)$")
-WHOLE = "Whole subcategory: "                      # how a question_number 0 failure shows on every line of the sheet
-STALE = "the mapping rows changed since these questions were written: check them against the rows, then set pass"
+PLAYBOOK_REF = re.compile(rf"^((?:{'|'.join(AI_FUNCTION_ORDER)}) \d+\.\d+) [—–-] suggested action (\d+)$")
+SHEET_WORDS = json.loads(SHEET_SPECS.read_text())["review_words"]   # data/common/sheet_specs.json
+WHOLE, STALE = SHEET_WORDS["whole_subcategory"], SHEET_WORDS["rows_changed"]
 
 
 def question_context(inp: dict) -> dict:
@@ -58,14 +57,9 @@ def question_context(inp: dict) -> dict:
             "foundation_count": qrules["foundation_questions"], "row_max": qrules["row_questions"]["max"]}
 
 
-def rows_sha(rows: dict) -> str:
-    """Hash of a subcategory's mapping rows as the questions were written for them (a changed row makes them stale)."""
-    return hashlib.sha256(json.dumps(rows, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
-
-
 def rows_record(ctx: dict, sid: str) -> dict:
     """What an area bank entry stores about the rows its questions were written for."""
-    return {"rows_sha": rows_sha({r: v["sig"] for r, v in ctx["rows"][sid].items()}),
+    return {"rows_sha": audit.json_sha({r: v["sig"] for r, v in ctx["rows"][sid].items()}),
             "rows": {r: {"area": v["area"], "impact": v["impact"]} for r, v in ctx["rows"][sid].items()}}
 
 
@@ -78,7 +72,7 @@ def bank_freshness(bank: str, doc: dict, inp: dict) -> tuple[bool, str]:
     missing = [s for s in want if s not in have]
     extra = [s for s in have if s not in want]
     changed = [s for s in want if s in have and bank == "areas"
-               and have[s].get("rows_sha") != rows_sha({r: v["sig"] for r, v in ctx["rows"][s].items()})]
+               and have[s].get("rows_sha") != rows_record(ctx, s)["rows_sha"]]
     review = sum(1 for e in have.values() if e["status"] == "needs_human_review")
     if missing or extra or changed:
         parts = ([f"{len(missing)} of {len(want)} subcategories missing"] if missing else []) + \
@@ -211,7 +205,7 @@ EVIDENCE_MAX_CHARS = TEXT_LIMITS["evidence_max_chars"]
 
 def evidence_targets(bank: str) -> dict[tuple[str, int], dict]:
     """{(subcategory, question number 1-based): question} for the bank's questions with no evidence_prompt yet."""
-    doc = load_json(AI_BANKS / f"question_bank_ai_rmf_{bank}.json", f"{bank} bank")
+    doc = load_json(ai_bank_path(bank, AI_BANKS), f"{bank} bank")
     return {(sid, n): q for sid, e in doc["subcategories"].items() for n, q in enumerate(e["questions"], 1)
             if not q.get("evidence_prompt")}
 
@@ -254,7 +248,7 @@ def validate_evidence(data, review, bank: str) -> list[str]:
 
 def human_decided(data, args) -> list[str]:
     """A subcategory a person decided in the review sheet is not overwritten by agent output unless --replace-human."""
-    path = AI_BANKS / f"question_bank_ai_rmf_{args.bank}.json"
+    path = ai_bank_path(args.bank, AI_BANKS)
     if not isinstance(data, dict) or not path.is_file() or getattr(args, "replace_human", False):
         return []
     bank = load_json(path, path.name)["subcategories"]
@@ -290,7 +284,7 @@ def reason_from_lines(lines: list[dict]) -> dict[str, str]:
         if whole.strip():
             parts["0"] = whole.strip()
         if own.strip() or not whole.strip():
-            parts[str(n)] = own.strip() or "flagged in the review sheet"
+            parts[str(n)] = own.strip() or SHEET_WORDS["flagged"]
     return parts
 
 
@@ -471,7 +465,7 @@ def restamp_banks(stages: list[tuple[str, bool, str]]) -> tuple[str, bool]:
         return f"not re-stamped, not everything is current: {'; '.join(not_current)}", True
     today = date.today().isoformat()
     for bank in AI_QUESTION_BANKS:
-        path = AI_BANKS / f"question_bank_ai_rmf_{bank}.json"
+        path = ai_bank_path(bank, AI_BANKS)
         doc = load_json(path, path.name)
         doc["built_on"] = today
         path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
@@ -481,7 +475,7 @@ def restamp_banks(stages: list[tuple[str, bool, str]]) -> tuple[str, bool]:
 def store_questions(data: dict, args, inp: dict) -> tuple[Path, str]:
     """Store checked questions in their bank (entries replaced per subcategory); returns (path, summary)."""
     today = date.today().isoformat()
-    path = AI_BANKS / f"question_bank_ai_rmf_{args.bank}.json"
+    path = ai_bank_path(args.bank, AI_BANKS)
     AI_BANKS.mkdir(parents=True, exist_ok=True)
     bank = load_json(path, path.name) if path.is_file() else {"bank": args.bank, "subcategories": {}}
     ctx = question_context(inp)
@@ -508,7 +502,7 @@ def store_evidence(data: dict, args, inp: dict) -> tuple[Path, str]:
     """Store the evidence lines the evaluator passed in their bank; returns (path, summary)."""
     review = load_json(Path(args.review), "review file")
     failed = {(v["subcategory_id"], v["question_number"]) for v in review if v["verdict"] == "fail"}
-    path = AI_BANKS / f"question_bank_ai_rmf_{args.bank}.json"
+    path = ai_bank_path(args.bank, AI_BANKS)
     bank = load_json(path, path.name)
     stored = 0
     for sid, per in data.items():
@@ -539,7 +533,7 @@ def accept_pilot(note: str | None) -> str:
     """Record that the user accepted the pilot. Needs at least one recorded subcategory in each bank."""
     recorded = {}
     for bank in AI_QUESTION_BANKS:
-        path = AI_BANKS / f"question_bank_ai_rmf_{bank}.json"
+        path = ai_bank_path(bank, AI_BANKS)
         recorded[bank] = len(load_json(path, path.name)["subcategories"]) if path.is_file() else 0
     if not all(recorded.values()):
         sys.exit(f"[record_bank] ERROR: run the pilot first; recorded subcategories per bank: {recorded}")

@@ -15,7 +15,6 @@ Output:    data/ai/mapping.json
 Terms (AI area, mapping row, folded subcategory, required check, needs human review): see docs/guide.md, Glossary.
 """
 
-import hashlib
 import json
 import sys
 from datetime import date
@@ -301,7 +300,7 @@ def mapping_input_hashes(inp: dict, area_id: str) -> dict:
     """What a recorded area was built from: its own row of the AI areas sheet (`area`), the whole sheet and the rules
     (both reach the drafter: other areas' covers, candidates, foundation), and the sources."""
     row = next((a for a in load_json(AI_AREAS, "ai_areas.json")["ai_areas"] if a["id"] == area_id), None)
-    return {"area": hashlib.sha256(json.dumps(row, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16],
+    return {"area": audit.json_sha(row),
             "ai_areas": audit.sha(AI_AREAS), "rules": audit.sha(AI_MAPPING_RULES),
             "playbook": inp["core"]["source_sha256_16"],
             "guides": {g: s["sha256_16"] for g, s in inp["sg_doc"]["sources"].items()}}
@@ -494,7 +493,7 @@ def mapping_from_sheet(lines: list[dict], doc: dict, inp: dict, m: dict) -> tupl
 def mapping_hash(doc: dict) -> str:
     """Hash of what the mapping decides (rows, no_question, removals per area); not the sheet hash or dates."""
     keep = {a: {k: e.get(k) for k in ("rows", "no_question", "removed_by_human")} for a, e in doc["areas"].items()}
-    return hashlib.sha256(json.dumps(keep, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+    return audit.json_sha(keep)
 
 
 def mapping_problems(doc: dict | None) -> tuple[list[str], list[str]]:
