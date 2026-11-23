@@ -1086,9 +1086,3 @@ class BankAge(unittest.TestCase):
     def test_a_missing_bank_names_the_command_to_build_it(self):
         self.assertIn("CSF bank finance is missing: run /build-csf-bank", self.problems())
 
-    def test_the_committed_banks_have_a_build_date_and_the_limits_exist(self):
-        from config import METADATA, bank_path
-        limits = json.loads(METADATA.read_text())["question_banks"]
-        self.assertEqual(BA.bank_problems("finance", limits={"csf_max_age_days": 10**6, "ai_max_age_days": 10**6},
-                                          csf_file=bank_path("finance")), [])
-        self.assertTrue({"csf_max_age_days", "ai_max_age_days"} <= set(limits))

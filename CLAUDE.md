@@ -6,7 +6,10 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
 
 ## Running
 - Always use the venv: `.venv/bin/python ./scripts/<script>.py` (create: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`). Run from the repo root.
-- Tests: `.venv/bin/python -m unittest discover -s tests` (stores are redirected to a temp dir; keep it that way).
+- Unit tests (every change; they must pass): `.venv/bin/python -m unittest discover -s tests` (`test_*.py`; their own
+  inputs, stores redirected to a temp dir; keep it that way).
+- Data checks (the committed banks and data files; at the end-to-end run, after a rebuild):
+  `.venv/bin/python -m unittest discover -s tests -p "check_*.py"`.
 
 ## What to run
 - **Generate questions:** `/generate-questions` (one numbered intake, CSF + AI RMF, one `questionnaire.xlsx`). Parts on an

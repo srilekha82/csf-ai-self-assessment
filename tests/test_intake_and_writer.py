@@ -13,47 +13,58 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import intake as IN  # noqa: E402
 import config as OPT  # noqa: E402
 import write_questionnaire as WQ  # noqa: E402
-from config import AI_AREAS, AI_SCOPE_RULES  # noqa: E402
+
+
+def opt(*values, alone=()):
+    return [{"value": v, "label": str(v), **({"alone": True} if v in alone else {})} for v in values]
+
+
+# A small intake of the same shape as data/common/intake_options.json (menus spelled out, as config.py gives them),
+# with its AI areas and area rules: the intake code is tested on these, not on today's menus.
+MENUS = [
+    {"key": "sector", "prompt": "Sector", "multi": False, "options": opt("finance", "healthcare")},
+    {"key": "certs", "prompt": "Certs", "multi": True, "options": opt("none", "iso27001", "pci_dss", alone=("none",))},
+    {"key": "ai_in_use", "prompt": "AI", "multi": False, "options": opt("none", "some", "unsure")},
+    {"key": "role", "prompt": "Role", "multi": False, "ask_if": {"ai_in_use": "some"},
+     "options": opt("consumer", "producer", "both")},
+    {"key": "built_on_existing_model", "prompt": "Built on", "multi": False, "ask_if": {"role": ["producer", "both"]},
+     "options": opt(True, False)},
+    {"key": "given_to_others", "prompt": "Given", "multi": False, "ask_if": {"role": ["producer", "both"]},
+     "options": opt(True, False)},
+    {"key": "ai_usage", "prompt": "Usage", "multi": True, "optional": True, "ask_if": {"ai_in_use": "some"},
+     "options": opt("internal_process", "customer_facing")},
+    {"key": "ai_components", "prompt": "Components", "multi": True, "optional": True, "ask_if": {"ai_in_use": "some"},
+     "options": opt("agent", "hosting")},
+]
+AREA_ORDER = ["internal_process", "customer_facing", "invisible_usage", "input", "output", "model", "agent", "mcp_tools",
+              "hosting"]
+AREA_RULES = {"always": ["invisible_usage"], "any_ai": ["input", "output"],
+              "role": {"producer": ["model"], "both": ["model"]}, "with": {"agent": ["mcp_tools"]}}
+
+
+def use_fixture_menus(test: unittest.TestCase, tmp: Path) -> None:
+    """Point intake.py at the menus, areas and area rules above for this test."""
+    (tmp / "areas.json").write_text(json.dumps({"ai_areas": [{"id": a} for a in AREA_ORDER]}))
+    (tmp / "rules.json").write_text(json.dumps({"ai_area_rules": AREA_RULES}))
+    for name, value in (("INTAKE_QUESTIONS", MENUS), ("BY_KEY", {q["key"]: q for q in MENUS}),
+                        ("AI_AREAS", tmp / "areas.json"), ("AI_SCOPE_RULES", tmp / "rules.json")):
+        test.addCleanup(setattr, IN, name, getattr(IN, name))
+        setattr(IN, name, value)
 
 
 def args(**over):
     base = dict(replace=False, org="Acme Corp", sector="1", certs="2 3", ai_in_use="2", role="1",
-                built_on_existing_model=None, given_to_others=None, ai_usage="1 3", ai_components="2", date="2026-10-14", runs_dir=None)
+                built_on_existing_model=None, given_to_others=None, ai_usage="1 2", ai_components="1", date="2026-10-14", runs_dir=None)
     base.update(over)
     return type("A", (), base)()
 
 
-class Options(unittest.TestCase):
-    def test_every_ai_area_is_reachable(self):
-        # every AI area comes from a menu or ai_area_rules; automatic ones (always, any_ai) are never also on a menu.
-        # A with-rule may add a menu item too (agents add MCP / tools, which can also be ticked).
-        areas = {a["id"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]}
-        menu = {q["key"]: [o["value"] for o in q["options"]] for q in OPT.INTAKE_QUESTIONS}
-        r = json.loads(AI_SCOPE_RULES.read_text())["ai_area_rules"]
-        menus, auto = set(menu["ai_usage"]) | set(menu["ai_components"]), set(r["always"]) | set(r["any_ai"])
-        added = {a for adds in list(r["with"].values()) + list(r["role"].values()) for a in adds}
-        self.assertEqual(menus | auto | added, areas)
-        self.assertFalse(menus & auto)
-        self.assertTrue(set(r["role"]) <= set(menu["role"]))
-        self.assertTrue(set(r["with"]) <= areas)
-
-    def test_client_roles_cover_every_answer_and_only_known_roles(self):
-        rules, qrules = json.loads(AI_SCOPE_RULES.read_text()), json.loads(OPT.AI_QUESTION_RULES.read_text())
-        menu = {q["key"]: [o["value"] for o in q["options"]] for q in OPT.INTAKE_QUESTIONS}
-        roles = {k: v for k, v in rules["client_roles"].items() if k != "description"}
-        self.assertEqual(set(roles), set(menu["role"]) | {"none", "unsure"})
-        self.assertTrue({r for v in roles.values() for r in v} <= set(qrules["roles"]))
-
-    def test_every_sector_has_its_bumps_and_every_cert_a_file(self):
-        bumps = json.loads(OPT.SCOPE_RULES.read_text())["sector_bumps"]
-        self.assertEqual(set(bumps) - {"description"}, set(OPT.SECTORS))
-        menu = [o["value"] for o in next(q for q in OPT.INTAKE_QUESTIONS if q["key"] == "certs")["options"]]
-        self.assertEqual(set(OPT.CERT_FILES), set(menu) - {"none"})
 
 
 class Intake(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
+        use_fixture_menus(self, self.tmp)
 
     def go(self, **over):
         a = args(runs_dir=str(self.tmp), **over)
@@ -75,7 +86,7 @@ class Intake(unittest.TestCase):
         self.assertEqual((intake["sector"], intake["certs"]), ("finance", ["iso27001", "pci_dss"]))
         usage = self.usage()
         self.assertEqual(usage["ai_areas"], ["internal_process", "customer_facing", "invisible_usage", "input", "output",
-                                             "mcp_tools"])
+                                             "agent", "mcp_tools"])
         self.assertEqual((usage["role"], usage["producer"]), ("consumer", None))
         self.assertEqual(set(usage), {"ai_in_use", "role", "producer", "ai_areas"})
 
@@ -87,9 +98,9 @@ class Intake(unittest.TestCase):
 
     def test_producer_and_agents_bring_their_areas(self):
         # build, built on an existing model, not given to others; agents and a hosted model
-        self.assertEqual(self.go(role="2", built_on_existing_model="1", given_to_others="2", ai_usage="", ai_components="3 4"), 0)
+        self.assertEqual(self.go(role="2", built_on_existing_model="1", given_to_others="2", ai_usage="", ai_components="1 2"), 0)
         usage = self.usage()
-        for area in ("model_building", "model", "test_tuning_data", "agent", "mcp_tools", "hosting"):
+        for area in ("model", "agent", "mcp_tools", "hosting"):
             self.assertIn(area, usage["ai_areas"])
         self.assertEqual(usage["producer"], {"built_on_existing_model": True, "given_to_others": False})
         self.assertEqual(usage["role"], "producer")
@@ -98,7 +109,7 @@ class Intake(unittest.TestCase):
         self.assertEqual(self.go(role="3", built_on_existing_model="2", given_to_others="1"), 0)
         usage = self.usage()
         self.assertEqual(usage["role"], "both")
-        self.assertTrue({"internal_process", "customer_facing", "model_building", "model"} <= set(usage["ai_areas"]))
+        self.assertTrue({"internal_process", "customer_facing", "model"} <= set(usage["ai_areas"]))
         self.assertEqual(usage["producer"], {"built_on_existing_model": False, "given_to_others": True})
 
     def test_blank_menus_are_allowed(self):
@@ -136,9 +147,10 @@ class ScopeWhenInDoubt(unittest.TestCase):
     """An SoA exclusion or an unreadable SoA entry: the subcategory is asked in full, with a note for the client."""
 
     def test_excluded_and_unreadable_controls_are_asked_in_full_with_a_note(self):
-        runs = Path(tempfile.mkdtemp())
-        IN.write(args(runs_dir=str(runs), certs="2", ai_in_use="1", role=None, ai_usage=None, ai_components=None))
-        run = runs / "Acme_Corp_2026-10-14"
+        run = Path(tempfile.mkdtemp()) / "Acme_Corp_2026-10-14"
+        run.mkdir()
+        (run / "csf_intake.json").write_text(json.dumps({"org": "Acme Corp", "date": "2026-10-14", "sector": "finance",
+                                                         "certs": ["iso27001"]}))
         (run / "soa_parsed.json").write_text(json.dumps([
             {"control_id": "Annex A Controls: 5.20", "control_id_raw": "5.20", "applicable": False,
              "applicable_raw": "No", "exclusion_reason": "No suppliers handle data", "implemented": None},
@@ -207,6 +219,10 @@ class CsetCsf2Set(unittest.TestCase):
 
     def test_the_csf2_question_leads_then_the_sets_for_the_sector(self):
         import build_csf_bank as BQ
+        for name, value in (("SECTOR_BY_MODEL", {"ACET": "finance", "SSG IT": "saas_cloud"}),
+                            ("REJECT_FLAGS", {"not_answerable", "empty_text", "truncated"}), ("STATEMENT_FIELD", "outcome")):
+            self.addCleanup(setattr, BQ, name, getattr(BQ, name))
+            setattr(BQ, name, value)                           # the test's own rules, not data/csf/bank_rules.json
         active = {s: {"subcategory_text": s} for s in ("GV.OV-01", "ID.AM-01", "RS.MA-02")}
         q = lambda text, model, flags=(), practice=None: {"question_text": text, "model_name": model, "flags": list(flags),
                                                          "practice": practice or {}}
@@ -302,27 +318,6 @@ class Workbook(unittest.TestCase):
         self.assertEqual(self.area_columns_shown({"ai_in_use": "unsure", "ai_areas": ["invisible_usage"]}),
                          set(labels.values()))                            # unsure: all, to find out what AI it has
 
-    def test_the_template_matches_the_data(self):
-        """The questionnaire template is laid out by hand in Excel: fail if it drifts from the data it shows."""
-        import openpyxl
-        from config import AI_AREAS, AI_AREA_LABELS, AI_QUESTION_RULES, QUESTIONNAIRE_TEMPLATE
-        wb = openpyxl.load_workbook(QUESTIONNAIRE_TEMPLATE)
-        for framework, spec in WQ.FRAMEWORKS.items():
-            heads = {c.value for c in wb[spec["sheet"]][1]}
-            self.assertLessEqual(set(WQ.row_values(framework, {}, 0, {})) | {"Answer", "Evidence"}, heads, framework)
-        inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
-        labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
-        areas = [labels[a["id"]] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
-        ws = wb[inv["sheet"]]
-        self.assertEqual(ws["A1"].value, inv["instructions"])
-        self.assertEqual([c.value for c in ws[2]], [inv["system_column"], *areas, *inv["criticality"]])
-        from openpyxl.utils.cell import range_boundaries
-        bounds = [(range_boundaries(str(dv.sqref)), dv) for dv in ws.data_validations.dataValidation]
-        lists = {b[0]: dv.formula1.strip('"').split(",") for b, dv in bounds}
-        self.assertEqual([lists[c] for c in range(2, 2 + len(areas))], [["Yes"]] * len(areas))
-        self.assertEqual([lists[2 + len(areas) + i] for i in range(len(inv["criticality"]))],
-                         list(inv["criticality"].values()))
-        self.assertEqual({b[3] for b, _ in bounds}, {2 + inv["rows"]})
 
 if __name__ == "__main__":
     unittest.main()
