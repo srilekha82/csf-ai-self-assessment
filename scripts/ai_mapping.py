@@ -22,10 +22,29 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_CORE, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_MAPPING_XLSX,  # noqa: E402
-                    AI_SAFEGUARDS, AI_SAFEGUARD_IDS)
+                    AI_SAFEGUARDS, AI_SAFEGUARD_IDS, SHEET_SPECS)
 from ai_bank_common import foundation_subcategories, load_json  # noqa: E402
 import audit  # noqa: E402
 
+
+
+DRAFT_FIELDS = ("function", "subcategory", "cis_refs", "impact", "why", "folded")   # a row as the drafter writes it
+SHEET_WORDS = json.loads(SHEET_SPECS.read_text())["review_words"]   # data/common/sheet_specs.json
+
+
+def draft_of(area_id: str, rows: list, no_question: list) -> dict:
+    """An area as the drafter hands it in (the stored rows without status, decided_by or review_reason)."""
+    return {"area": area_id, "no_question": no_question,
+            "rows": [{k: r[k] for k in DRAFT_FIELDS if k in r} for r in rows]}
+
+
+def unfold(rows: list, own: set) -> list:
+    """Rows with every subcategory in `own` taken out of their folded lists (it now has a row of its own)."""
+    out = []
+    for r in rows:
+        left = [f for f in r.get("folded", []) if f not in own]
+        out.append({k: v for k, v in r.items() if k != "folded"} | ({"folded": left} if left else {}))
+    return out
 
 
 # ── mapping_rules.json: what each AI area may cite and must check ──────────────────────────────────────────────
@@ -134,7 +153,7 @@ def validate_mapping(data, inp, m: dict, review) -> list[str]:
     allowed = {s["id"] for s in area_candidates(inp, rules, area_id)}
     errors, seen = [], set()
     for n, r in enumerate(rows, 1):
-        tag = f"row {n}"
+        tag = str(r.get("subcategory")) if isinstance(r, dict) else f"row {n}"
         if not isinstance(r, dict) or not {"function", "subcategory", "cis_refs", "impact", "why"} <= set(r) <= \
                 {"function", "subcategory", "cis_refs", "impact", "why", "folded"}:
             errors.append(f"{tag}: fields must be function, subcategory, cis_refs, impact, why (and optional folded)")
@@ -212,16 +231,17 @@ def folded_problems(rows: list, inp: dict, rules: dict) -> list[str]:
     for n, r in enumerate(rows, 1):
         folded = r.get("folded", [])
         if not isinstance(folded, list):
-            errors.append(f"row {n}: folded must be a list of subcategory ids")
+            errors.append(f"{r.get('subcategory')}: folded must be a list of subcategory ids")
             continue
         for sid in folded:
             sub = inp["subs"].get(sid)
             if sub is None or sub["function"] not in rules["functions"] or sid in rules["foundation"]["subcategories"]:
-                errors.append(f"row {n}: folded {sid!r} is not a MAP, MEASURE or MANAGE subcategory an area can map")
+                errors.append(f"{r.get('subcategory')}: folded {sid!r} is not a MAP, MEASURE or MANAGE subcategory an area "
+                              "can map")
             elif sid in own:
-                errors.append(f"row {n}: folded {sid} is also a row of its own; keep one")
+                errors.append(f"{r.get('subcategory')}: folded {sid} is also a row of its own; keep one")
             elif sid in where:
-                errors.append(f"row {n}: folded {sid} is already folded into {where[sid]}")
+                errors.append(f"{r.get('subcategory')}: folded {sid} is already folded into {where[sid]}")
             else:
                 where[sid] = r.get("subcategory")
     return errors
@@ -247,9 +267,7 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
     doc = load_json(AI_MAPPING, "mapping.json") if AI_MAPPING.is_file() else {"areas": {}}
     rows, no_question, kept, removed = keep_human_decisions(rows, data.get("no_question", []),
                                                            doc["areas"].get(data["area"]), inp)
-    merged = {"area": data["area"], "no_question": no_question,
-              "rows": [{k: r[k] for k in ("function", "subcategory", "cis_refs", "impact", "why", "folded") if k in r}
-                       for r in rows]}
+    merged = draft_of(data["area"], rows, no_question)
     problems = validate_mapping(merged, inp, m, None) if kept else []
     if problems:   # a person's earlier decision no longer fits the current rules: they decide, not the script
         print("[record_bank] ERROR: merged with the rows a person decided, the area breaks the rules; nothing "
@@ -258,9 +276,7 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
         sys.exit(1)
     own = {r["subcategory"] for r in rows}
     missing = [x for x in missing if x["subcategory"] not in own and x["subcategory"] not in removed]
-    doc["description"] = ("AI RMF mapping: per AI area, rows of AI RMF function -> subcategory, CIS safeguards that prove "
-                          "it, impact. Drafted and evaluated by agents (prompts/ai_rmf_mapping_*.md), recorded by "
-                          "record_bank.py ai-mapping, reviewed by a person. Model: docs/ai-rmf-model.md.")
+    doc.pop("description", None)
     doc["areas"][data["area"]] = {
         "recorded_on": date.today().isoformat(), "inputs": mapping_input_hashes(inp, data["area"]),
         "rows": rows, "no_question": no_question, **({"missing": missing} if missing else {}),
@@ -285,11 +301,7 @@ def keep_human_decisions(rows: list, no_question: list, prev: dict | None, inp: 
     human = {r["subcategory"]: r for r in prev["rows"] if r.get("decided_by") == "human"}
     removed = [sid for sid in prev.get("removed_by_human", []) if sid not in human]
     out = [r for r in rows if r["subcategory"] not in human and r["subcategory"] not in removed] + list(human.values())
-    for i, r in enumerate(out):   # a subcategory the person decided is no longer folded into an agent row
-        if set(r.get("folded", [])) & set(human):
-            out[i] = {k: v for k, v in r.items() if k != "folded"}
-            if [f for f in r["folded"] if f not in human]:
-                out[i]["folded"] = [f for f in r["folded"] if f not in human]
+    out = unfold(out, set(human))   # a subcategory the person decided is no longer folded into an agent row
     out.sort(key=lambda r: list(inp["subs"]).index(r["subcategory"]))
     fns = {r["function"] for r in out}
     kept = len(human) + sum(1 for r in rows if r["subcategory"] in removed)
@@ -313,7 +325,9 @@ def mapping_freshness(entry: dict, area_id: str, inp: dict) -> str:
     rec, now = entry.get("inputs") or {}, mapping_input_hashes(inp, area_id)
     if rec == now:
         return "current"
-    if rec.get("playbook") != now["playbook"] or rec.get("guides") != now["guides"]:
+    used = area_rules(load_json(AI_MAPPING_RULES, "mapping_rules.json"), area_id)["guides"]   # the guides it cites
+    if rec.get("playbook") != now["playbook"] or \
+            any((rec.get("guides") or {}).get(g) != now["guides"].get(g) for g in used):
         return "redraft"
     if rec.get("area", None if rec.get("ai_areas") == now["ai_areas"] else "unknown") not in (None, now["area"]):
         return "redraft"
@@ -333,10 +347,7 @@ def revalidate(inp: dict, m: dict) -> tuple[dict, list[str], int]:
         if state == "redraft":
             lines.append(f"{area_id}: its own row in the AI areas sheet or the sources changed; re-draft it")
             continue
-        draft = {"area": area_id, "no_question": entry.get("no_question", []),
-                 "rows": [{k: r[k] for k in ("function", "subcategory", "cis_refs", "impact", "why", "folded") if k in r}
-                          for r in entry["rows"]]}
-        problems = validate_mapping(draft, inp, m, None)
+        problems = validate_mapping(draft_of(area_id, entry["rows"], entry.get("no_question", [])), inp, m, None)
         if problems:
             lines += [f"{area_id}: {p}" for p in problems]
             continue
@@ -378,10 +389,8 @@ def mapping_sheet_rows(doc: dict, inp: dict, m: dict) -> tuple[list[dict], list[
         for s in mapped_subs:
             r = by_sub.get(s["subcategory_id"])
             refs = r["cis_refs"] if r else []
-            note = ("Also covers " + ", ".join(r["folded"]) + " (folded into this row by the drafter)."
-                    if r and r.get("folded") else
-                    f"Folded into {into[s['subcategory_id']]}: that row covers this subcategory's content."
-                    if s["subcategory_id"] in into else "")
+            note = (SHEET_WORDS["also_covers"].format(", ".join(r["folded"])) if r and r.get("folded") else
+                    SHEET_WORDS["folded_into"].format(into[s["subcategory_id"]]) if s["subcategory_id"] in into else "")
             lines.append({
                 **({"_comments": {"why": note}} if note else {}),
                 "area": area_id, "area_name": m["areas"].get(area_id, {}).get("name", ""), "function": s["function"],
@@ -391,22 +400,22 @@ def mapping_sheet_rows(doc: dict, inp: dict, m: dict) -> tuple[list[dict], list[
                 "status": r["status"] if r else "needs_human_review" if s["subcategory_id"] in missing else "",
                 "review_reason": " ".join(filter(None, [
                     r.get("review_reason", "") if r else "",
-                    f"Missing: {missing[s['subcategory_id']]}" if s["subcategory_id"] in missing else "",
-                    *[f"Note: {t}" for t in notes.get(s["subcategory_id"], [])]])),
+                    SHEET_WORDS["missing"] + missing[s["subcategory_id"]] if s["subcategory_id"] in missing else "",
+                    *[SHEET_WORDS["note"] + t for t in notes.get(s["subcategory_id"], [])]])),
                 "decided_by": r["decided_by"] if r else "", "folded": r.get("folded", []) if r else [],
             })
     drafted = doc.get("areas", {})
     reach = {(a, r["subcategory"]) for a in drafted for r in drafted[a]["rows"]}
     folds = {(a, f): r["subcategory"] for a in drafted for r in drafted[a]["rows"] for f in r.get("folded", [])}
     foundation = set(foundation_subcategories(m["rules"], inp))
-    coverage = [["Function", "Subcategory", "What it means (Playbook outcome)", "Areas reaching it",
-                 *[a if a in drafted else f"{a} (not drafted)" for a in m["areas"]]]]
+    coverage = [[*SHEET_WORDS["coverage_headers"],
+                 *[a if a in drafted else SHEET_WORDS["not_drafted"].format(a) for a in m["areas"]]]]
     for s in inp["subs"].values():   # all 72, in AI RMF order; every AI area as a column
         if s["subcategory_id"] in foundation:
-            coverage.append([s["function"], s["subcategory_id"], s["outcome"], "foundation (asked once, by role)",
+            coverage.append([s["function"], s["subcategory_id"], s["outcome"], SHEET_WORDS["foundation"],
                              *["" for _ in m["areas"]]])
             continue
-        cells = ["yes" if (a, s["subcategory_id"]) in reach else f"folded into {folds[(a, s['subcategory_id'])]}"
+        cells = ["yes" if (a, s["subcategory_id"]) in reach else SHEET_WORDS["folded_cell"].format(folds[(a, s["subcategory_id"])])
                  if (a, s["subcategory_id"]) in folds else "" for a in m["areas"]]
         coverage.append([s["function"], s["subcategory_id"], s["outcome"], sum(1 for c in cells if c), *cells])
     return lines, coverage
@@ -464,20 +473,10 @@ def mapping_from_sheet(lines: list[dict], doc: dict, inp: dict, m: dict) -> tupl
                 changed += 1
                 rows.append({**new, "decided_by": "human"})
         rows.sort(key=lambda r: list(inp["subs"]).index(r["subcategory"]))
-        own = {r["subcategory"] for r in rows}
-        for i, r in enumerate(rows):   # a subcategory the person maps on its own is no longer folded into another row
-            if set(r.get("folded", [])) & own:
-                rows[i] = {k: v for k, v in r.items() if k != "folded"}
-                if [f for f in r["folded"] if f not in own]:
-                    rows[i]["folded"] = [f for f in r["folded"] if f not in own]
+        rows = unfold(rows, {r["subcategory"] for r in rows})   # mapped on its own: no longer folded into another row
         with_rows = {r["function"] for r in rows}
-        draft = {"area": area_id, "rows": [{k: r[k] for k in ("function", "subcategory", "cis_refs", "impact", "why",
-                                                              "folded") if k in r} for r in rows],
-                 "no_question": [q for q in areas[area_id].get("no_question", []) if q["function"] not in with_rows]}
-        at = {f"row {k}:": f"sheet row {subs[r['subcategory']]['line']} ({r['subcategory']}):"
-              for k, r in enumerate(rows, 1)}
-        problems += [f"{area_id}: " + next((e.replace(a, b, 1) for a, b in at.items() if e.startswith(a + " ")), e)
-                     for e in validate_mapping(draft, inp, m, None)]
+        draft = draft_of(area_id, rows, [q for q in areas[area_id].get("no_question", []) if q["function"] not in with_rows])
+        problems += [f"{area_id}: {e}" for e in validate_mapping(draft, inp, m, None)]
         new_doc["areas"][area_id].update(rows=rows, no_question=draft["no_question"])
         new_doc["areas"][area_id].pop("missing", None)
         if missing:

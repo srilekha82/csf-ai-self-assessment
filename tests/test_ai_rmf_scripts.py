@@ -594,6 +594,17 @@ class Mapping(unittest.TestCase):
         self.inp = R.load_inputs()
         self.inp["has_text"] = True   # structure only; the CIS text is local only
 
+    def test_a_new_guide_edition_redrafts_only_the_areas_that_cite_it(self):
+        import copy
+        entry = {"inputs": R.mapping_input_hashes(self.inp, "agent")}          # agent cites the Agents guide only
+        self.assertEqual(R.mapping_freshness(entry, "agent", self.inp), "current")
+        llm = copy.deepcopy(self.inp)
+        llm["sg_doc"]["sources"]["LLM"]["sha256_16"] = "new-llm-edition"
+        self.assertEqual(R.mapping_freshness(entry, "agent", llm), "recheck")   # not its guide: no agent needed
+        agents = copy.deepcopy(self.inp)
+        agents["sg_doc"]["sources"]["AGENT"]["sha256_16"] = "new-agents-edition"
+        self.assertEqual(R.mapping_freshness(entry, "agent", agents), "redraft")
+
     def row(self, function, sub, cis=(), impact=("access",), why=None):
         return {"function": function, "subcategory": sub, "cis_refs": list(cis), "impact": list(impact),
                 "why": why or f"{sub} checks how the org handles MCP servers and tool credentials."}
