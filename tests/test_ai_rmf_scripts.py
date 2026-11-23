@@ -872,6 +872,13 @@ class FreshnessGate(unittest.TestCase):
     def states(self):
         return {stage: ok for stage, ok, _ in CF.ai_stages()}
 
+    def test_a_parse_without_the_local_cis_text_is_not_current(self):
+        self.build_everything()
+        CF.AI_SAFEGUARDS.unlink()                   # a fresh clone: only the committed ids file
+        stage = next(s for s in CF.ai_stages() if s[0] == "parse")
+        self.assertFalse(stage[1])
+        self.assertIn("missing the CIS text", stage[2])
+
     def test_nothing_built_is_not_current_even_though_sources_exist(self):
         s = self.states()
         self.assertTrue(s["parse"] is False and not any(s.values()))
@@ -1012,6 +1019,26 @@ class CsfBankStage(unittest.TestCase):
         ok, text, notes = self.stage()
         self.assertTrue(ok)                       # compared with the local commit instead
         self.assertTrue(notes and "could not check upstream" in notes[0])
+
+
+class ParseUpToDate(unittest.TestCase):
+    """parse_ai_rmf_sources.py reads the PDFs only when an output is missing or a source file changed."""
+
+    def test_up_to_date_only_when_every_output_records_the_current_sources(self):
+        import audit
+        import parse_ai_rmf_sources as PS
+        tmp = Path(tempfile.mkdtemp())
+        playbook, guides = tmp / "pb.pdf", {g: tmp / f"{g}.pdf" for g in ("LLM", "MCP", "AGENT")}
+        for f in (playbook, *guides.values()):
+            f.write_text(f"content of {f.name}")
+        sources = {"sources": {g: {"sha256_16": audit.sha(p)} for g, p in guides.items()}}
+        (tmp / PS.AI_CORE.name).write_text(json.dumps({"source_sha256_16": audit.sha(playbook)}))
+        (tmp / PS.AI_SAFEGUARD_IDS.name).write_text(json.dumps(sources))
+        self.assertFalse(PS.up_to_date(playbook, guides, tmp))          # no local CIS text file
+        (tmp / PS.AI_SAFEGUARDS.name).write_text(json.dumps(sources))
+        self.assertTrue(PS.up_to_date(playbook, guides, tmp))
+        guides["MCP"].write_text("a new edition")
+        self.assertFalse(PS.up_to_date(playbook, guides, tmp))          # a source changed
 
 
 if __name__ == "__main__":

@@ -7,7 +7,10 @@ Called by: /build-ai-bank (step 2)
 Input:     data/ai/source/: the AI RMF Playbook and the three CIS v8.1 AI companion guides
 Output:    data/ai/ai_rmf_core.json, cis_ai_safeguards.json (local only) and cis_ai_safeguard_ids.json
 
-Usage: .venv/bin/python ./scripts/parse_ai_rmf_sources.py [--source-dir DIR] [--output-dir DIR]
+Usage: .venv/bin/python ./scripts/parse_ai_rmf_sources.py [--source-dir DIR] [--output-dir DIR] [--force]
+
+Up to date (prints so, reads nothing) when all three outputs exist and record the SHA-256 of the source files on
+disk; --force reads the PDFs anyway (e.g. after editing parse_config.json).
 
 ai_rmf_core.json holds the 4 functions and 72 subcategories, each with its suggested actions. cis_ai_safeguards.json
 holds every CIS safeguard with its text and stays on your machine (never committed); cis_ai_safeguard_ids.json is the
@@ -193,10 +196,22 @@ def safeguard_ids_doc(sg_doc: dict) -> dict:
             "safeguards": [{k: r[k] for k in keep if k in r} for r in sg_doc["safeguards"]]}
 
 
+def up_to_date(playbook: Path, guide_files: dict[str, Path], out: Path) -> bool:
+    """All three outputs exist (the CIS text one included: it is local only) and record the sources' current hashes."""
+    docs = [out / AI_CORE.name, out / AI_SAFEGUARDS.name, out / AI_SAFEGUARD_IDS.name]
+    if not all(p.is_file() for p in docs):
+        return False
+    core, sg, ids = (json.loads(p.read_text()) for p in docs)
+    guides = {g: audit.sha(p) for g, p in guide_files.items()}
+    recorded = lambda d: {g: v.get("sha256_16") for g, v in d.get("sources", {}).items()}  # noqa: E731
+    return core.get("source_sha256_16") == audit.sha(playbook) and recorded(sg) == guides == recorded(ids)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-dir", default=str(AI_SOURCE))
     parser.add_argument("--output-dir", default=str(AI))
+    parser.add_argument("--force", action="store_true", help="read the PDFs even if the outputs are up to date")
     args = parser.parse_args()
 
     src, out = Path(args.source_dir), Path(args.output_dir)
@@ -209,6 +224,11 @@ def main():
     if missing:
         ev.fail(f"[parse_ai_rmf_sources] ERROR: source file(s) missing (see data/ai/source/README.md): {missing}")
     inputs = [playbook, *guide_files.values()]
+    if not args.force and up_to_date(playbook, guide_files, out):
+        print("[parse_ai_rmf_sources] up to date: the outputs were read from these exact source files (--force to "
+              "read them again)")
+        ev.finish(inputs=inputs, detail="up to date")
+        return
 
     try:
         functions = parse_playbook(playbook)
