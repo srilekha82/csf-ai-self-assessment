@@ -48,152 +48,84 @@ evaluator and nothing is left for a person; if it refuses, stop and show the use
 .venv/bin/python ./scripts/parse_ai_rmf_sources.py
 ```
 
-Writes `data/ai/ai_rmf_core.json` (the 4 functions with their Playbook descriptions, and their 72 subcategories with
-suggested actions) and
-`data/ai/cis_ai_safeguards.json` (the safeguards of the three guides, with their CIS text: local only, never
-committed) and `data/ai/cis_ai_safeguard_ids.json` (the same without the text: committed). It fails, writing nothing,
-if a count is off. It reads nothing and says "up to date" when the outputs were made from these exact PDFs and the
-local CIS text file exists (`--force` reads them anyway: only after editing `data/ai/parse_config.json`).
-Agents read these files, never the PDFs.
+It reads the Playbook and CIS PDFs into `data/ai/ai_rmf_core.json` and the CIS safeguard files, which agents read
+instead of the PDFs. It skips itself when the PDFs are unchanged (`--force` only after editing
+`data/ai/parse_config.json`).
 
-## Step 4 — Questions (subagents)
+## Step 4 — Questions (only when the gate shows a bank `missing` or `incomplete`)
 
-Two banks, built the same way: **foundation** (GOVERN and the 12 foundation subcategories of
-`data/ai/mapping_rules.json`; questions per subcategory from the Playbook, each tagged with the roles it is asked of:
-none, consumer, producer) and **areas** (one item per subcategory with every AI area's mapping row on it; each row is
-asked once per role its area allows, or twice when its check holds two practices, and rows that would get the same
-question share one). Use Sonnet
-(`model: "sonnet"`) for the generator and Opus (`model: "opus"`) for the evaluator (a Sonnet evaluator misses wrong
-citations and duplicates).
+Two banks: **foundation** (GOVERN and the other foundation subcategories, asked once per organisation) and **areas**
+(per subcategory, every AI area's mapping row on it). Pass subagents paths, not content.
 
-Ask the user: **pilot** (a few subcategories the user agrees to, then stop for review) or **full** (all subcategories
-not yet recorded, one AI RMF function per batch).
+**Pilot or full.** If the gate's `pilot` line is not `accepted` (no pilot yet, or a question prompt changed): pilot.
+Propose about 6 subcategories and wait for the user's yes: GOVERN 1.2 and GOVERN 1.6 (foundation); one area
+subcategory with many areas (e.g. MEASURE 2.8); one with a producer detail; one with a folded subcategory; one MAP
+subcategory on usage areas. Otherwise: full, one batch per AI RMF function, `--missing` (only what is not recorded),
+or `--ids` for the subcategories the gate lists as changed.
 
-### Pilot
-Propose about 6 subcategories and show them to the user before running (wait for confirmation):
-- two foundation: one GOVERN policy subcategory (e.g. GOVERN 1.2) and GOVERN 1.6 (the AI system inventory)
-- one area subcategory with many areas (e.g. MEASURE 2.8, the audit trail: tests sharing)
-- one with producer-only areas and a producer detail (e.g. a MANAGE row on model_building about releases)
-- one with a folded subcategory (e.g. MAP 3.2 on internal_process folds MAP 5.1)
-- one MAP subcategory on usage areas (e.g. MAP 1.4)
-
-### The loop (per batch: the pilot's ids of one bank, or one AI RMF function in a full run)
-1. Prepare the batch input:
+The loop, per batch (`<b>` = `foundation` or `areas`, `<t>` = batch tag):
+1. `.venv/bin/python ./scripts/prepare_ai_bank.py batch <b> (--ids ... | --function <F> --missing) --tag <t>`
+   → `work/batch_<b>_<t>.json`.
+2. **Generator** (fresh subagent): `prompts/ai_rmf_question_generator.md` with the batch → `work/<t>_gen1.json`.
+3. **Evaluator** (fresh subagent, never sees the generator's prompt): `prompts/ai_rmf_question_evaluator.md` with the
+   batch and gen1 → `work/<t>_eval1.json`.
+4. Only if eval1 fails anything: a fresh generator revises the failing subcategories (batch, gen1, eval1 → `gen2`), a
+   fresh evaluator checks it (batch, gen1, eval1, gen2 → `eval2`). Two turns at most.
+5. Record; if a command lists problems, send them back (evaluator file problems to the evaluator, question problems to
+   the generator) and record again:
    ```bash
-   .venv/bin/python ./scripts/prepare_ai_bank.py batch <foundation|areas> --ids "<ID>" ... --tag <tag>   # pilot
-   .venv/bin/python ./scripts/prepare_ai_bank.py batch <foundation|areas> --function MEASURE --missing    # full
-   ```
-   It writes `data/ai/bank_build/work/batch_<bank>_<tag>.json`.
-2. **Generator** (a fresh subagent via the Agent tool, Sonnet): tell it to follow
-   `prompts/ai_rmf_question_generator.md` with the batch file as input and to write its output to `work/<tag>_gen1.json`.
-   Pass paths, not content.
-3. **Evaluator** (another fresh subagent, Opus): tell it to follow `prompts/ai_rmf_question_evaluator.md` with the
-   batch file and `work/<tag>_gen1.json`, and to write its verdicts (every check of every question, and a `complete`
-   verdict per subcategory) to `work/<tag>_eval1.json`. It must not see the generator's prompt.
-4. If `eval1` fails anything: a fresh generator subagent revises only those subcategories (inputs: the batch file,
-   `gen1`, `eval1`; output `work/<tag>_gen2.json` with the COMPLETE question list of each failing subcategory), then a
-   fresh evaluator checks `gen2` into `work/<tag>_eval2.json`, given also `gen1` and `eval1` (round 2: unchanged
-   questions that passed keep their verdicts, except checks 6 and 7). Two turns at most.
-5. Assemble and record (the script marks a subcategory `needs_human_review` if it still fails after turn 2; it rejects
-   an evaluator file without a verdict on every check of every question, or a round 2 file that fails an unchanged
-   question that passed round 1 on a check other than 6 and 7: send it back to the evaluator):
-   ```bash
-   .venv/bin/python ./scripts/record_bank.py ai-assemble --gen1 work/... --eval1 work/... [--gen2 ... --eval2 ...] --out data/ai/bank_build/work/<tag>_record.json
-   .venv/bin/python ./scripts/record_bank.py ai-questions <foundation|areas> data/ai/bank_build/work/<tag>_record.json \
+   .venv/bin/python ./scripts/record_bank.py ai-assemble --gen1 data/ai/bank_build/work/<t>_gen1.json \
+       --eval1 data/ai/bank_build/work/<t>_eval1.json [--gen2 ... --eval2 ...] --out data/ai/bank_build/work/<t>_record.json
+   .venv/bin/python ./scripts/record_bank.py ai-questions <b> data/ai/bank_build/work/<t>_record.json \
        --model <generator model id> --session "evaluator=<evaluator model id>"
    ```
-   If `questions` lists problems (a row not asked, or asked more than twice, for a role; a role the area does not allow; a
-   safeguard not of the row; a fold not cited; a foundation subcategory without a consumer or producer question), send
-   them back to the generator and repeat; nothing is stored until it passes. A subcategory the user decided in the
-   review sheet is refused: leave it out of the batch, or add `--replace-human` only if the user agreed.
-6. Refresh the review sheet of that bank: `.venv/bin/python ./scripts/sheet_io.py export area_questions` (or
-   `foundation_questions`); it refuses if the sheet has edits not yet imported: ask the user to import them first.
+   A subcategory the user decided in the review sheet is refused: leave it out, or add `--replace-human` only if the
+   user agreed.
+6. `.venv/bin/python ./scripts/sheet_io.py export area_questions` (or `foundation_questions`). If it refuses (sheet edits
+   not imported), ask the user to run `sheet_io.py import area_questions` / `foundation_questions` first.
 
-### After the pilot: stop
-Do not continue to a full run on your own. Report to the user: how many subcategories passed on turn 1 and turn 2, how
-many need human review, and token use per batch if you can see it. Show 2 or 3 PASSING questions as well as the
-failures (include a shared question and its rows), so passes get reviewed too. Run the evaluator once on a file with 3
-deliberately weak, checkbox-style questions added to a copy of one subcategory (never recorded) and report whether it
-caught them. Point the user to the review sheets (`data/ai/authoring/questions_areas.xlsx`,
-`questions_foundation.xlsx`); the user cannot easily edit spreadsheets, so take their decisions in chat, apply them to
-the sheet and run `sheet_io.py import area_questions` / `foundation_questions`. The user tunes the generator and
-evaluator prompts from this, then runs `/build-ai-bank` again for the full run.
+**After a pilot: stop.** Report turn 1 and turn 2 passes and what needs human review; show 2 or 3 passing questions
+(one shared) as well as the failures. Point the user to `data/ai/authoring/questions_areas.xlsx` and
+`questions_foundation.xlsx`; take their decisions in chat, apply them to the sheet and import it. When the user says
+the pilot is good: `.venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"`.
 
-When the user says the pilot is good, record it:
-```bash
-.venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"
-```
-The acceptance is tied to the current generator and evaluator prompts: later rebuilds need no pilot until either
-prompt is edited.
+**After a full run:** show the user 5 random passing subcategories to spot-check.
 
-### Full run
-Use `prepare_ai_bank.py batch <bank> --function <MAP|MEASURE|MANAGE|GOVERN> --missing` so each batch holds only
-subcategories not yet recorded (split a function with `--ids` if the batch is large), and run the loop per batch. At
-the end show the user a random sample of 5 passing subcategories to spot-check.
+## Step 5 — Complete?
 
-## Step 5 — Check completeness
+`.venv/bin/python ./scripts/check_freshness.py --ai-bank`: `bank foundation` and `bank areas` must be `current`.
+`incomplete` names what is missing or changed: back to Step 4 for those.
 
-```bash
-.venv/bin/python ./scripts/check_freshness.py --ai-bank
-```
-
-Both `bank foundation` and `bank areas` must show `current`. `incomplete` lists what is missing, or the area
-subcategories whose mapping rows changed after their questions were written: go back to Step 4 (`--missing`, or
-`--ids` for the changed ones).
-
-### Step 5b — Evidence prompts (agents; only questions without one)
-Each bank question gets its own evidence prompt once, so every client gets a specific line rather than a generic one.
+### Step 5b — Evidence lines (only questions without one)
 Per bank (`foundation`, then `areas`):
+1. `.venv/bin/python ./scripts/prepare_ai_bank.py evidence <b>` → `work/evidence_input_<b>.json`. It says how many;
+   nothing to do at 0.
+2. **Writer** (fresh subagent): `prompts/ai_rmf_evidence_writer.md` with the input → `work/evidence_<b>.json` (split
+   the area bank by function if the input is large).
+3. **Evaluator** (fresh subagent, never sees the writer's prompt): `prompts/ai_rmf_evidence_evaluator.md` with the input
+   and the writer's file → `work/evidence_<b>_eval.json`.
+4. `.venv/bin/python ./scripts/record_bank.py ai-evidence <b> data/ai/bank_build/work/evidence_<b>.json \
+   --review data/ai/bank_build/work/evidence_<b>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
+   One pass: a failed line is not stored (the question keeps its generic line). Then export the bank's review sheet.
 
-1. `.venv/bin/python ./scripts/prepare_ai_bank.py evidence <bank>` writes
-   `data/ai/bank_build/work/evidence_input_<bank>.json` (only questions with no evidence prompt; it says how many).
-   Nothing to do when it says 0.
-2. **Writer** (a fresh subagent, Sonnet): follow `prompts/ai_rmf_evidence_writer.md` with that input; write
-   `work/evidence_<bank>.json`. For the area bank, split by function (MAP, MEASURE, MANAGE) if the input is large.
-3. **Evaluator** (a fresh subagent, Opus; it must not see the writer's prompt): follow
-   `prompts/ai_rmf_evidence_evaluator.md` with the input and the writer's file; write `work/evidence_<bank>_eval.json`.
-4. Record: `.venv/bin/python ./scripts/record_bank.py ai-evidence <bank> data/ai/bank_build/work/evidence_<bank>.json
-   --review data/ai/bank_build/work/evidence_<bank>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
-   A failed prompt is not stored (the question keeps the generic line from `data/ai/evidence_prompts.json`; review
-   it in the questions sheet); one pass, no revision turn. Then refresh the review sheet
-   (`sheet_io.py export area_questions` / `foundation_questions`).
+## Step 6 — AI impact notes (only when the gate's `notes` line is not current)
 
-## Step 6 — AI impact notes (agent; skip if sources are unchanged and notes exist)
+`.venv/bin/python ./scripts/prepare_ai_notes.py` → `work/impact_pending.json` (the CSF subcategories CIS maps to the
+MCP and agents guides). Follow `prompts/ai_impact_notes_writer.md`; record each patch with
+`.venv/bin/python ./scripts/record_bank.py ai-notes <file> --model <model id>` and send back what it lists:
+1. Layer 1, exposure → `work/notes_layer1.json`.
+2. Layer 2, use → `work/notes_layer2.json`.
+3. **Evaluator** (fresh subagent, never sees the writer's prompt): `prompts/ai_impact_notes_evaluator.md` with
+   `impact_pending.json` and `data/csf/ai_impact_notes.json` → `work/notes_review1.json`, recorded with
+   `record_bank.py ai-notes-review data/ai/bank_build/work/notes_review1.json --model <model id>`.
+4. Only if notes were flagged: a fresh writer revises them (the prompt's "Revision turn") → `work/notes_revision.json`,
+   recorded with `ai-notes`; a fresh evaluator reviews the rewritten ones → `notes_review2.json`. Two turns at most.
+5. `.venv/bin/python ./scripts/sheet_io.py export impact_notes`; the user decides flagged notes in chat, you apply them
+   and run `sheet_io.py import impact_notes`.
 
-Notes for orgs reached by external agents or AI-enabled attackers, and where AI use changes the reading.
-
-```bash
-.venv/bin/python ./scripts/prepare_ai_notes.py
-```
-
-It joins the CIS → CSF 2.0 mapping to the MCP and agents guide safeguards and writes
-`data/ai/bank_build/work/impact_pending.json` (about 48 CSF subcategories; the unmapped ones are listed, not guessed). Read
-`prompts/ai_impact_notes_writer.md` and that file. Run the two layers in order, each as a patch file, each recorded:
-
-1. Layer 1 (exposure, only where the safeguard text supports something real for an org with no AI): write
-   `data/ai/bank_build/work/notes_layer1.json`, then
-   `.venv/bin/python ./scripts/record_bank.py ai-notes data/ai/bank_build/work/notes_layer1.json --model <model id>`
-2. Layer 2 (use): write `data/ai/bank_build/work/notes_layer2.json` for the subset where use changes the reading, then
-   the same command with that file.
-
-Fix-and-rerun on problems. A note a person decided in the review sheet is refused; leave it out of the patch.
-
-3. Review (a fresh subagent, Opus, `model: "opus"`; it must not see the writer's prompt): follow
-   `prompts/ai_impact_notes_evaluator.md` with `impact_pending.json` and `data/csf/ai_impact_notes.json`, writing the
-   flagged notes to `data/ai/bank_build/work/notes_review1.json`, then
-   `.venv/bin/python ./scripts/record_bank.py ai-notes-review data/ai/bank_build/work/notes_review1.json --model <model id>`
-   (every note not yet reviewed and not decided by a person gets status pass or needs_human_review).
-   If notes were flagged: a fresh writer (Sonnet) follows the writer prompt's "Revision turn" with
-   `impact_pending.json` and the notes file, writes `data/ai/bank_build/work/notes_revision.json` (every flagged
-   subcategory, complete), recorded with `record_bank.py ai-notes` (a rewritten note loses its status); then a fresh
-   evaluator reviews again into `notes_review2.json`, recorded with `notes-review`: it judges only the rewritten notes,
-   the others keep their verdict. Two turns at most; what still fails goes to the user in the review sheet.
-4. Refresh the review sheet: `.venv/bin/python ./scripts/sheet_io.py export impact_notes`
-   (`data/ai/authoring/impact_notes.xlsx`; the user decides flagged notes in chat, Claude applies them and runs
-   `sheet_io.py import impact_notes`).
+A note a person decided in the review sheet is refused: leave it out of the patch.
 
 ## Step 7 — Report
 
-Tell the user: what was rebuilt or skipped, the gate output, counts (passed, needs human review), notes count, and
-what is left to do. List any subcategory that needs human review with its reason (read it from the bank file only
-for those).
+Tell the user what was rebuilt or skipped, the counts (passed, needs human review), and what is left to do. List each
+subcategory that needs human review with its reason (read it from the bank file only for those).

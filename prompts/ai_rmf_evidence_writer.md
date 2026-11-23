@@ -17,10 +17,9 @@ One evidence prompt of 1 to 2 short sentences (at most 400 characters) that:
 - carries what the question itself must not ask, so the question stays short: coverage (which AI systems, areas,
   vendors or teams it covers), how recent the artefact is;
 - never repeats the question, never asks a yes / no, never names a vendor or product, never assumes the organisation
-  has something (say "if any" where it may not). In particular, an event a well-run organisation may never have had
-  (an alert, incident, finding, report, complaint, re-rating, declined vendor feature, deletion request) is always
-  asked as "the latest one, if any"; prefer the artefact the practice itself produces (the procedure, the setting,
-  the review record) over proof of an event.
+  has something (say "if any" where it may not). An event a well-run organisation may never have had (an alert,
+  incident, finding, complaint, deletion request) is asked as "the latest one, if any"; prefer the artefact the
+  practice itself produces (the procedure, the setting, the review record) over proof of an event.
 
 Do not write a prompt for a question that is not in the input.
 

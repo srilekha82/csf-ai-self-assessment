@@ -2,6 +2,8 @@
 Prepares the small input file each AI agent reads in the AI RMF bank build, so agents never read the PDFs
 or whole banks. It decides and stores nothing.
 
+Why:       an agent given everything (PDFs, the whole mapping, whole banks) costs many tokens and wanders off its task.
+           Each agent gets one file with only what its step needs, so its judgement is focused, cheap and repeatable.
 Called by: /ai-mapping (step 2; also run by /build-ai-bank step 2), /build-ai-bank (step 4 questions, 5b evidence)
 Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks)
 Output:    data/ai/bank_build/work/mapping_input_<area>.json, batch_<bank>_<tag>.json or evidence_input_<bank>.json
@@ -39,8 +41,9 @@ from ai_bank_common import (area_candidates, area_roles, area_rules, check_mappi
                             foundation_subcategories, load_inputs, load_json, rel, require_cis_text, row_id)
 from ai_mapping import mapping_status  # noqa: E402
 
-MAX_ACTIONS, ACTION_CHARS, AI_TEXT_CHARS = 6, 220, 260   # how much Playbook and CIS text the mapping drafter sees
 import audit  # noqa: E402
+
+MAX_ACTIONS, ACTION_CHARS, AI_TEXT_CHARS = 6, 220, 260   # how much Playbook and CIS text the mapping drafter sees
 
 
 def trunc(text: str, n: int) -> str:
@@ -215,16 +218,14 @@ def main():
         if not args.area:
             ev.fail("[prepare_ai_bank] ERROR: mapping needs --area ID")
         out = prepare_mapping(inp, args.area)
-        ev.finish(inputs=[AI_CORE, AI_SAFEGUARDS, AI_AREAS, AI_MAPPING_RULES], outputs=[out], detail=f"prepared {out.name}")
-        print(f"[prepare_ai_bank] wrote {rel(out)} ({out.stat().st_size // 1024} KB)")
-        return
+        inputs = [AI_CORE, AI_SAFEGUARDS, AI_AREAS, AI_MAPPING_RULES]
     else:
         if not args.bank:
             ev.fail("[prepare_ai_bank] ERROR: batch needs a bank (areas|foundation)")
         out = prepare_batch(inp, args.bank, args.ids, args.function, args.all, args.tag, args.missing)
+        inputs = [AI_CORE, AI_SAFEGUARDS, AI_MAPPING, AI_AREAS, AI_QUESTION_RULES]
     print(f"[prepare_ai_bank] wrote {rel(out)} ({out.stat().st_size // 1024} KB)")
-    ev.finish(inputs=[AI_CORE, AI_SAFEGUARDS, AI_MAPPING, AI_AREAS, AI_QUESTION_RULES], outputs=[out],
-              detail=f"prepared {out.name}")
+    ev.finish(inputs=inputs, outputs=[out], detail=f"prepared {out.name}")
 
 
 if __name__ == "__main__":
