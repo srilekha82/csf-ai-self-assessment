@@ -19,7 +19,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, SCOPE_RULES, load_csf_intake  # noqa: E402
-from pick_questions import client_roles, pick  # noqa: E402
+from pick_questions import ai_client_roles, ai_questions_for  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
 DETAIL_WORDS = {"built_on_existing_model": "built on an existing model", "given_to_others": "given to others"}
@@ -90,7 +90,7 @@ def check_ai(run_dir: Path) -> list[str]:
     profile = load(run_dir / "ai_intake.json")
     if profile is None:
         return ["AI: ai_intake.json is missing (run the intake)"]
-    roles = client_roles(profile, json.loads(AI_SCOPE_RULES.read_text()))
+    roles = ai_client_roles(profile, json.loads(AI_SCOPE_RULES.read_text()))
     flags = [f for f, v in (profile.get("producer") or {}).items() if v]
     areas = profile["ai_areas"]
     problems = []
@@ -132,7 +132,7 @@ def check_ai(run_dir: Path) -> list[str]:
                 elif rows:
                     problems.append(f"AI {name} {sid}: a foundation question must cover no area rows")
         for sid, rec in subs.items():   # nothing missing: what the bank gives this client is all there
-            want = {q["question_text"] for q, _ in pick(name, rec, roles, flags, areas)}
+            want = {q["question_text"] for q, _ in ai_questions_for(name, rec, roles, flags, areas)}
             have = {q.get("question_text") for q in (got.get(sid) or {}).get("questions") or []}
             if want - have:
                 problems.append(f"AI {name} {sid}: {len(want - have)} question(s) the bank gives this client are missing")
