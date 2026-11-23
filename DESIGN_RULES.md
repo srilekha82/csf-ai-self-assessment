@@ -60,6 +60,8 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
   bank holds CSET's own CSF 2.0 set (`NCSF_V2`, one question per subcategory, first) and the maturity-model questions
   CSET maps to CSF 2.0 (practice detail). A gap is closed by reading more of CSET, not by writing questions. A
   client run never rewords them; CSET's own CSF 2.0 question is always kept (`tests/test_picks.py` checks it).
+  Only if the bank has no question for a subcategory does a client run ask the fixed fallback in `scope_rules.json`
+  (built from NIST's outcome text); the run's summary counts these.
   Evidence prompts are not questions: each subcategory gets one, written
   once from NIST's implementation examples and checked by an evaluator. The AI RMF track builds on CSF, not beside it.
 
