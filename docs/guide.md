@@ -21,16 +21,35 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Map the AI areas to the AI RMF (rarely: a new or changed AI area, rules or source) | `/ai-mapping`: one area at a time, pilot first; you review `mapping.xlsx` and accept (`record_bank.py ai-accept-mapping`). |
 | Build or refresh the AI RMF question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank` (does the mapping first if it is not accepted, and accepts it when every row passed): pilot first; after you accept the pilot (`record_bank.py ai-accept-pilot`) later rebuilds need no pilot until a question prompt changes. |
 | Use a new Playbook, CIS guide or CSF download | Replace the file (`data/ai/source/` or `data/csf/source/csf2.xlsx`, links in `data/metadata.json`). The freshness check sees the change; rebuild with the commands above. |
-| Change how many questions per type, or when a question is `gap` | `data/csf/scope_rules.json` (CSF). AI: `data/ai/scope_rules.json` says which roles each client is asked as; every AI question is `full_discovery` (they ask what is done for AI, so they never repeat general security; no gap rule). No code change. |
-| Change an intake menu, a sector, a certification or the question-type order | `data/common/intake_options.json`. Every script reads it through `scripts/options.py`. |
-| Change the AI question roles, producer details or impacts | `data/ai/question_rules.json` (what the generator and evaluator are told, and what `record_bank.py ai-questions` checks). |
+| Change a rule, a menu, a limit or a prompt | See **Policy** below: which file, and what to run after. |
 | Review the AI RMF mapping (right, wrong, missing) | `.venv/bin/python ./scripts/sheet_io.py export mapping`, open `data/ai/authoring/mapping.xlsx` (one line per AI area x subcategory, mapped or not, with the Playbook text; a Coverage sheet), edit, then `sheet_io.py import mapping`. Then accept it: `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`. |
 | Review the AI RMF questions | `.venv/bin/python ./scripts/sheet_io.py export area_questions` (and `foundation_questions`), open `data/ai/authoring/questions_areas.xlsx` / `questions_foundation.xlsx` (one line per question: areas covered, who it is asked of, flag, question, Playbook actions, status), edit, then `sheet_io.py import area_questions`. Changed subcategories are stored as decided by a person and a later generator run does not overwrite them. |
 | Review the CSF AI impact notes | `.venv/bin/python ./scripts/sheet_io.py export impact_notes`, open `data/ai/authoring/impact_notes.xlsx` (one line per CSF subcategory: exposure note, the two use notes, status from the notes evaluator), edit, then `sheet_io.py import impact_notes`. Changed lines are stored as decided by a person. |
-| Change the AI areas (usage and ecosystem components, their impact) | Edit `data/ai/authoring/ai_areas.xlsx` (the decision), then `.venv/bin/python ./scripts/sheet_io.py import ai_areas` (checks every row, writes `data/ai/ai_areas.json`). The model is in `docs/ai-rmf-model.md`. A change to an area makes its mapping rows, and then their questions, out of date. |
-| Change how an agent judges | The file in `prompts/` (see the list below). Editing the AI generator or evaluator prompt makes the accepted pilot stale. |
+| Check that nothing drifted (regression check, writes nothing) | CSF: `.venv/bin/python ./scripts/build_csf_bank.py --check` (a fresh build compared with the committed banks). AI: `.venv/bin/python ./scripts/record_bank.py ai-check` (the stored mapping and banks re-checked against the current rules). |
 | See what happened in a run | `runs/<Org>_<date>/audit.jsonl` (timeline). For an AI bank build, also `judgement_log/` in `data/ai/bank_build/` (what each agent was shown and answered). |
 | Change the code or add a stage | Read `DESIGN_RULES.md` first, then run the unit tests (`.venv/bin/python -m unittest discover -s tests`). After a bank rebuild, also the data checks (`-p "check_*.py"`). |
+
+## Policy: what to change, and what to do after
+
+Rules and wording live in data files, not code. Each file's own `description` says what it decides.
+
+| To change | File (key) | Then |
+|---|---|---|
+| Which CSET question sets go to which sector; which questions are left out | `data/csf/bank_rules.json` (`sector_by_model`, `reject_flags`, `statement_only_text`) | `/build-csf-bank` (scripts only), then the data checks |
+| Question type per state, questions per type, the certification sentences, the fallback question and evidence line, sector bumps, how the SoA is read | `data/csf/scope_rules.json` | Nothing: the next client run uses it |
+| Intake menus, sectors, certifications, question-type order | `data/common/intake_options.json` | Nothing. A new sector also needs its `sector_bumps` entry and a bank (`/build-csf-bank`); a new certification needs its crosswalk (`parse_csf_source.py`) |
+| How old a bank may be | `data/metadata.json` (`question_banks`) | Nothing |
+| The AI areas (usage, components, impacts) | `data/ai/authoring/ai_areas.xlsx`, then `sheet_io.py import ai_areas` | `/build-ai-bank` (it re-drafts the changed area, rechecks the others without an agent, then rebuilds the questions of changed rows). Keep `area_client_labels.json` and the questionnaire template's AI systems sheet in step (data check) |
+| Which CIS controls an AI area may cite, required checks, foundation subcategories, how much source text the drafter sees | `data/ai/mapping_rules.json` | `record_bank.py ai-revalidate` (no agent); re-draft only the areas it names (`/ai-mapping`) |
+| Question roles, producer details, impacts, criticality frame, questions per foundation subcategory, text limits, the AI system inventory | `data/ai/question_rules.json` | `record_bank.py ai-check`: it lists stored questions that break the new rules; regenerate those (`/build-ai-bank`, `--ids`) |
+| Which roles a client is asked as; which AI areas the intake answers give | `data/ai/scope_rules.json` | Nothing: the next client run uses it (data check: every AI area reachable) |
+| The label a client sees for an AI area | `data/ai/area_client_labels.json` | Update the AI systems sheet of `templates/questionnaire_template.xlsx` to match (data check) |
+| The generic AI evidence line (a question with none of its own) | `data/ai/evidence_prompts.json` | Nothing |
+| Priority per AI RMF subcategory (Stage 2) | `data/ai/severity_rules.json` | Nothing yet |
+| Expected counts and file names of the AI source PDFs | `data/ai/parse_config.json` | `parse_ai_rmf_sources.py --force` |
+| Review sheet columns, allowed values and words | `data/common/sheet_specs.json` | `sheet_io.py export <sheet>` again |
+| How the question generator or evaluator judges | `prompts/ai_rmf_question_generator.md`, `ai_rmf_question_evaluator.md` | A new pilot before the next question build (the acceptance goes stale) |
+| How any other agent judges (mapping, evidence, notes) | the file in `prompts/` | Nothing: the next draft or run uses it |
 
 ## How it works
 
@@ -241,7 +260,7 @@ data/
     ├── scope_rules.json        engagement policy: AI area rules for the intake, roles each client is asked as, notes
     ├── evidence_prompts.json   evidence hint per question (foundation, or by the impacts of the rows it covers)
     ├── banks/                  question_bank_ai_rmf_<foundation|areas>.json
-    └── bank_build/             mapping_accepted.json, pilot_accepted.json, audit.jsonl, judgement_log/ (write-once records of agent steps), work/ (temporary)
+    └── bank_build/             mapping_accepted.json, pilot_accepted.json, audit.jsonl, judgement_log/ (write-once records of agent steps, committed), work/ (temporary)
 ```
 
 ### Runs (`runs/<Org>_<date>/`)

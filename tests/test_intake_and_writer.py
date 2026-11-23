@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+import ai_fixture  # noqa: E402,F401  (the frozen AI data: tests/fixtures/ai/)
 import intake as IN  # noqa: E402
 import config as OPT  # noqa: E402
 import write_questionnaire as WQ  # noqa: E402
@@ -240,6 +241,22 @@ class CsetCsf2Set(unittest.TestCase):
         ssg = BQ.build_bank("saas_cloud", candidates, active)["questions"]["GV.OV-01"]["candidates"][1]
         self.assertEqual((ssg["question_text"], ssg["text_from"]), ("Development environments are separated.", "outcome"))
         self.assertEqual(BQ.build_bank("finance", candidates, active)["questions"]["ID.AM-01"]["candidates"], [])
+
+class CsfBankCheck(unittest.TestCase):
+    """build_csf_bank.py --check: a fresh build compared with the committed bank, the build date ignored."""
+
+    def test_only_real_differences_are_reported(self):
+        import build_csf_bank as BQ
+        bank = {"sector": "finance", "cset_commit": "c", "built_on": "2026-11-01",
+                "questions": {"GV.OV-01": {"candidates": [1]}, "ID.AM-01": {"candidates": []}}}
+        fresh = dict(bank, built_on="2026-11-23")
+        self.assertEqual(BQ.bank_differences("finance", fresh, bank), [])
+        changed = dict(fresh, cset_commit="d", questions={"GV.OV-01": {"candidates": [2]}, "RS.MA-02": {"candidates": []}})
+        self.assertEqual(BQ.bank_differences("finance", changed, bank),
+                         ["finance: cset_commit 'c' -> 'd'", "finance GV.OV-01: questions differ",
+                          "finance ID.AM-01: removed", "finance RS.MA-02: added"])
+        self.assertEqual(BQ.bank_differences("finance", fresh, None), ["finance: no committed bank"])
+
 
 class CsfEvidencePrompts(unittest.TestCase):
     def test_the_evidence_line_is_nists_examples_word_for_word(self):

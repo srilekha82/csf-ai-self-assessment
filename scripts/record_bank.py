@@ -20,6 +20,8 @@ What every mode does
 
 AI RMF (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
+  ai-check                                  regression check, no agent, writes nothing: the stored mapping and both banks
+                                            re-checked against the current rules, plus every freshness stage
   ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
                                             ones to redraft
   ai-accept-mapping [--note T] [--by-build] you approve the mapping as it is now (approved again if it changes);
@@ -124,6 +126,7 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument(f"--{name}", required=name in ("gen1", "eval1"))
     p.add_argument("--out", required=True)
     sub.add_parser("ai-revalidate")
+    sub.add_parser("ai-check")
     sub.add_parser("ai-confirm-current")
     for m in ("ai-accept-mapping", "ai-accept-pilot"):
         sub.add_parser(m).add_argument("--note")
@@ -139,6 +142,22 @@ def main():
         files = [Path(p) if p else None for p in (args.gen1, args.eval1, args.gen2, args.eval2)]
         run_step("ai_assemble_questions", {"gen1": args.gen1, "gen2": args.gen2}, [f for f in files if f],
                  [Path(args.out)], lambda: (assemble(*files, Path(args.out)), False))
+    elif mode == "ai-check":
+        import check_freshness
+        from ai_mapping import stored_mapping_problems
+        from ai_questions import stored_bank_problems
+
+        def check():
+            inp = load_inputs()
+            problems = stored_mapping_problems(inp, mapping_inputs(inp))
+            problems += [p for b in AI_QUESTION_BANKS for p in stored_bank_problems(b, inp)]
+            problems += [f"{stage}: {text}" for stage, ok, text in check_freshness.ai_stages() if not ok]
+            for p in problems:
+                print(f"  - {p}")
+            return (f"check: {len(problems)} problems" if problems else
+                    "check: the mapping and both banks pass every check against the current rules, and every stage is "
+                    "current"), bool(problems)
+        run_step("ai_check", {}, [AI_MAPPING, *[ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS]], [], check)
     elif mode == "ai-revalidate":
         def do():
             inp = load_inputs()

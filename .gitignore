@@ -14,5 +14,8 @@ data/ai/cis_ai_safeguards.json
 # run logs: written by the scripts on every run, not part of the code
 audit.jsonl
 judgement_log/
+# except the AI bank build's: the record of every agent decision behind the banks (agent output and hashes,
+# no CIS text: inputs are referenced by path and hash only)
+!data/ai/bank_build/judgement_log/
 # temporary bank build files (prepared inputs, agent drafts, verdicts): deleted at the end of a build
 data/*/bank_build/work/

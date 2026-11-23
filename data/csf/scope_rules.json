@@ -3,10 +3,10 @@
   "function_order": ["GV", "ID", "PR", "DE", "RS", "RC"],
   "sector_bumps": {
     "description": "Subcategories asked one step more demandingly for a sector (confirmatory -> gap -> full_discovery): the areas that matter most in that sector. Maintainer judgement.",
-    "finance": ["DE.CM-01", "GV.RM-01", "PR.DS-01", "PR.DS-02", "RS.MI-01"],
-    "healthcare": ["GV.SC-01", "ID.RA-01", "PR.DS-01", "PR.DS-02", "RC.RP-01"],
+    "finance": ["DE.CM-01", "PR.DS-01", "PR.DS-02", "RS.MI-01"],
+    "healthcare": ["ID.RA-01", "PR.DS-01", "PR.DS-02", "RC.RP-01"],
     "manufacturing_ot": ["DE.CM-01", "PR.PS-01", "RC.RP-01", "RS.MI-01"],
-    "saas_cloud": ["GV.SC-01", "ID.AM-02", "PR.AA-01", "PR.DS-01", "PR.DS-02"],
+    "saas_cloud": ["ID.AM-02", "PR.AA-01", "PR.DS-01", "PR.DS-02"],
     "consulting": [],
     "other": []
   },

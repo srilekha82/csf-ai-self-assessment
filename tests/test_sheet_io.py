@@ -14,6 +14,7 @@ import openpyxl
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+import ai_fixture  # noqa: E402,F401  (the frozen AI data: tests/fixtures/ai/)
 import sheet_io as S  # noqa: E402
 from config import AI_AREAS, AI_AREAS_XLSX  # noqa: E402
 
