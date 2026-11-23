@@ -456,6 +456,19 @@ def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out
     return f"{len(result)} subcategories: {len(result) - len(failing)} pass, {len(failing)} need human review → {out.name}"
 
 
+def stored_bank_problems(bank: str, inp: dict) -> list[str]:
+    """The committed bank re-checked with validate_questions against the current mapping and rules (regression check:
+    the stored agent and person decisions must still pass the checks they passed when recorded). Writes nothing."""
+    path = ai_bank_path(bank, AI_BANKS)
+    if not path.is_file():
+        return [f"{bank} bank: missing"]
+    doc = load_json(path, path.name)
+    data = {sid: {"status": e["status"], "turns": e.get("turns", 1), "questions": e["questions"],
+                  **({"reasons": e["review_reasons"]} if e.get("review_reasons") else {})}
+            for sid, e in doc["subcategories"].items()}
+    return [f"{bank} bank: {p}" for p in validate_questions(data, bank, inp, question_context(inp))]
+
+
 def restamp_banks(stages: list[tuple[str, bool, str]]) -> tuple[str, bool]:
     """When the gate finds everything current, set both banks' built_on to today, as a CSF rebuild does: the bank age a
     client run checks then counts from the last time the bank was confirmed current. Nothing else in the files changes.

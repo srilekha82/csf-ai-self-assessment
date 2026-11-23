@@ -9,6 +9,9 @@ Do not re-implement any parsing or picking inline.
 
 Tools: Bash, Read. Working directory: repo root. Say little: the script summary lines and the final report.
 
+If the user asks only for a **regression check**: run `.venv/bin/python ./scripts/build_csf_bank.py --check` (writes
+nothing; "identical" or the differences) and report it. Nothing else.
+
 ## 1 — CSET path
 The CSET repo is `~/workstuff/cset` unless the user says otherwise (expand `~`).
 If that folder does not exist, clone the public repo there (only the SQL folder, with full history; tell the user):

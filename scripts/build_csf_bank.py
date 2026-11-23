@@ -9,7 +9,10 @@ Input:     data/csf/bank_build/cset_candidates.json (extract_cset_candidates.py)
            data/csf/bank_rules.json
 Output:    data/csf/banks/question_bank_<sector>.json for every sector
 
-Usage: .venv/bin/python ./scripts/build_csf_bank.py [--output-dir DIR] [--cache-dir DIR]
+Usage: .venv/bin/python ./scripts/build_csf_bank.py [--output-dir DIR] [--cache-dir DIR] [--check]
+
+--check (regression check): builds the six banks in memory from the committed inputs and compares them with the
+committed banks, ignoring the build date. Prints "identical" or each difference; writes nothing; exit 1 on a difference.
 
 Per CSF subcategory, in this order:
   1. CSET's own CSF 2.0 question (the NCSF_V2 set), in every sector.
@@ -94,21 +97,47 @@ def bank_inputs_sha() -> dict:
     return {"bank_rules": audit.sha(CSF_BANK_RULES), "csf2_core": audit.sha(CSF_CORE)}
 
 
+def bank_differences(sector: str, fresh: dict, committed: dict | None) -> list[str]:
+    """What a fresh build of one sector's bank changes against the committed one (the build date is ignored)."""
+    if committed is None:
+        return [f"{sector}: no committed bank"]
+    out = [f"{sector}: {k} {committed.get(k)!r} -> {fresh.get(k)!r}" for k in sorted(set(fresh) | set(committed))
+           if k not in ("built_on", "questions") and fresh.get(k) != committed.get(k)]
+    old, new = committed.get("questions", {}), fresh["questions"]
+    for sid in sorted(set(old) | set(new)):
+        if old.get(sid) != new.get(sid):
+            out.append(f"{sector} {sid}: " + ("added" if sid not in old else "removed" if sid not in new else
+                                              "questions differ"))
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default=str(CSF_BANKS))
     parser.add_argument("--cache-dir", default=str(BANK_BUILD))
+    parser.add_argument("--check", action="store_true", help="compare a fresh build with the committed banks; write nothing")
     args = parser.parse_args()
 
     cache, out_dir = Path(args.cache_dir), Path(args.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    ev = audit.begin(cache / "audit.jsonl", "build_csf_bank", {})
+    ev = audit.begin(cache / "audit.jsonl", "build_csf_bank_check" if args.check else "build_csf_bank", {})
     candidates = load_json(cache / "cset_candidates.json")
     if candidates is None:
         ev.fail("[build_csf_bank] ERROR: cset_candidates.json not found. Run scripts/extract_cset_candidates.py first.")
     active = {s["subcategory_id"]: s for s in load_json(CSF_CORE)["subcategories"]
               if not s["subcategory_text"].startswith("[Withdrawn")}
 
+    if args.check:
+        differences = []
+        for sector in SECTORS:
+            differences += bank_differences(sector, build_bank(sector, candidates, active), load_json(bank_path(sector, out_dir)))
+        line = "identical: a fresh build gives the committed banks" if not differences else \
+            f"{len(differences)} differences:\n  - " + "\n  - ".join(differences)
+        print(f"[build_csf_bank] check: {line}")
+        ev.finish(inputs=[cache / "cset_candidates.json", CSF_CORE, CSF_BANK_RULES],
+                  detail=line.splitlines()[0], cset_commit=candidates["cset_commit"])
+        sys.exit(1 if differences else 0)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
     paths, details = [], []
     for sector in SECTORS:
         bank = build_bank(sector, candidates, active)

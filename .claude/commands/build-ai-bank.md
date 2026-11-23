@@ -16,6 +16,9 @@ Delete that folder at the end of the build.
 
 ---
 
+If the user asks only for a **regression check**: run `.venv/bin/python ./scripts/record_bank.py ai-check` (no agent,
+writes nothing: the stored mapping and banks re-checked against the current rules, and every stage) and report it.
+
 ## Step 1 — Freshness gate
 
 ```bash

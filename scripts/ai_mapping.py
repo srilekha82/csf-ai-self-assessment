@@ -334,6 +334,13 @@ def mapping_freshness(entry: dict, area_id: str, inp: dict) -> str:
     return "recheck"
 
 
+def stored_mapping_problems(inp: dict, m: dict) -> list[str]:
+    """Every recorded area re-checked with validate_mapping against the current rules (regression check). Writes nothing."""
+    doc = load_json(AI_MAPPING, "mapping.json") if AI_MAPPING.is_file() else {"areas": {}}
+    return [f"mapping {a}: {p}" for a, e in doc["areas"].items()
+            for p in validate_mapping(draft_of(a, e["rows"], e.get("no_question", [])), inp, m, None)]
+
+
 def revalidate(inp: dict, m: dict) -> tuple[dict, list[str], int]:
     """(the mapping, one line per area that is not current, areas stamped current). Checks only; decides nothing: the
     recorded rows are kept as they are, and an area that breaks the current rules stays stale."""

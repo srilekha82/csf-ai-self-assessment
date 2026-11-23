@@ -1063,6 +1063,27 @@ class ConfirmCurrent(unittest.TestCase):
             self.assertEqual(doc, {"built_on": date.today().isoformat(), "subcategories": {"S": 1}})
 
 
+class RegressionCheck(unittest.TestCase):
+    """record_bank.py ai-check: the stored mapping and banks re-checked against the rules, writing nothing."""
+
+    def test_the_stored_mapping_passes_and_a_broken_one_is_reported(self):
+        import json as J
+        from ai_fixture import FIXTURE
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(setattr, R, "AI_MAPPING", R.AI_MAPPING)
+        R.AI_MAPPING = FIXTURE / "mapping.json"
+        inp = R.load_inputs()
+        m = R.mapping_inputs(inp)
+        self.assertEqual(R.stored_mapping_problems(inp, m), [])
+        doc = J.loads((FIXTURE / "mapping.json").read_text())
+        area = next(iter(doc["areas"]))
+        doc["areas"][area]["rows"][0]["impact"] = ["not-an-impact"]
+        R.AI_MAPPING = tmp / "mapping.json"
+        R.AI_MAPPING.write_text(J.dumps(doc))
+        problems = R.stored_mapping_problems(inp, m)
+        self.assertTrue(problems and problems[0].startswith(f"mapping {area}: ") and "impact" in problems[0])
+
+
 class ParseUpToDate(unittest.TestCase):
     """parse_ai_rmf_sources.py reads the PDFs only when an output is missing or a source file changed."""
 
