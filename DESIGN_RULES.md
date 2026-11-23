@@ -49,7 +49,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    `csf_intake.json` and `ai_intake.json` in the run folder; later steps read those files and never ask or pass the answers
    again. The intake is asked as numbered choices; the script, not the agent, turns numbers into values.
    Temporary files (prepared inputs, agent drafts, verdicts) go in a gitignored `work/` folder
-   (`data/<csf|ai>/bank_build/work/`) and are deleted when the build ends; a client run's whole folder is gitignored.
+   (`data/ai/bank_build/work/`) and are deleted when the build ends; a client run's whole folder is gitignored.
    Only kept inputs, approvals and results are committed.
 10. **Prompts and docs stand alone.** A prompt carries its own rules; it does not point to a design document. Shared
     definitions (AI areas in `data/ai/ai_areas.json`; roles, producer details and impacts in `data/ai/question_rules.json`)
@@ -62,8 +62,8 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
   client run never rewords them; CSET's own CSF 2.0 question is always kept (`tests/test_picks.py` checks it).
   Only if the bank has no question for a subcategory does a client run ask the fixed fallback in `scope_rules.json`
   (built from NIST's outcome text); the run's summary counts these.
-  Evidence prompts are not questions: each subcategory gets one, written
-  once from NIST's implementation examples and checked by an evaluator. The AI RMF track builds on CSF, not beside it.
+  The Evidence Required line is NIST's implementation examples for the subcategory, word for word; no agent
+  writes it. The AI RMF track builds on CSF, not beside it.
 
 ## AI RMF track
 How it works, with a small example (AI area → AI RMF statement → question): `docs/index.md`; the full model:

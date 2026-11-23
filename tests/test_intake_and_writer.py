@@ -156,56 +156,6 @@ class ScopeWhenInDoubt(unittest.TestCase):
         self.assertEqual(scope["GV.OC-01"]["note"], "")                     # only a doubt gets a note
 
 
-class EvidenceLoop(unittest.TestCase):
-    """record_bank.py csf-evidence: round 1, one revision, then a person; a person's decision is final."""
-
-    def setUp(self):
-        import build_csf_bank as RC
-        self.RC, tmp = RC, Path(tempfile.mkdtemp())
-        targets = list(RC.evidence_targets()) or ["PR.AA-03", "PR.AA-04"]
-        self.a, self.b = sorted(targets)[:2] if len(targets) >= 2 else ("PR.AA-03", "PR.AA-04")
-        core = json.loads(RC.CSF_CORE.read_text())
-        others = {s["subcategory_id"]: "x" * 40 for s in core["subcategories"]
-                  if s["subcategory_id"] not in (self.a, self.b)}
-        (tmp / "evidence_prompts.json").write_text(json.dumps({"default": "d", "by_category": {}, "by_subcategory": others}))
-        for name, value in (("EVIDENCE_PROMPTS", tmp / "evidence_prompts.json"), ("BANK_BUILD", tmp),
-                            ("EVIDENCE_INPUT", tmp / "evidence_input.json"), ("EVIDENCE_REVISE", tmp / "evidence_revise.json"),
-                            ("EVIDENCE_REVIEW", tmp / "evidence_review.json")):
-            self.addCleanup(setattr, RC, name, getattr(RC, name))
-            setattr(RC, name, value)
-        self.tmp = tmp
-
-    def record(self, prompts, verdicts, *more):
-        (self.tmp / "p.json").write_text(json.dumps(prompts))
-        (self.tmp / "v.json").write_text(json.dumps(verdicts))
-        self.RC.record_evidence(str(self.tmp / "p.json"), str(self.tmp / "v.json"), bool(more), "m", None)
-
-    def test_a_failure_is_revised_once_then_decided_by_a_person(self):
-        good = "The latest record of this outcome, with the systems it covers and when it was last reviewed."
-        self.RC.evidence_prepare()
-        self.assertEqual(len(json.loads(self.RC.EVIDENCE_INPUT.read_text())["items"]), 2)
-        self.record({self.a: good, self.b: good}, [{"subcategory_id": self.a, "verdict": "pass"},
-                                                   {"subcategory_id": self.b, "verdict": "fail", "reason": "generic"}])
-        self.assertEqual(list(self.RC.evidence_targets()), [self.b])
-        with self.assertRaises(SystemExit):                       # the revision round is not finished
-            self.RC.evidence_prepare()
-        with self.assertRaises(SystemExit):                       # a revision must cover only the failed ones
-            self.record({self.a: good}, [{"subcategory_id": self.a, "verdict": "pass"}], "--revision")
-        self.record({self.b: good + " Revised."}, [{"subcategory_id": self.b, "verdict": "fail", "reason": "still"}],
-                    "--revision")
-        review = json.loads(self.RC.EVIDENCE_REVIEW.read_text())
-        self.assertEqual([len(i["drafts"]) for i in review["items"]], [2])
-        with self.assertRaises(SystemExit):                       # the person has not decided yet
-            self.RC.record_review()
-        review["items"][0]["keep_category_line"] = True
-        self.RC.EVIDENCE_REVIEW.write_text(json.dumps(review))
-        self.RC.record_review()
-        doc = json.loads(self.RC.EVIDENCE_PROMPTS.read_text())
-        self.assertEqual((doc["by_subcategory"][self.a], list(doc["category_line_kept"])), (good, [self.b]))
-        self.assertEqual(self.RC.evidence_targets(), {})          # never asked again
-        self.assertFalse(self.RC.EVIDENCE_REVIEW.exists())
-
-
 class Metadata(unittest.TestCase):
     def test_a_refresh_updates_only_the_files_parsed(self):
         import parse_csf_source as PC
@@ -276,21 +226,12 @@ class CsetCsf2Set(unittest.TestCase):
         self.assertEqual(BQ.build_bank("finance", candidates, active)["questions"]["ID.AM-01"]["candidates"], [])
 
 class CsfEvidencePrompts(unittest.TestCase):
-    def test_a_subcategory_prompt_wins_over_the_category_line(self):
+    def test_the_evidence_line_is_nists_examples_word_for_word(self):
         from pick_questions import csf_evidence_prompt
-        ev = {"default": "d", "by_category": {"PR.DS": "cat"}, "by_subcategory": {"PR.DS-11": "own"}}
-        self.assertEqual((csf_evidence_prompt("PR.DS-11", ev), csf_evidence_prompt("PR.DS-01", ev), csf_evidence_prompt("XX.YY-01", ev)),
-                         ("own", "cat", "d"))
-
-    def test_the_writer_file_and_the_review_are_validated_together(self):
-        import build_csf_bank as RC
-        ok = "The backup schedule for critical data and the latest restore test result."
-        self.assertEqual(RC.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}],
-                                              {"PR.DS-11"}), [])
-        errs = RC.validate_evidence({"PR.DS-11": "short", "ZZ.ZZ-01": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "fail"}],
-                                    {"PR.DS-11"})
-        self.assertTrue(any("ZZ.ZZ-01" in e for e in errs) and any("30 to 400" in e for e in errs)
-                        and any("a fail needs a reason" in e or "exactly one verdict" in e for e in errs))
+        frames = {"fallback_evidence": "fallback"}
+        sub = {"implementation_examples": ["Ex1: Back up critical data", "Ex2: Test restores at least annually"]}
+        self.assertEqual(csf_evidence_prompt(sub, frames), "Ex1: Back up critical data\nEx2: Test restores at least annually")
+        self.assertEqual(csf_evidence_prompt({"implementation_examples": []}, frames), "fallback")
 
 
 class Workbook(unittest.TestCase):

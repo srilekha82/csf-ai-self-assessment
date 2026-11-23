@@ -4,7 +4,7 @@ writes gets into the banks: every file is checked first, and a file with any pro
 
 Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
            the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
-Called by: /build-csf-bank (step 4) and /build-ai-bank (steps 3 to 7); never in a client run
+Called by: /build-ai-bank (steps 3 to 7); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
@@ -15,16 +15,8 @@ What every mode does
   1. Check   the whole file against the rules (the check function named below). Any problem: it lists them, saves
              nothing and exits 1, so the agent can fix the file and hand it in again.
   2. Save    the file into its bank file. A line a person decided is never overwritten by an agent.
-  3. Record  a write-once copy in judgement_log/ (data/csf/bank_build/ or data/ai/bank_build/): who decided, with
+  3. Record  a write-once copy in judgement_log/ (data/ai/bank_build/): who decided, with
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
-
-CSF banks (/build-csf-bank; the checks are in build_csf_bank.py)
-  csf-evidence-prepare                      writes the evidence writers' input: subcategories with no evidence line
-  csf-evidence <file> --review F            round 1: passed lines -> evidence_prompts.json; failed ones are kept
-                                            for one revision                                   check: validate_evidence
-  csf-evidence <file> --review F --revision round 2: passed lines saved; lines that fail again go to you
-  csf-evidence-reviewed                     your choice for each of those (your own line, or keep the category line);
-                                            final                                              check: validate_review
 
 AI RMF banks (/build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
@@ -59,7 +51,6 @@ from config import (AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPP
                     AI_QUESTION_BANKS, REPO_ROOT)
 from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
-import build_csf_bank as csf  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
                           store_questions, validate_evidence, validate_questions)
@@ -96,8 +87,7 @@ def record_ai(mode: str, args) -> None:
 
 def run_step(step: str, args: dict, inputs: list, outputs: list, do, actor: str = "script") -> None:
     """A mode with no agent output (prepare, assemble, revalidate, your approvals): run it, print and log one line."""
-    ev = audit.begin(AI_BUILD / "audit.jsonl" if step.startswith("ai") else csf.BANK_BUILD / "audit.jsonl",
-                     step, args, actor=actor)
+    ev = audit.begin(AI_BUILD / "audit.jsonl", step, args, actor=actor)
     line, failed = do()
     print(f"[record_bank] {line}")
     ev.finish(inputs=inputs, outputs=outputs, detail=line)
@@ -113,13 +103,6 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument("--model", required=True, help="model id of the agent that produced the file")
         p.add_argument("--session", help="session reference, e.g. evaluator=<model id>")
 
-    sub.add_parser("csf-evidence-prepare")
-    p = sub.add_parser("csf-evidence")
-    p.add_argument("file")
-    p.add_argument("--review", required=True, help="the evaluator's verdicts")
-    p.add_argument("--revision", action="store_true", help="round 2: the revised prompts of evidence_revise.json")
-    agent_args(p)
-    sub.add_parser("csf-evidence-reviewed")
 
     for m in ("mapping", "questions", "evidence", "notes", "notes-review"):
         p = sub.add_parser(f"ai-{m}")
@@ -147,13 +130,7 @@ def parser() -> argparse.ArgumentParser:
 def main():
     args = parser().parse_args()
     mode = args.mode
-    if mode == "csf-evidence-prepare":
-        csf.evidence_prepare()
-    elif mode == "csf-evidence":
-        csf.record_evidence(args.file, args.review, args.revision, args.model, args.session)
-    elif mode == "csf-evidence-reviewed":
-        csf.record_review()
-    elif mode == "ai-assemble":
+    if mode == "ai-assemble":
         files = [Path(p) if p else None for p in (args.gen1, args.eval1, args.gen2, args.eval2)]
         run_step("ai_assemble_questions", {"gen1": args.gen1, "gen2": args.gen2}, [f for f in files if f],
                  [Path(args.out)], lambda: (assemble(*files, Path(args.out)), False))
