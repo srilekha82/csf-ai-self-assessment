@@ -68,13 +68,15 @@ def ai_stages() -> list[tuple[str, bool, str]]:
             return stage, False, "missing"
         return (stage, True, "current") if same else (stage, False, f"stale ({what})")
 
-    core, sg = load(AI_CORE), load(AI_SAFEGUARDS) or load(AI_SAFEGUARD_IDS)   # the ids file carries the same sources
+    core, sg = load(AI_CORE), load(AI_SAFEGUARDS)   # the CIS text file is local only: a fresh clone has only the ids
     notes = load(CSF_IMPACT_NOTES)
     recorded = lambda sources: {g: v["sha256_16"] for g, v in sources.items()}  # noqa: E731
     stages = [
         verdict("parse", core and sg, core and sg and core["source_sha256_16"] == playbook
                 and recorded(sg["sources"]) == guides),
     ]
+    if core and not sg and load(AI_SAFEGUARD_IDS):
+        stages[0] = ("parse", False, f"missing the CIS text ({AI_SAFEGUARDS.name} is local only): run the parse")
     for bank in AI_QUESTION_BANKS:
         doc = load(AI_BANKS / f"question_bank_ai_rmf_{bank}.json")
         stage, ok, text = verdict(f"bank {bank}", doc, doc and doc["playbook_sha256_16"] == playbook

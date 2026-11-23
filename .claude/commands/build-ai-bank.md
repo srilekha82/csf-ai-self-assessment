@@ -40,7 +40,8 @@ Writes `data/ai/ai_rmf_core.json` (the 4 functions with their Playbook descripti
 suggested actions) and
 `data/ai/cis_ai_safeguards.json` (the safeguards of the three guides, with their CIS text: local only, never
 committed) and `data/ai/cis_ai_safeguard_ids.json` (the same without the text: committed). It fails, writing nothing,
-if a count is off.
+if a count is off. It reads nothing and says "up to date" when the outputs were made from these exact PDFs and the
+local CIS text file exists (`--force` reads them anyway: only after editing `data/ai/parse_config.json`).
 Agents read these files, never the PDFs.
 
 ## Steps 3 and 4 — Mapping (see `docs/ai-rmf-model.md`)
