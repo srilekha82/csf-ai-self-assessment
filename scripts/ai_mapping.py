@@ -433,7 +433,7 @@ def mapping_hash(doc: dict) -> str:
 def mapping_problems(doc: dict | None) -> tuple[list[str], list[str]]:
     """(what stops the mapping from being accepted, subcategories no area reaches)."""
     if doc is None:
-        return ["missing (draft the areas: /build-ai-bank, Mapping)"], []
+        return ["missing (draft the areas: /ai-mapping)"], []
     if not (AI_CORE.is_file() and (AI_SAFEGUARDS.is_file() or AI_SAFEGUARD_IDS.is_file())):
         return ["cannot check (run parse_ai_rmf_sources.py first)"], []
     from ai_bank_common import load_inputs

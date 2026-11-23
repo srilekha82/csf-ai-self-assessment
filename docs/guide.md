@@ -18,7 +18,8 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | Generate only the CSF part, or only the AI part | On an existing run folder: `/csf-questionnaire` or `/ai-questionnaire`. Each checks its questions and writes its own sheet; either can run in any order. |
 | See what the bank builds need to redo (maintainer) | `.venv/bin/python ./scripts/check_freshness.py --csf` (NIST's reference data and every CSF bank against CSET) or `--ai-bank` (each part of the AI RMF build against its sources). |
 | Build or refresh the CSF banks | `/build-csf-bank` (all six sectors together). `/generate-questions` stops and names it when a bank is missing or too old. |
-| Build or refresh the AI RMF mapping, the question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank`: pilot first; after you accept the pilot (`record_bank.py ai-accept-pilot`) later rebuilds run on their own. |
+| Map the AI areas to the AI RMF (rarely: a new or changed AI area, rules or source) | `/ai-mapping`: one area at a time, pilot first; you review `mapping.xlsx` and accept (`record_bank.py ai-accept-mapping`). |
+| Build or refresh the AI RMF question banks (foundation, areas) and the CSF AI impact notes | `/build-ai-bank` (needs the mapping accepted): pilot first; after you accept the pilot (`record_bank.py ai-accept-pilot`) later rebuilds need no pilot until a question prompt changes. |
 | Use a new Playbook, CIS guide or CSF download | Replace the file (`data/ai/source/` or `data/csf/source/csf2.xlsx`, links in `data/metadata.json`). The freshness check sees the change; rebuild with the commands above. |
 | Change how many questions per type, or when a question is `gap` | `data/csf/scope_rules.json` (CSF). AI: `data/ai/scope_rules.json` says which roles each client is asked as; every AI question is `full_discovery` (they ask what is done for AI, so they never repeat general security; no gap rule). No code change. |
 | Change an intake menu, a sector, a certification or the question-type order | `data/common/intake_options.json`. Every script reads it through `scripts/options.py`. |
@@ -57,7 +58,8 @@ Question banks  →  Stage 1: Questionnaire  →  Stage 2: Answers        →  S
 | `/csf-questionnaire` | The CSF sheet for a run folder: SoA question (and confirming its columns), scope, questions from the bank, check, sheet. Writes `csf_scope.json`, `csf_questions_draft.json` and the CSF sheet of `questionnaire.xlsx`. |
 | `/ai-questionnaire` | The AI RMF sheet for a run folder: picks the client's questions by role, producer details and AI areas from `ai_intake.json`, checks them, writes the sheet. Writes `ai_scope.json`, `ai_questions_draft_<foundation|areas>.json` and the AI RMF sheet of `questionnaire.xlsx`. |
 | `/build-csf-bank` | Builds the six CSF question banks, all sectors together, from the CSET repo (occasional; reused by every engagement). |
-| `/build-ai-bank` | Builds the AI RMF mapping (AI area x subcategory), the two question banks (foundation, areas) and the CSF AI impact notes from the Playbook and CIS companion guides (quarterly, or when a source changes). Pilot first, then full run. |
+| `/ai-mapping` | Maps each AI area to the AI RMF subcategories that check it, with the CIS safeguards that prove them (`data/ai/mapping.json`); you review and accept it. Rarely redone. |
+| `/build-ai-bank` | Builds the two AI RMF question banks (foundation, areas) and the CSF AI impact notes from the Playbook and CIS companion guides, from the accepted mapping (quarterly, or when a source changes). Pilot first, then full run. |
 
 The intake is `scripts/intake.py`: it prints the numbered menus (from `data/common/intake_options.json`), turns the typed numbers into values, and writes `csf_intake.json` (org, sector, certs) and `ai_intake.json` in the run folder. Every later step reads those files.
 
@@ -84,8 +86,8 @@ Sectors: `healthcare`, `finance`, `manufacturing_ot`, `saas_cloud`, `consulting`
 **Building the banks (`/build-ai-bank`):**
 1. `check_freshness.py --ai-bank` compares the SHA-256 of the current source files with the hashes each output recorded about its inputs, one line per stage; all current means skip.
 2. `parse_ai_rmf_sources.py` turns the Playbook and the three CIS guides into `ai_rmf_core.json` (the 4 functions with their Playbook descriptions, 72 subcategories, suggested actions) and `cis_ai_safeguards.json` (153 safeguards per guide, with the CIS text: local only, CC BY-NC-ND 4.0) plus `cis_ai_safeguard_ids.json` (the same without text: committed).
-3. Mapping (agents, `prompts/ai_rmf_mapping_drafter.md` and `ai_rmf_mapping_evaluator.md`): per AI area (`data/ai/ai_areas.json`), the MAP, MEASURE and MANAGE subcategories that check it and the CIS safeguards that prove them, recorded by `record_bank.py ai-mapping` against `data/ai/mapping_rules.json`, reviewed in `mapping.xlsx` and accepted (`record_bank.py ai-accept-mapping`).
-4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_bank.py ai-assemble` and `ai-questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; when the user accepts it (`record_bank.py ai-accept-pilot`, tied to the current generator and evaluator prompts) later rebuilds run without asking, like the CSF banks.
+3. Mapping (`/ai-mapping`, rarely redone; agents, `prompts/ai_rmf_mapping_drafter.md` and `ai_rmf_mapping_evaluator.md`): per AI area (`data/ai/ai_areas.json`), the MAP, MEASURE and MANAGE subcategories that check it and the CIS safeguards that prove them, recorded by `record_bank.py ai-mapping` against `data/ai/mapping_rules.json`, reviewed in `mapping.xlsx` and accepted (`record_bank.py ai-accept-mapping`).
+4. Questions, generated and evaluated with subagents (`prompts/ai_rmf_question_generator.md`, `prompts/ai_rmf_question_evaluator.md`), two turns at most, into two banks: **foundation** (GOVERN and the 12 foundation subcategories, asked once for the organisation) and **areas** (one item per subcategory with every area's mapping row on it; a question may stand for several rows). Every question carries the roles it is asked of and any producer details it needs. `prepare_ai_bank.py batch <foundation|areas>` prepares each batch; `record_bank.py ai-assemble` and `ai-questions` store the result (every row asked once, or twice when its check holds two practices, per role its area allows). Pilot first; once the user accepts it (`record_bank.py ai-accept-pilot`, tied to the current generator and evaluator prompts) later rebuilds need no pilot.
 5. AI impact notes: `prepare_ai_notes.py` joins the CIS → CSF mapping to the MCP and agents guides (48 CSF subcategories); an agent writes an exposure layer and a use layer (`prompts/ai_impact_notes_writer.md`); `record_bank.py ai-notes` stores `data/csf/ai_impact_notes.json`; a second agent reviews them (`prompts/ai_impact_notes_evaluator.md`, `record_bank.py ai-notes-review`).
 
 **Running an engagement (`/ai-questionnaire`, run by `/generate-questions` or alone):** `pick_questions.py (--framework ai)` picks the client's questions from both banks by filtering on `ai_intake.json`: roles (`scope_rules.json` `client_roles`), producer details and, for area questions, the client's AI areas. A question shared by several of the client's areas carries "This question covers: ..." naming them. Every question is `full_discovery`: it asks what is done for AI, so it never repeats the CSF sheet or ISO 27001. It writes one draft per bank. `write_questionnaire.py --framework ai` writes the AI RMF sheet of `questionnaire.xlsx`, plus an "AI systems" sheet where the client answers the inventory question (GOVERN 1.6) as a table: one row per system, which of the client's AI areas it involves, and its criticality. The layout comes from `templates/questionnaire_template.xlsx`.
@@ -156,7 +158,7 @@ flowchart TD
     classDef stop fill:#fee2e2,stroke:#dc2626,color:#111
 ```
 
-**Building the AI RMF banks** (`/build-ai-bank`, maintainer)
+**Building the AI RMF mapping and banks** (`/ai-mapping`, `/build-ai-bank`, maintainer)
 
 ```mermaid
 flowchart TD
@@ -165,6 +167,7 @@ flowchart TD
     CF --> PS[parse_ai_rmf_sources.py]:::script
     SRC --> PS --> CORE([ai_rmf_core.json, cis_ai_safeguards.json, cis_ai_safeguard_ids.json]):::file
 
+    AMC["/ai-mapping"]:::cmd --> PM
     CORE --> PM["prepare_ai_bank.py mapping"]:::script --> AM["agents: mapping drafter + checker"]:::agent --> RM["record_bank.py ai-mapping<br/><small>checks and store: ai_mapping.py</small>"]:::script --> MAP([mapping.json]):::file
     MAP --> SM["sheet_io.py export mapping"]:::script --> U1["you: review, then record_bank.py ai-accept-mapping"]:::you
 

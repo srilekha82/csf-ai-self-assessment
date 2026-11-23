@@ -4,7 +4,7 @@ writes gets into the banks: every file is checked first, and a file with any pro
 
 Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
            the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
-Called by: /build-ai-bank (steps 3 to 7); never in a client run
+Called by: /ai-mapping (steps 2 and 3), /build-ai-bank (steps 4 to 6); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
@@ -18,7 +18,7 @@ What every mode does
   3. Record  a write-once copy in judgement_log/ (data/ai/bank_build/): who decided, with
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
-AI RMF banks (/build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
+AI RMF (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
   ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
                                             ones to redraft

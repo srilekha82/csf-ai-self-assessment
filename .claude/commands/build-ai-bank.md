@@ -1,6 +1,7 @@
 # /build-ai-bank
 
-Builds or refreshes the AI RMF mapping, the two AI RMF question banks and the CSF AI impact notes.
+Builds or refreshes the two AI RMF question banks and the CSF AI impact notes, from an accepted mapping
+(`/ai-mapping`).
 
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
 `scripts/record_bank.py` (its `ai-…` modes), which rejects a whole file if anything is wrong. The judging rules are in the prompts
@@ -21,7 +22,8 @@ Delete that folder at the end of the build.
 .venv/bin/python ./scripts/check_freshness.py --ai-bank
 ```
 
-One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, mapping): `current`, `missing`, `stale`
+One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, mapping; the last two belong to
+`/ai-mapping`): `current`, `missing`, `stale`
 or `incomplete`. A
 stage is current only if it was built from the exact source files on disk (each output records the SHA-256 of its inputs).
 
@@ -44,33 +46,11 @@ if a count is off. It reads nothing and says "up to date" when the outputs were 
 local CIS text file exists (`--force` reads them anyway: only after editing `data/ai/parse_config.json`).
 Agents read these files, never the PDFs.
 
-## Steps 3 and 4 — Mapping (one AI area at a time, only when the user asks; the first run is a pilot on the area they name)
+## Step 3 — Mapping accepted?
 
-Work files: `data/ai/bank_build/work/`, area `<a>`. Pass subagents paths, not content.
+The `mapping` line of Step 1 must be `accepted`. If not, stop and tell the user to run `/ai-mapping` first.
 
-1. `.venv/bin/python ./scripts/prepare_ai_bank.py mapping --area <a>` → `work/mapping_input_<a>.json`.
-2. **Drafter** (fresh subagent): `prompts/ai_rmf_mapping_drafter.md` with the input → `work/mapping_<a>_draft1.json`.
-3. **Evaluator** (fresh subagent, never sees the drafter's prompt): `prompts/ai_rmf_mapping_evaluator.md` with the input
-   and the draft → `work/mapping_<a>_eval1.json`.
-4. Only if it has `row` or `missing` findings: a fresh drafter revises (input, draft1, eval1 → complete `draft2`), a fresh
-   evaluator checks it (→ `eval2`). Two turns at most.
-5. Record the last pair; if it lists problems, send them back to the drafter and record again:
-   ```bash
-   .venv/bin/python ./scripts/record_bank.py ai-mapping data/ai/bank_build/work/mapping_<a>_draft<N>.json \
-       --review data/ai/bank_build/work/mapping_<a>_eval<N>.json --model <drafter model id> --session "evaluator=<model id>"
-   ```
-6. `.venv/bin/python ./scripts/sheet_io.py export mapping`. If it refuses (sheet edits not imported), ask the user to run
-   `sheet_io.py import mapping` first.
-
-After the pilot: **stop.** Show the recorded rows, what the evaluator failed, missing rows, notes and unreached
-subcategories, and point the user to `data/ai/authoring/mapping.xlsx`.
-
-- Rules or another area's row changed: `.venv/bin/python ./scripts/record_bank.py ai-revalidate` (no agent); re-draft
-  only the areas it names.
-- All areas recorded and reviewed (nothing needs human review, edits imported): the user runs
-  `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping`.
-
-## Step 5 — Questions (subagents; needs the mapping accepted as it is now)
+## Step 4 — Questions (subagents)
 
 Two banks, built the same way: **foundation** (GOVERN and the 12 foundation subcategories of
 `data/ai/mapping_rules.json`; questions per subcategory from the Playbook, each tagged with the roles it is asked of:
@@ -137,26 +117,25 @@ When the user says the pilot is good, record it:
 ```bash
 .venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"
 ```
-The acceptance is tied to the current generator and evaluator prompts. From then on `/generate-questions` rebuilds a
-missing or incomplete AI bank on its own, like a CSF bank. If either prompt is edited later the acceptance goes stale
-and a new pilot is needed before the next rebuild.
+The acceptance is tied to the current generator and evaluator prompts: later rebuilds need no pilot until either
+prompt is edited.
 
 ### Full run
 Use `prepare_ai_bank.py batch <bank> --function <MAP|MEASURE|MANAGE|GOVERN> --missing` so each batch holds only
 subcategories not yet recorded (split a function with `--ids` if the batch is large), and run the loop per batch. At
 the end show the user a random sample of 5 passing subcategories to spot-check.
 
-## Step 6 — Check completeness
+## Step 5 — Check completeness
 
 ```bash
 .venv/bin/python ./scripts/check_freshness.py --ai-bank
 ```
 
 Both `bank foundation` and `bank areas` must show `current`. `incomplete` lists what is missing, or the area
-subcategories whose mapping rows changed after their questions were written: go back to Step 5 (`--missing`, or
+subcategories whose mapping rows changed after their questions were written: go back to Step 4 (`--missing`, or
 `--ids` for the changed ones).
 
-### Step 6b — Evidence prompts (agents; only questions without one)
+### Step 5b — Evidence prompts (agents; only questions without one)
 Each bank question gets its own evidence prompt once, so every client gets a specific line rather than a generic one.
 Per bank (`foundation`, then `areas`):
 
@@ -173,7 +152,7 @@ Per bank (`foundation`, then `areas`):
    it in the questions sheet); one pass, no revision turn. Then refresh the review sheet
    (`sheet_io.py export area_questions` / `foundation_questions`).
 
-## Step 7 — AI impact notes (agent; skip if sources are unchanged and notes exist)
+## Step 6 — AI impact notes (agent; skip if sources are unchanged and notes exist)
 
 Notes for orgs reached by external agents or AI-enabled attackers, and where AI use changes the reading.
 
@@ -207,7 +186,7 @@ Fix-and-rerun on problems. A note a person decided in the review sheet is refuse
    (`data/ai/authoring/impact_notes.xlsx`; the user decides flagged notes in chat, Claude applies them and runs
    `sheet_io.py import impact_notes`).
 
-## Step 8 — Report
+## Step 7 — Report
 
 Tell the user: what was rebuilt or skipped, the gate output, counts (passed, needs human review), notes count, and
 what is left to do. List any subcategory that needs human review with its reason (read it from the bank file only

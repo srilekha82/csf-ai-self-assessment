@@ -4,7 +4,7 @@ spreadsheets, and reads your edits back after checking them.
 
 Why:       a person reviews the AI mapping, questions and notes far more easily in a spreadsheet than in JSON. This
            keeps the sheet you edit and the JSON the scripts use in step, and checks every edit before it is stored.
-Called by: /build-ai-bank (after each step that a person reviews)
+Called by: /ai-mapping and /build-ai-bank (after each step that a person reviews)
 Input:     export: data/ai/ JSON (AI areas, mapping, both banks, impact notes); import: your edited spreadsheet
 Output:    export: spreadsheets in data/ai/authoring/; import: the updated JSON
 
@@ -192,7 +192,7 @@ def mapping_context():
 
 def import_mapping(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
-        ev.fail(f"[sheet_io] ERROR: {json_path} not found; draft an area first (/build-ai-bank, Mapping)")
+        ev.fail(f"[sheet_io] ERROR: {json_path} not found; draft an area first (/ai-mapping)")
     M, inp, m = mapping_context()
     doc, problems, changed = M.mapping_from_sheet(rows, json.loads(json_path.read_text()), inp, m)
     if problems:
@@ -208,7 +208,7 @@ def import_mapping(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]
 
 def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
-        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record questions first (/build-ai-bank, Step 5)")
+        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record questions first (/build-ai-bank, Step 4)")
     from ai_bank_common import load_inputs
     from ai_questions import questions_from_sheet
     doc, problems, changed = questions_from_sheet(spec["bank"], rows, json.loads(json_path.read_text()), load_inputs())
@@ -225,7 +225,7 @@ def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dic
 
 def import_notes(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
-        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record notes first (/build-ai-bank, Step 7)")
+        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record notes first (/build-ai-bank, Step 6)")
     from ai_notes import notes_from_sheet
     doc, problems, changed = notes_from_sheet(rows, json.loads(json_path.read_text()))
     if problems:

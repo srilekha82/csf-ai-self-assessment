@@ -233,7 +233,7 @@ check.
   quality, sharing and audience. Each area entry stores a fingerprint of the rows it was written for and each row's area
   and impact (for the covers note and the evidence prompt).
 - **Evidence lines.** Each bank question may carry its own `evidence_prompt`, written once by an evidence writer and
-  checked by an evidence evaluator (`/build-ai-bank` Step 6b, `record_bank.py ai-evidence`). A prompt the evaluator
+  checked by an evidence evaluator (`/build-ai-bank` Step 5b, `record_bank.py ai-evidence`). A prompt the evaluator
   fails is not stored and there is no revision turn: the question keeps the generic line of
   `data/ai/evidence_prompts.json`. Editable in the question review sheets (a blank cell keeps the bank's prompt).
 - **Selection** (`pick_questions.py (--framework ai)`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,

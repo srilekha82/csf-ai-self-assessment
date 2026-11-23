@@ -5,7 +5,7 @@ check_bank_age.py.)
 
 Why:       the banks are built from sources (NIST, CSET, CIS, the Playbook), prompts and your approvals, which all
            change. Without it you would work out by hand which outputs are out of date and what to redo.
-Called by: /build-ai-bank (--ai-bank), /build-csf-bank (--csf)
+Called by: /build-ai-bank and /ai-mapping (--ai-bank), /build-csf-bank (--csf)
 Input:     the source files (AI RMF Playbook and CIS guides, NIST's CSF download, your CSET copy), the fingerprints each
            output recorded about them, data/metadata.json, the review spreadsheets
 Output:    a report on screen; exit 1 when something needs work
