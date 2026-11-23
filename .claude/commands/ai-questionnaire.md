@@ -21,7 +21,7 @@ If no run folder was given: `ls runs/` and ask which one. It must contain `ai_in
 `/generate-questions` (or `scripts/intake.py`) first and stop.
 
 ## 2 — Scope and questions
-`.venv/bin/python ./scripts/build_ai_questions.py <run_dir>`
+`.venv/bin/python ./scripts/pick_questions.py <run_dir> --framework ai`
 
 Picks the client's questions from the banks by their role, producer details and AI areas (policy in
 `data/ai/scope_rules.json`: do not read it or re-apply it by hand) and writes `ai_scope.json`,

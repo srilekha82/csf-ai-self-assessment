@@ -29,7 +29,7 @@ import audit  # noqa: E402
 BANK_DESCRIPTION = {
     "areas": ("AI RMF area questions: every question that could be asked per mapping row (AI area x subcategory, "
               "data/ai/mapping.json), keyed by subcategory. A question lists the rows it covers (one question may stand "
-              "for several areas' rows), the roles it is asked of and any producer flags; build_ai_questions.py picks a "
+              "for several areas' rows), the roles it is asked of and any producer flags; pick_questions.py (--framework ai) picks a "
               "client's questions by filtering on their AI areas, role and producer flags. rows_sha is the hash of the "
               "subcategory's mapping rows the questions were written for; rows gives each row's area and impact (for the "
               "covers note and the evidence prompt). Recorded by record_bank.py ai-questions."),

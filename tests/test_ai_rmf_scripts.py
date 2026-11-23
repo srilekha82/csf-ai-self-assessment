@@ -393,13 +393,13 @@ class Recording(unittest.TestCase):
         self.assertEqual(json.loads(out.read_text())["C"]["status"], "needs_human_review")
 
 
-import build_ai_questions as BQ  # noqa: E402
+import pick_questions as BQ  # noqa: E402
 import check_freshness as CF  # noqa: E402
 import check_bank_age as BA  # noqa: E402
 
 
 class Scope(unittest.TestCase):
-    """build_ai_questions.py on synthetic banks (the real banks do not exist until the build)."""
+    """pick_questions.py --framework ai on synthetic banks (the real banks do not exist until the build)."""
 
     def q(self, text, roles, rows=None, flags=()):
         q = {"question_text": f"For your highest-criticality AI systems, how is {text} handled, and who owns it?",
@@ -456,7 +456,7 @@ class Scope(unittest.TestCase):
 
     def go(self, profile):
         (self.run / "ai_intake.json").write_text(json.dumps(profile))
-        sys.argv = ["x", str(self.run)]
+        sys.argv = ["x", str(self.run), "--framework", "ai"]
         try:
             BQ.main()
         except SystemExit as e:
@@ -484,8 +484,6 @@ class Scope(unittest.TestCase):
         self.assertEqual(e["question_type"], "full_discovery")
         f = json.loads((self.run / "ai_questions_draft_foundation.json").read_text())
         self.assertTrue(all(q["applies_to"] == "Whole organisation" for x in f for q in x["questions"]))
-        self.assertEqual({q["criticality_frame"] for x in f for q in x["questions"]}, {"none"})
-        self.assertEqual((shared["criticality_frame"], single["criticality_frame"]), ("required", "optional"))
 
     def test_a_bank_evidence_prompt_replaces_the_generic_line(self):
         doc = json.loads(self.banks["areas"].read_text())

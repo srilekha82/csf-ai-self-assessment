@@ -1,5 +1,5 @@
 {
-  "description": "Evidence an assessor should ask for (the Evidence Required column of the CSF sheet). Used by build_questions.py: a subcategory's own prompt (by_subcategory: written in /build-csf-bank step 5 and checked by an evaluator, or written by a person), else its category's line, else the default. category_line_kept: subcategories a person decided keep their category line (never asked again).",
+  "description": "Evidence an assessor should ask for (the Evidence Required column of the CSF sheet). Used by pick_questions.py (--framework csf): a subcategory's own prompt (by_subcategory: written in /build-csf-bank step 5 and checked by an evaluator, or written by a person), else its category's line, else the default. category_line_kept: subcategories a person decided keep their category line (never asked again).",
   "default": "Policy document, tool screenshot, or named process owner",
   "by_category": {
     "GV.OC": "Strategic plans, board minutes, mission statement",
