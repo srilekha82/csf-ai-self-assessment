@@ -127,8 +127,7 @@ def prepare_batch(inp: dict, bank: str, ids: list[str], function: str | None, ev
                "items": [sub_fields(inp["subs"][s]) for s in chosen]}
     else:
         items = [i for i in items if i["subcategory_id"] in chosen]
-        doc = {"bank": bank, "definitions": definitions, "area_question_rule": qrules["area_question_rule"],
-               **area_context(inp, qrules, items), "items": items}
+        doc = {"bank": bank, "definitions": definitions, **area_context(inp, qrules, items), "items": items}
     name = tag or (function if function else "ids" if ids else "all")
     out = AI_WORK / f"batch_{bank}_{name}.json"
     out.parent.mkdir(parents=True, exist_ok=True)

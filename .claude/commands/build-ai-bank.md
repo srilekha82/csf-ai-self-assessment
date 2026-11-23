@@ -37,7 +37,8 @@ stage is current only if it was built from the exact source files on disk (each 
 ## Step 2 — Mapping
 
 If the `mapping` line of Step 1 is not `accepted`, do the mapping here without asking the user: follow
-`.claude/commands/ai-mapping.md` steps 1 and 2 for the areas the gate names (no pilot stop), then
+`.claude/commands/ai-mapping.md` steps 1 and 2 for the areas the gate names, using Step 1's lines instead of running
+the check again (no pilot stop), then
 `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping --by-build`. It accepts only when every row passed its
 evaluator and nothing is left for a person; if it refuses, stop and show the user what it lists (rows to review in
 `data/ai/authoring/mapping.xlsx`).
