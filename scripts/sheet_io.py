@@ -217,7 +217,8 @@ def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dic
     doc["source_sha"] = audit.sha(xlsx)
     json_path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
     line = (f"{len(rows)} questions from {xlsx.name}, {changed} subcategories changed (decided_by human) -> "
-            f"{_rel(json_path)}; {doc['summary']['needs_human_review']} subcategories need human review")
+            f"{_rel(json_path)}; {sum(1 for e in doc['subcategories'].values() if e['status'] != 'pass')} subcategories need human "
+            f"review")
     print(f"[sheet_io] {line}")
     ev.finish(inputs=[xlsx], outputs=[json_path], detail=line)
     return line

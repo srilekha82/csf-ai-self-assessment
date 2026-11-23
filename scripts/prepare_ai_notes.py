@@ -1,6 +1,8 @@
 """
 Prepares the input for the AI impact notes on the CSF side. No judgement.
 
+Why:       the notes writer needs, per CSF subcategory, only the AI text of the CIS safeguards CIS maps to it. Joining
+           CIS's spreadsheet to the guides is a fixed lookup, so a script does it and the agent only writes.
 Called by: /build-ai-bank (step 6)
 Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json, data/ai/parse_config.json (the AI
            text length)

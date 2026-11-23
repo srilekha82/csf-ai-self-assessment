@@ -4,6 +4,9 @@ stored, keeps what a person decided, says whether each area is up to date, conve
 review spreadsheet, and records your approval of the whole mapping (mapping_accepted.json, with a fingerprint: change
 the mapping and it must be approved again).
 
+Why:       the mapping decides which AI RMF subcategories each AI area is asked about. A drafted area is checked
+           against the rules (ids, candidate safeguards, impacts, required checks) before it is stored, a person's
+           decisions are kept, and each area says when it is out of date, so only that area is redrafted.
 Called by: record_bank.py (ai-mapping, ai-revalidate, ai-accept-mapping), sheet_io.py (the mapping sheet),
            check_freshness.py (mapping status)
 Input:     data/ai/mapping.json, data/ai/ai_areas.json, data/ai/mapping_rules.json, the parsed AI RMF and CIS data
