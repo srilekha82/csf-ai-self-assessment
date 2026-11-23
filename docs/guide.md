@@ -66,10 +66,8 @@ The intake is `scripts/intake.py`: it prints the numbered menus (from `data/comm
 ### Building a bank (`/build-csf-bank`)
 
 1. `extract_cset_candidates.py` replays the CSET SQL migrations into `cset_candidates.json` (skipped if CSET has not changed): CSET's own CSF 2.0 set (`NCSF_V2`, one question for each of the 106 subcategories) and the maturity-model questions (ACET, CPG, SSG…) CSET maps to CSF 2.0.
-2. `build_question_bank.py` puts the CSF 2.0 set's question first in every subcategory (no routing), then routes each maturity-model question for each sector: **reject** (not answerable or empty), **accept** (source model matches the domain), or **pending**. The routing rules are in `data/csf/bank_rules.json`.
-3. If anything is pending the agent decides it using `prompts/question_bank_judge.md`: which domains a question suits, rewording statements and repairing truncated text, and whether a widely-mapped question fits each subcategory. `record_bank.py csf-cset` validates and stores the verdicts (reused by every domain, redone only when CSET changes a question).
-4. Run the build again; it writes all six `data/csf/banks/question_bank_<sector>.json` together (no bank is written while anything is pending, so the six always share one record of what they were built from).
-5. Once for all domains: each subcategory's own evidence prompt, the "Evidence Required" line of the CSF sheet
+2. `build_csf_bank.py` writes all six `data/csf/banks/question_bank_<sector>.json` at once, with no agent: per subcategory, CSET's own CSF 2.0 question first, then the CSET questions linked to it from the sets for that sector (`data/csf/bank_rules.json` `sector_by_model`: ACET for finance, SSG IT for saas_cloud; an unlisted set goes to every sector). Questions CSET marks not answerable, or with no text, are left out; an SSG IT practice with no question text is shown as its CSET outcome text.
+3. Once for all sectors: each subcategory's own evidence prompt, the "Evidence Required" line of the CSF sheet
    (`record_bank.py csf-evidence`, `data/csf/evidence_prompts.json` `by_subcategory`). A writer agent drafts it from
    NIST's implementation examples and an evaluator agent checks it; a failed draft is revised once and checked again;
    what still fails goes to you (`evidence_review.json`): write the line or keep the category's line. Your decision is
@@ -149,11 +147,11 @@ flowchart TD
     B["/build-csf-bank"]:::cmd --> PC["parse_csf_source.py<br/>(only when NIST's file is refreshed)"]:::script
     NIST([csf2.xlsx from NIST]):::file --> PC --> CORE([csf2_core.json, crosswalks]):::file
     B --> EX[extract_cset_candidates.py]:::script
-    SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_question_bank.py]:::script
-    BQB -- "questions it cannot place" --> JA["agent: question bank judge"]:::agent --> RJ["record_bank.py csf-cset<br/><small>checks and store: build_question_bank.py</small>"]:::script --> JS([cset_judgements.json]):::file --> BQB
+    SQL([CSET SQL files]):::file --> EX --> CAND([cset_candidates.json]):::file --> BQB[build_csf_bank.py]:::script
+    RULES([bank_rules.json]):::file --> BQB
     BQB --> BANK([question_bank_&lt;sector&gt;.json]):::file
     B --> EP["record_bank.py csf-evidence-prepare"]:::script
-    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence<br/><small>checks and store: build_question_bank.py</small>"]:::script --> EVP([evidence_prompts.json]):::file
+    CORE --> EP --> EW["agents: evidence writer + checker"]:::agent --> RE["record_bank.py csf-evidence<br/><small>checks and store: build_csf_bank.py</small>"]:::script --> EVP([evidence_prompts.json]):::file
     RE -- "failed: revise once" --> EW
     RE -- "failed twice" --> YOU["you: write the line or keep the category line<br/>(evidence_review.json, then record_bank.py csf-evidence-reviewed)"]:::you --> EVP
 
@@ -205,7 +203,7 @@ helpers), `ai_mapping.py`, `ai_questions.py` and `ai_notes.py` (the checks, stor
 
 ### Prompts (`prompts/`)
 
-How the agents judge and write. CSF: `question_bank_judge.md`, `csf_evidence_writer.md`, `csf_evidence_evaluator.md` (bank build). AI RMF: `ai_rmf_mapping_drafter.md`, `ai_rmf_mapping_evaluator.md`, `ai_rmf_question_generator.md`, `ai_rmf_question_evaluator.md`, `ai_rmf_evidence_writer.md`, `ai_rmf_evidence_evaluator.md`, `ai_impact_notes_writer.md`, `ai_impact_notes_evaluator.md` (bank build). Commands (`.claude/commands/`) say what to run; prompts say how to judge.
+How the agents judge and write. CSF: `csf_evidence_writer.md`, `csf_evidence_evaluator.md` (bank build). AI RMF: `ai_rmf_mapping_drafter.md`, `ai_rmf_mapping_evaluator.md`, `ai_rmf_question_generator.md`, `ai_rmf_question_evaluator.md`, `ai_rmf_evidence_writer.md`, `ai_rmf_evidence_evaluator.md`, `ai_impact_notes_writer.md`, `ai_impact_notes_evaluator.md` (bank build). Commands (`.claude/commands/`) say what to run; prompts say how to judge.
 
 ### Data (`data/`)
 
@@ -223,12 +221,12 @@ data/
 │   ├── csf2_core.json       CSF 2.0 subcategories and examples
 │   ├── scope_rules.json     state → question type, max questions per type, sector bumps, function order; how
 │   │                        the SoA spreadsheet is read (soa_reading)
-│   ├── bank_rules.json      how CSET questions are flagged and routed when a CSF bank is built: sector of each
-│   │                        question set, reject and rewrite flags, the fan-out threshold
+│   ├── bank_rules.json      how CSET questions are flagged and picked when a CSF bank is built: sector of each
+│   │                        question set, reject flags, the text shown for a practice with no question
 │   ├── evidence_prompts.json  evidence hint per CSF category
 │   ├── crosswalks/          ISO 27001 and PCI DSS mappings
 │   ├── banks/               question_bank_<domain>.json
-│   └── bank_build/          cset_candidates.json, cset_judgements.json (cannot be regenerated; back it up), judgement_log/, audit.jsonl, work/ (temporary)
+│   └── bank_build/          cset_candidates.json, judgement_log/, audit.jsonl, work/ (temporary)
 ├── audit.jsonl              data refresh and freshness checks (created on first run)
 └── ai/
     ├── source/                 AI RMF Playbook, CIS companion guides, CIS → CSF mapping (not in the repo; see source/README.md; SHA-256 in metadata.json)

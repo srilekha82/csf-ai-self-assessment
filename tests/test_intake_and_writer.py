@@ -160,7 +160,7 @@ class EvidenceLoop(unittest.TestCase):
     """record_bank.py csf-evidence: round 1, one revision, then a person; a person's decision is final."""
 
     def setUp(self):
-        import build_question_bank as RC
+        import build_csf_bank as RC
         self.RC, tmp = RC, Path(tempfile.mkdtemp())
         targets = list(RC.evidence_targets()) or ["PR.AA-03", "PR.AA-04"]
         self.a, self.b = sorted(targets)[:2] if len(targets) >= 2 else ("PR.AA-03", "PR.AA-04")
@@ -255,19 +255,25 @@ class CsetCsf2Set(unittest.TestCase):
             "ID.AM-01": {"questions": [{"question_id": 1, "question_text": "The organization maintains inventories of hardware."}]},
         })
 
-    def test_the_csf2_question_leads_and_a_duplicate_maturity_question_is_dropped(self):
-        import build_question_bank as BQ
+    def test_the_csf2_question_leads_then_the_sets_for_the_sector(self):
+        import build_csf_bank as BQ
         active = {s: {"subcategory_text": s} for s in ("GV.OV-01", "ID.AM-01", "RS.MA-02")}
-        candidates = {"cset_commit": "c", "questions": {"7": {"question_text": "Are outcomes reviewed?"},
-                                                        "8": {"question_text": "Is the board told?"}},
+        q = lambda text, model, flags=(), practice=None: {"question_text": text, "model_name": model, "flags": list(flags),
+                                                         "practice": practice or {}}
+        candidates = {"cset_commit": "c",
+                      "questions": {"7": q("Are outcomes reviewed?", "ACET"),             # same wording as the CSF 2.0 one
+                                    "8": q("Is the board told?", "ACET"),                 # finance only
+                                    "9": q("", "SSG IT", ["statement_only"], {"outcome": "Development  environments\nare separated."}),
+                                    "10": q("Is anything left?", "CPG2", ["not_answerable"]),
+                                    "11": q("Is risk owned by someone?", "GENERIC")},     # no sector: every sector
+                      "mappings": [{"qid": n, "subcategory_id": "GV.OV-01"} for n in (7, 8, 9, 10, 11)],
                       "csf2_set": {"GV.OV-01": {"questions": [{"question_id": 2, "question_text": "Are outcomes reviewed?"}]}}}
-        routed = [{"qid": q, "subcategory_id": "GV.OV-01", "status": "accept", "decided_by": "schema",
-                   "text": candidates["questions"][q]["question_text"]} for q in ("7", "8")]
-        bank = BQ.build_bank("finance", routed, candidates, active, {}, 0)
-        got = [(c["cset_question_id"], c.get("cset_set")) for c in bank["questions"]["GV.OV-01"]["candidates"]]
-        self.assertEqual(got, [(2, "NCSF_V2"), (8, None)])
-        self.assertEqual((bank["with_candidates"], bank["with_maturity_questions"], bank["empty"]), (1, 1, 2))
-
+        ids = lambda sector: [c["cset_question_id"] for c in
+                              BQ.build_bank(sector, candidates, active)["questions"]["GV.OV-01"]["candidates"]]
+        self.assertEqual((ids("finance"), ids("saas_cloud"), ids("healthcare")), ([2, 8, 11], [2, 9, 11], [2, 11]))
+        ssg = BQ.build_bank("saas_cloud", candidates, active)["questions"]["GV.OV-01"]["candidates"][1]
+        self.assertEqual((ssg["question_text"], ssg["text_from"]), ("Development environments are separated.", "outcome"))
+        self.assertEqual(BQ.build_bank("finance", candidates, active)["questions"]["ID.AM-01"]["candidates"], [])
 
 class CsfEvidencePrompts(unittest.TestCase):
     def test_a_subcategory_prompt_wins_over_the_category_line(self):
@@ -277,7 +283,7 @@ class CsfEvidencePrompts(unittest.TestCase):
                          ("own", "cat", "d"))
 
     def test_the_writer_file_and_the_review_are_validated_together(self):
-        import build_question_bank as RC
+        import build_csf_bank as RC
         ok = "The backup schedule for critical data and the latest restore test result."
         self.assertEqual(RC.validate_evidence({"PR.DS-11": ok}, [{"subcategory_id": "PR.DS-11", "verdict": "pass"}],
                                               {"PR.DS-11"}), [])

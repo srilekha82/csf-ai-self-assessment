@@ -4,7 +4,7 @@ writes gets into the banks: every file is checked first, and a file with any pro
 
 Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
            the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
-Called by: /build-csf-bank (steps 4 and 5) and /build-ai-bank (steps 3 to 7); never in a client run
+Called by: /build-csf-bank (step 4) and /build-ai-bank (steps 3 to 7); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
@@ -18,9 +18,7 @@ What every mode does
   3. Record  a write-once copy in judgement_log/ (data/csf/bank_build/ or data/ai/bank_build/): who decided, with
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
-CSF banks (/build-csf-bank; the checks are in build_question_bank.py)
-  csf-cset <verdicts.json> [--pending F]    the agent's decisions on CSET questions the build could not place
-                                            (sector, rewording, fit) -> cset_judgements.json   check: validate_cset
+CSF banks (/build-csf-bank; the checks are in build_csf_bank.py)
   csf-evidence-prepare                      writes the evidence writers' input: subcategories with no evidence line
   csf-evidence <file> --review F            round 1: passed lines -> evidence_prompts.json; failed ones are kept
                                             for one revision                                   check: validate_evidence
@@ -61,7 +59,7 @@ from config import (AI_AREAS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPP
                     AI_QUESTION_BANKS, REPO_ROOT)
 from ai_bank_common import DEFAULT_PROMPTS, load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
-import build_question_bank as csf  # noqa: E402
+import build_csf_bank as csf  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
                           store_questions, validate_evidence, validate_questions)
@@ -115,10 +113,6 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument("--model", required=True, help="model id of the agent that produced the file")
         p.add_argument("--session", help="session reference, e.g. evaluator=<model id>")
 
-    p = sub.add_parser("csf-cset")
-    p.add_argument("file")
-    p.add_argument("--pending", help="the pending_judgements file the agent was shown")
-    agent_args(p)
     sub.add_parser("csf-evidence-prepare")
     p = sub.add_parser("csf-evidence")
     p.add_argument("file")
@@ -153,9 +147,7 @@ def parser() -> argparse.ArgumentParser:
 def main():
     args = parser().parse_args()
     mode = args.mode
-    if mode == "csf-cset":
-        csf.record_cset(args.file, args.pending, args.model, args.session)
-    elif mode == "csf-evidence-prepare":
+    if mode == "csf-evidence-prepare":
         csf.evidence_prepare()
     elif mode == "csf-evidence":
         csf.record_evidence(args.file, args.review, args.revision, args.model, args.session)

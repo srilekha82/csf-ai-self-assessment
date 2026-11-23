@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE, AI_IMPACT_NOTES_XLSX,  # noqa: E402
                      AI_PARSE_CONFIG, AI_PILOT, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX,
-                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, BANK_BUILD, CERT_FILES,
+                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, CERT_FILES,
                      CSF_IMPACT_NOTES, DATA_AUDIT, DOMAINS, METADATA, bank_path)
 import audit  # noqa: E402
 from sheet_io import sheet_status  # noqa: E402
@@ -131,9 +131,9 @@ def csf_bank_stage(domain: str, cset_path: Path, upstream: tuple | None = None) 
     bank = load(bank_path(domain))
     if bank is None:
         return (stage, False, "missing"), []
-    from build_question_bank import bank_inputs_sha
-    if bank.get("inputs_sha") != bank_inputs_sha(BANK_BUILD):
-        return (stage, False, "stale (the agent judgements or csf2_core.json changed since the bank was built)"), []
+    from build_csf_bank import bank_inputs_sha
+    if bank.get("inputs_sha") != bank_inputs_sha():
+        return (stage, False, "stale (bank_rules.json or csf2_core.json changed since the bank was built)"), []
     ref, notes, error = upstream or cset_upstream(cset_path)
     if ref is None:
         return (stage, False, error), notes
@@ -158,7 +158,7 @@ def reference_lines() -> list[tuple[str, bool, str]]:
         info = metadata.get(name, {})
         refreshed, limit = info.get("last_refreshed"), info.get("refresh_threshold_days")
         if info.get("is_placeholder") or refreshed is None:
-            lines.append((name, False, "seed data, never refreshed: download it from NIST"))
+            lines.append((name, False, "never refreshed: download it from NIST"))
             continue
         age = (date.today() - date.fromisoformat(refreshed)).days
         if limit and age > limit:
@@ -177,7 +177,7 @@ def csf_banks_line(cset_path: Path, upstream: tuple) -> tuple[str, bool, str]:
         return "CSF banks", False, f"missing: {', '.join(missing)} (run /build-csf-bank)"
     records = {(b.get("cset_commit"), json.dumps(b.get("inputs_sha"), sort_keys=True)) for b in banks.values()}
     if len(records) > 1:
-        return "CSF banks", False, "built from different CSET versions or judgements (run /build-csf-bank)"
+        return "CSF banks", False, "built from different CSET versions or rules (run /build-csf-bank)"
     (_, ok, text), _ = csf_bank_stage(DOMAINS[0], cset_path, upstream)
     return "CSF banks", ok, text
 

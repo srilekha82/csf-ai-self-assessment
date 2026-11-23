@@ -14,7 +14,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    file, rejects it if anything is wrong (exit 1, nothing stored), otherwise stores it and writes a write-once record
    (model, prompt hash, input hash, output snapshot). The contract lives once, in `audit.record_agent_output`; a recording
    script supplies only its validator and its store. Both bank builds: `record_bank.py` (one mode per kind of agent
-   output; the checks live next to the data they guard: `build_question_bank.py` for CSF, `ai_mapping.py`,
+   output; the checks live next to the data they guard: `build_csf_bank.py` for CSF, `ai_mapping.py`,
    `ai_questions.py`, `ai_notes.py` for AI RMF). A client run has no agent output: its scope and picks are fixed rules,
    and where a rule cannot be sure (an SoA exclusion) it asks in full rather than ask an agent.
 5. **Everything is audited.** Every script calls `scripts/audit.py` (`begin`, then `finish` / `fail` / `pending`), which

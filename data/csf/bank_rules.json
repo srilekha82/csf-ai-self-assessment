@@ -1,21 +1,18 @@
 {
-  "description": "Rules for building the CSF question banks (/build-csf-bank). extract_cset_candidates.py flags each CSET question; build_question_bank.py routes each question per sector: rejected, accepted, or pending for the question bank judge agent.",
+  "description": "Rules for building the CSF question banks (/build-csf-bank). extract_cset_candidates.py flags each CSET question; build_csf_bank.py puts each question CSET links to a CSF 2.0 subcategory into the banks of the sectors its question set is for. After a change, run /build-csf-bank again.",
   "truncated": {
-    "description": "A CSET question is flagged truncated (sent to the agent to be rewritten) if its text ends with one of these characters or is shorter than min_chars.",
+    "description": "A CSET question is flagged truncated if its text ends with one of these characters or is shorter than min_chars.",
     "ends_with": [":", ","],
     "min_chars": 25
   },
-  "reject_flags": ["not_answerable", "empty_text"],
-  "rewrite_flags": ["statement_only", "truncated"],
-  "sector_by_model": {
-    "description": "CSET question sets that belong to one sector: their questions are accepted for that sector without an agent. Every other set is generic, and the agent decides which sectors its questions suit.",
-    "ACET": "finance",
-    "SSG Chemical": "manufacturing_ot",
-    "CYOTE": "manufacturing_ot",
-    "HYDRO": "manufacturing_ot"
+  "reject_flags": ["not_answerable", "empty_text", "truncated"],
+  "statement_only_text": {
+    "description": "A CSET practice with no question text (flag statement_only) is shown with the text of this CSET practice field.",
+    "field": "outcome"
   },
-  "fanout_threshold": {
-    "description": "A question linked to this many CSF subcategories or more gets the agent's fit check for each one (build_question_bank.py --fanout-threshold overrides it).",
-    "value": 4
+  "sector_by_model": {
+    "description": "CSET question sets for one sector: their questions go only into that sector's bank. A set not listed here goes into every sector's bank.",
+    "ACET": "finance",
+    "SSG IT": "saas_cloud"
   }
 }
