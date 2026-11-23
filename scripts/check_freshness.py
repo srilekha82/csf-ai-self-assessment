@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANKS, AI_CIS_CSF_XLSX, AI_CORE, AI_IMPACT_NOTES_XLSX,  # noqa: E402
                      AI_PARSE_CONFIG, AI_PILOT, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX,
-                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, CERT_FILES,
+                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, CERT_FILES, ai_bank_path,
                      CSF_IMPACT_NOTES, DATA_AUDIT, SECTORS, METADATA, bank_path)
 import audit  # noqa: E402
 from sheet_io import sheet_status  # noqa: E402
@@ -78,7 +78,7 @@ def ai_stages() -> list[tuple[str, bool, str]]:
     if core and not sg and load(AI_SAFEGUARD_IDS):
         stages[0] = ("parse", False, f"missing the CIS text ({AI_SAFEGUARDS.name} is local only): run the parse")
     for bank in AI_QUESTION_BANKS:
-        doc = load(AI_BANKS / f"question_bank_ai_rmf_{bank}.json")
+        doc = load(ai_bank_path(bank, AI_BANKS))
         stage, ok, text = verdict(f"bank {bank}", doc, doc and doc["playbook_sha256_16"] == playbook
                                   and doc["guide_sha256_16"] == guides)
         if ok and stages[0][1]:

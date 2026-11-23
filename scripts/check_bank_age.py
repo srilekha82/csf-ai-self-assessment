@@ -23,7 +23,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_BANKS, AI_QUESTION_BANKS, DATA_AUDIT, SECTORS, METADATA, bank_path, load_csf_intake  # noqa: E402
+from config import (AI_BANKS, AI_QUESTION_BANKS, DATA_AUDIT, SECTORS, METADATA, ai_bank_path, bank_path,  # noqa: E402
+                    load_csf_intake)
 import audit  # noqa: E402
 
 
@@ -35,7 +36,7 @@ def bank_problems(sector: str, today: date | None = None, limits: dict | None = 
     limits = limits or json.loads(METADATA.read_text())["question_banks"]
     ai_dir = ai_dir or AI_BANKS
     banks = [(f"CSF bank {sector}", csf_file or bank_path(sector), limits["csf_max_age_days"], "/build-csf-bank")]
-    banks += [(f"AI bank {b}", ai_dir / f"question_bank_ai_rmf_{b}.json", limits["ai_max_age_days"], "/build-ai-bank")
+    banks += [(f"AI bank {b}", ai_bank_path(b, ai_dir), limits["ai_max_age_days"], "/build-ai-bank")
               for b in AI_QUESTION_BANKS]
     problems = []
     for name, path, limit, command in banks:

@@ -18,9 +18,11 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_WORK, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
+from config import AI_WORK, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES, SHEET_SPECS  # noqa: E402
 from ai_bank_common import load_json  # noqa: E402
 import audit  # noqa: E402
+
+SHEET_WORDS = json.loads(SHEET_SPECS.read_text())["review_words"]   # data/common/sheet_specs.json
 
 
 NOTE_MIN_CHARS = json.loads(AI_QUESTION_RULES.read_text())["text_limits"]["note_min_chars"]
@@ -101,7 +103,7 @@ def notes_from_sheet(lines: list[dict], doc: dict) -> tuple[dict, list[str], int
         if ln["status"] == "pass":
             e.pop("review_reason", None)
         else:
-            e["review_reason"] = old.get("review_reason") or "flagged in the review sheet"
+            e["review_reason"] = old.get("review_reason") or SHEET_WORDS["flagged"]
         changed.append(sid)
     if set(notes) - seen:
         problems.append(f"every subcategory keeps its notes; no line for {', '.join(sorted(set(notes) - seen))}")

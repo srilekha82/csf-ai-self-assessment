@@ -37,6 +37,11 @@ def sha(path) -> str | None:
     return hashlib.sha256(p.read_bytes()).hexdigest()[:16] if p and p.is_file() else None
 
 
+def json_sha(obj) -> str:
+    """The same 16-character hash for a piece of JSON (key order does not matter)."""
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+
+
 def _ref(path, base: Path) -> dict:
     p = Path(path)
     for root in (base, REPO_ROOT):

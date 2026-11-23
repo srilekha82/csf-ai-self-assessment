@@ -50,7 +50,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_BANKS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
-                    AI_PROMPTS, AI_QUESTION_BANKS, REPO_ROOT)
+                    AI_PROMPTS, AI_QUESTION_BANKS, REPO_ROOT, ai_bank_path)
 from ai_bank_common import load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
@@ -151,7 +151,7 @@ def main():
     elif mode == "ai-confirm-current":
         import check_freshness
         from ai_questions import restamp_banks
-        run_step("ai_confirm_current", {}, [], [AI_BANKS / f"question_bank_ai_rmf_{b}.json" for b in AI_QUESTION_BANKS],
+        run_step("ai_confirm_current", {}, [], [ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS],
                  lambda: restamp_banks(check_freshness.ai_stages()))
     elif mode == "ai-accept-mapping":
         note = args.note or ("accepted by /build-ai-bank: every row passed its evaluator" if args.by_build else None)

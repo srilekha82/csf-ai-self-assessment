@@ -1,5 +1,5 @@
 {
-  "description": "Rules for the AI RMF mapping (AI area x AI RMF function -> subcategory, CIS safeguards, impact). prepare_ai_bank.py mapping uses area_cis to give the drafter a short list of candidate CIS safeguards; record_ai_bank.py mapping rejects a draft that breaks any rule here. Model: AI_RMF_Mapping_Sheet_Design.md. There is no row count: an area gets as many rows as it has real questions.",
+  "description": "Rules for the AI RMF mapping (AI area x AI RMF function -> subcategory, CIS safeguards, impact). prepare_ai_bank.py mapping uses area_cis to give the drafter a short list of candidate CIS safeguards; record_bank.py ai-mapping rejects a draft that breaks any rule here. Model: docs/ai-rmf-model.md. There is no row count: an area gets as many rows as it has real questions.",
   "functions": ["MAP", "MEASURE", "MANAGE"],
   "foundation": {
     "description": "Functions that are the foundation: how the organisation works with AI (policies, roles, inventory, culture, third parties). Not mapped to an AI area; asked once for the organisation, questions written per subcategory in the bank build and picked at engagement time by the intake role (none, consumer, producer). They count as reached in the coverage check. Every AI RMF function is either here or in functions, never both.",
@@ -8,6 +8,7 @@
     "subcategories": ["MAP 1.3", "MAP 1.5", "MAP 3.4", "MEASURE 1.1", "MEASURE 1.2", "MEASURE 3.1", "MEASURE 3.2", "MEASURE 4.1", "MANAGE 1.2", "MANAGE 1.3", "MANAGE 1.4", "MANAGE 2.1"]
   },
   "min_why_chars": 20,
+  "drafter_input": {"description": "How much source text prepare_ai_bank.py gives the mapping drafter per item: the first max_actions Playbook suggested actions of a subcategory, each cut at action_chars, and each CIS safeguard's AI text cut at ai_text_chars (also used for the question batches).", "max_actions": 6, "action_chars": 220, "ai_text_chars": 260},
   "always_cis_controls": {
     "description": "CIS Controls v8.1 control numbers (1-18) added to every AI area, taken from that area's own guides (area_cis guides): e.g. control 8 is MCP-8.x for mcp_tools, AGENT-8.x for agent, LLM-8.x for most areas. 1 and 2 (the area's assets and software, for MAP rows on its components), 8 (the audit trail check) and 17 (the incident response check), so every area can cite them. The names are checked against the parsed guides (cis_ai_safeguards.json controls).",
     "controls": {"1": "Inventory and Control of Enterprise Assets", "2": "Inventory and Control of Software Assets",
