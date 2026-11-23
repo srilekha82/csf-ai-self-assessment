@@ -1021,6 +1021,27 @@ class CsfBankStage(unittest.TestCase):
         self.assertTrue(notes and "could not check upstream" in notes[0])
 
 
+class ConfirmCurrent(unittest.TestCase):
+    """record_bank.py ai-confirm-current: like a CSF rebuild, a build that finds everything current resets the banks'
+    age; nothing else in them changes, and nothing is stamped while anything is not current."""
+
+    def test_only_a_fully_current_build_restamps_the_banks(self):
+        from datetime import date
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(setattr, PL, "AI_BANKS", PL.AI_BANKS)
+        PL.AI_BANKS = tmp
+        for b in ("foundation", "areas"):
+            (tmp / f"question_bank_ai_rmf_{b}.json").write_text(json.dumps({"built_on": "2026-01-01", "subcategories": {"S": 1}}))
+        line, failed = PL.restamp_banks([("parse", True, "current"), ("mapping", False, "not accepted")])
+        self.assertTrue(failed and "mapping (not accepted)" in line)
+        self.assertEqual(json.loads((tmp / "question_bank_ai_rmf_areas.json").read_text())["built_on"], "2026-01-01")
+        line, failed = PL.restamp_banks([("parse", True, "current"), ("mapping", True, "accepted")])
+        self.assertFalse(failed)
+        for b in ("foundation", "areas"):
+            doc = json.loads((tmp / f"question_bank_ai_rmf_{b}.json").read_text())
+            self.assertEqual(doc, {"built_on": date.today().isoformat(), "subcategories": {"S": 1}})
+
+
 class ParseUpToDate(unittest.TestCase):
     """parse_ai_rmf_sources.py reads the PDFs only when an output is missing or a source file changed."""
 

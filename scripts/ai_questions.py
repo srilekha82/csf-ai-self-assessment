@@ -492,6 +492,22 @@ def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out
     return f"{len(result)} subcategories: {len(result) - len(failing)} pass, {len(failing)} need human review → {out.name}"
 
 
+def restamp_banks(stages: list[tuple[str, bool, str]]) -> tuple[str, bool]:
+    """When the gate finds everything current, set both banks' built_on to today, as a CSF rebuild does: the bank age a
+    client run checks then counts from the last time the bank was confirmed current. Nothing else in the files changes.
+    `stages` is check_freshness.ai_stages(); returns (summary, failed)."""
+    not_current = [f"{stage} ({text})" for stage, ok, text in stages if not ok]
+    if not_current:
+        return f"not re-stamped, not everything is current: {'; '.join(not_current)}", True
+    today = date.today().isoformat()
+    for bank in AI_QUESTION_BANKS:
+        path = AI_BANKS / f"question_bank_ai_rmf_{bank}.json"
+        doc = load_json(path, path.name)
+        doc["built_on"] = today
+        path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
+    return f"both AI banks current: built_on set to {today}", False
+
+
 def store_questions(data: dict, args, inp: dict) -> tuple[Path, str]:
     """Store checked questions in their bank (entries replaced per subcategory); returns (path, summary)."""
     today = date.today().isoformat()

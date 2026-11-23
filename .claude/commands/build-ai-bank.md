@@ -27,7 +27,9 @@ One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, 
 or `incomplete`. A
 stage is current only if it was built from the exact source files on disk (each output records the SHA-256 of its inputs).
 
-- Exit 0: everything is current and complete. Tell the user and stop, unless they ask to force a rebuild.
+- Exit 0: everything is current and complete. Run `.venv/bin/python ./scripts/record_bank.py ai-confirm-current`
+  (no agent: it re-stamps both banks' build date, as a CSF rebuild does, so a client run's age check passes), tell the
+  user and stop, unless they ask to force a rebuild.
 - Exit 1 with `sources: missing ...`: point to `data/ai/source/README.md` and stop.
 - Exit 1 otherwise: do only the stages that are not current, in the order below; a stale stage makes the ones after it
   stale too. Tell the user which stages you will run.
