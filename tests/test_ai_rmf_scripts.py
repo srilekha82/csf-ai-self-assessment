@@ -963,7 +963,7 @@ class CsfBankStage(unittest.TestCase):
         self.base = self.commit(self.origin, f"{EX.SQL_SUBPATH}/1_data.sql", "-- v1")
         self.git(self.tmp, "clone", "-q", str(self.origin), str(self.clone))
         self.bank = self.tmp / "bank.json"
-        CF.bank_path = lambda domain: self.bank
+        CF.bank_path = lambda sector: self.bank
 
     def write_bank(self, commit, inputs=None):
         from build_csf_bank import bank_inputs_sha
@@ -1025,12 +1025,12 @@ class CsfBanksLine(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         real = CF.bank_path
         self.addCleanup(setattr, CF, "bank_path", real)
-        CF.bank_path = lambda domain: self.tmp / f"{domain}.json"
+        CF.bank_path = lambda sector: self.tmp / f"{sector}.json"
         from build_csf_bank import bank_inputs_sha
         self.record = {"cset_commit": "abc", "inputs_sha": bank_inputs_sha()}
 
     def write_all(self, **change):
-        for d in CF.DOMAINS:
+        for d in CF.SECTORS:
             (self.tmp / f"{d}.json").write_text(json.dumps({**self.record, **(change if d == "finance" else {})}))
 
     def line(self):

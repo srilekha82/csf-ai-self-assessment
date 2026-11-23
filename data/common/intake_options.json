@@ -1,7 +1,7 @@
 {
-  "description": "Facts shared by the CSF and AI RMF tracks: the intake menus (scripts/intake.py turns the typed numbers into these values; an option marked \"alone\" cannot be picked with another), the domains and certifications (each with its crosswalk file, and the prefix its references carry in NIST's CSF 2.0 download, which parse_csf_source.py reads), and the question types in order of how demanding they are. Read through scripts/config.py; no script keeps its own copy.",
+  "description": "Facts shared by the CSF and AI RMF tracks: the intake menus (scripts/intake.py turns the typed numbers into these values; an option marked \"alone\" cannot be picked with another), the sectors and certifications (each with its crosswalk file, and the prefix its references carry in NIST's CSF 2.0 download, which parse_csf_source.py reads), and the question types in order of how demanding they are. Read through scripts/config.py; no script keeps its own copy.",
   "severity_order": ["confirmatory", "gap", "full_discovery"],
-  "domains": [
+  "sectors": [
     {"value": "finance", "label": "Financial"},
     {"value": "healthcare", "label": "Healthcare"},
     {"value": "manufacturing_ot", "label": "Manufacturing / OT"},
@@ -17,7 +17,7 @@
      "framework": "PCI DSS v4.0.1", "nist_reference_prefix": "PCI DSS:"}
   ],
   "questions": [
-    {"key": "domain", "prompt": "Domain", "multi": false, "options": "domains"},
+    {"key": "sector", "prompt": "Sector", "multi": false, "options": "sectors"},
     {"key": "certs", "prompt": "Certifications held (pick all that apply, e.g. \"2 3\")", "multi": true, "options": "certs"},
     {"key": "ai_in_use", "prompt": "AI in use (the gate)", "multi": false,
      "options": [

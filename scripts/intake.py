@@ -10,7 +10,7 @@ Output:    runs/<Org>_<date>/csf_intake.json (organisation, date, sector, certif
            uses AI)
 
 Usage: .venv/bin/python ./scripts/intake.py menu [KEY]
-       .venv/bin/python ./scripts/intake.py write --org NAME --domain N --certs "N N" --ai-in-use N
+       .venv/bin/python ./scripts/intake.py write --org NAME --sector N --certs "N N" --ai-in-use N
               [--role N [--built-on-existing-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
               [--date YYYY-MM-DD] [--runs-dir DIR] [--replace]
 
@@ -126,7 +126,7 @@ def write(args) -> None:
     order = [a["id"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]]
     areas = ai_areas(gate, role, values.get("ai_usage", []), values.get("ai_components", []),
                      json.loads(AI_SCOPE_RULES.read_text()), order)
-    csf = {"org": args.org.strip(), "date": args.date, "domain": values["domain"], "certs": certs}
+    csf = {"org": args.org.strip(), "date": args.date, "sector": values["sector"], "certs": certs}
     ai = {"ai_in_use": gate, "role": role,
           "producer": ({k: values[k] for k in ("built_on_existing_model", "given_to_others")}
                        if role in ("producer", "both") else None),
@@ -138,7 +138,7 @@ def write(args) -> None:
     for name, doc in (("csf_intake.json", csf), ("ai_intake.json", ai)):
         (run_dir / name).write_text(json.dumps(doc, indent=2, ensure_ascii=False))
         outputs.append(run_dir / name)
-    detail = f"{values['domain']}; certs {', '.join(certs) or 'none'}; AI {gate}: {', '.join(areas)}"
+    detail = f"{values['sector']}; certs {', '.join(certs) or 'none'}; AI {gate}: {', '.join(areas)}"
     print(f"[intake] {run_dir}: {detail} → csf_intake.json, ai_intake.json")
     ev.finish(outputs=outputs, detail=detail)
 

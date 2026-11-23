@@ -29,7 +29,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (BANK_BUILD, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER, DOMAINS,  # noqa: E402
+from config import (BANK_BUILD, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER, SECTORS,  # noqa: E402
                      bank_path)
 import audit  # noqa: E402
 
@@ -110,7 +110,7 @@ def main():
               if not s["subcategory_text"].startswith("[Withdrawn")}
 
     paths, details = [], []
-    for sector in DOMAINS:
+    for sector in SECTORS:
         bank = build_bank(sector, candidates, active)
         path = bank_path(sector, out_dir)
         path.write_text(json.dumps(bank, indent=2, ensure_ascii=False))

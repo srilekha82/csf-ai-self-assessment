@@ -124,7 +124,7 @@ Medium / Low) for the profile's Priority column.
 - **Area subcategories** take the highest criticality among the systems marked with an AI area whose row (or a row
   that folds it) reaches the subcategory. **Foundation subcategories** take the highest system overall. An area no
   system is marked with, or no inventory at all, is High.
-- **Domain floor:** in healthcare and manufacturing / OT loss of life is possible, so subcategories reached through a
+- **Sector floor:** in healthcare and manufacturing / OT loss of life is possible, so subcategories reached through a
   row with a people impact, and MEASURE 2.6 (safety), are always High.
 - In AI RMF harm terms (NIST AI 100-1, section 1.1, Figure 1): financial and reputational loss is **Organization**,
   loss of life and harm to individuals is **People**, supply chain and environment is **Ecosystem** (not used).

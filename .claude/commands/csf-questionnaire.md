@@ -36,7 +36,7 @@ asked in full, with a note telling the client they may answer "Not applicable" w
 ## 4 — Questions from the bank
 `.venv/bin/python ./scripts/pick_questions.py <run_dir> --framework csf`
 
-Picks candidates from `data/csf/banks/question_bank_<domain>.json` per subcategory and writes `csf_questions_draft.json` and
+Picks candidates from `data/csf/banks/question_bank_<sector>.json` per subcategory and writes `csf_questions_draft.json` and
 a snapshot `csf_question_bank_used.json`.
 
 ## 5 — Write the CSF sheet

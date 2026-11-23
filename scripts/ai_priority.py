@@ -57,13 +57,13 @@ def reach(ctx: dict) -> dict[str, list[tuple[str, list]]]:
     return out
 
 
-def subcategory_priorities(subcategories, systems: list[dict], domain: str, client_areas, ctx: dict,
+def subcategory_priorities(subcategories, systems: list[dict], sector: str, client_areas, ctx: dict,
                            rules: dict | None = None) -> dict[str, str]:
     """Priority per subcategory in the client's questionnaire (`subcategories`); see severity_rules.json."""
     rules = rules or load_rules()
     levels = [(set(s.get("areas") or []), system_level(s, rules)) for s in systems]
     org = highest([lvl for _, lvl in levels] or [rules["blank"]], rules)
-    floor = rules["domain_floor"] if domain in rules["domain_floor"]["domains"] else None
+    floor = rules["sector_floor"] if sector in rules["sector_floor"]["sectors"] else None
     reached, client_areas = reach(ctx), set(client_areas)
     out = {}
     for sid in subcategories:

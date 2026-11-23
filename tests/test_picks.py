@@ -147,13 +147,13 @@ def script(name, *args):
 
 # Typical clients: intake answers as menu numbers (see data/common/intake_options.json), and an optional SoA.
 CLIENTS = {
-    "no_cert_no_ai":   ["--domain", "5", "--certs", "1", "--ai-in-use", "1"],
-    "iso_unsure_ai":   ["--domain", "2", "--certs", "2", "--ai-in-use", "3"],
-    "pci_ai_user":     ["--domain", "1", "--certs", "3", "--ai-in-use", "2", "--role", "1", "--ai-usage", "1 4",
+    "no_cert_no_ai":   ["--sector", "5", "--certs", "1", "--ai-in-use", "1"],
+    "iso_unsure_ai":   ["--sector", "2", "--certs", "2", "--ai-in-use", "3"],
+    "pci_ai_user":     ["--sector", "1", "--certs", "3", "--ai-in-use", "2", "--role", "1", "--ai-usage", "1 4",
                         "--ai-components", "1"],
-    "iso_pci_builder": ["--domain", "4", "--certs", "2 3", "--ai-in-use", "2", "--role", "2",
+    "iso_pci_builder": ["--sector", "4", "--certs", "2 3", "--ai-in-use", "2", "--role", "2",
                         "--built-on-existing-model", "1", "--given-to-others", "1", "--ai-components", "3 4"],
-    "iso_soa_both":    ["--domain", "3", "--certs", "2", "--ai-in-use", "2", "--role", "3",
+    "iso_soa_both":    ["--sector", "3", "--certs", "2", "--ai-in-use", "2", "--role", "3",
                         "--built-on-existing-model", "2", "--given-to-others", "2", "--ai-usage", "3",
                         "--ai-components", "2"],
 }
