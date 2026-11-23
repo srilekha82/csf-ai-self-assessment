@@ -873,6 +873,13 @@ class FreshnessGate(unittest.TestCase):
     def states(self):
         return {stage: ok for stage, ok, _ in CF.ai_stages()}
 
+    def test_without_the_cis_csf_xlsx_only_the_notes_cannot_be_checked(self):
+        self.build_everything()
+        CF.AI_CIS_CSF_XLSX.unlink()
+        stages = {stage: (ok, text) for stage, ok, text in CF.ai_stages()}
+        self.assertEqual(stages["notes"], (False, "cannot check (the CIS -> CSF xlsx is not on this machine)"))
+        self.assertTrue(stages["parse"][0] and stages["bank foundation"][0] and stages["bank areas"][0])
+
     def test_a_parse_without_the_local_cis_text_is_not_current(self):
         self.build_everything()
         CF.AI_SAFEGUARDS.unlink()                   # a fresh clone: only the committed ids file
