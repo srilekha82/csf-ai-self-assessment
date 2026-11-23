@@ -1,7 +1,7 @@
 """
 Prepares the input for the AI impact notes on the CSF side. No judgement.
 
-Called by: /build-ai-bank (step 7)
+Called by: /build-ai-bank (step 6)
 Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json, data/ai/parse_config.json (the AI
            text length)
 Output:    data/ai/bank_build/work/impact_pending.json

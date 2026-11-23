@@ -16,9 +16,9 @@ source it was built from changes.
 | | NIST CSF 2.0 | NIST AI RMF 1.0 |
 |---|---|---|
 | Source of the questions | CISA's [CSET](https://github.com/cisagov/cset): its own CSF 2.0 question set plus the maturity-model questions it maps to CSF, read from CSET's SQL files | The AI RMF Playbook's suggested actions. The CIS AI companion guides add the safeguards a question may cite as evidence. |
-| How questions are made | Taken from CSET, never written. An AI agent only decides which sector each question suits and repairs wording. | Written by an AI agent, checked by a second agent, piloted and reviewed by a person |
+| How questions are made | Taken from CSET, never written; scripts pick them by sector. | Written by an AI agent, checked by a second agent, piloted and reviewed by a person |
 | Banks | One per sector: `data/csf/banks/question_bank_<sector>.json` | Two: foundation (asked once per organisation) and areas (per AI area), in `data/ai/banks/` |
-| Command | `/build-csf-bank` | `/build-ai-bank` |
+| Command | `/build-csf-bank` | `/ai-mapping` (the mapping, rarely), then `/build-ai-bank` |
 | Rebuilt when | CSET changes a question | The Playbook or a CIS guide changes, or the mapping changes |
 
 The AI RMF track needs one extra step first: a **mapping** that links each AI area to the AI RMF subcategories that
