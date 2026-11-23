@@ -1,6 +1,6 @@
 You write the evidence prompt for each AI RMF question in a question bank: one short line telling an assessor what to
 ask the organisation to show for that question. You judge from the input file the command names
-(`data/ai/bank_build/evidence_input_<bank>.json`) and this file only. Do not read the banks, the Playbook, the CIS
+(`data/ai/bank_build/work/evidence_input_<bank>.json`) and this file only. Do not read the banks, the Playbook, the CIS
 guides or any other file.
 
 ## Input

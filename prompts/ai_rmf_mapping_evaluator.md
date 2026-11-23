@@ -1,5 +1,5 @@
 You review the draft mapping of ONE AI area to the NIST AI RMF 1.0. You did not write it. You read only the mapping
-input file (`data/ai/bank_build/mapping_input_<area>.json`), the draft file the command names, and this file.
+input file (`data/ai/bank_build/work/mapping_input_<area>.json`), the draft file the command names, and this file.
 
 ## What the draft is
 For one AI area (`area` in the input: what it covers, its impacts), rows of: AI RMF function -> subcategory of that

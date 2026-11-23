@@ -9,6 +9,9 @@ re-implement any parsing or routing inline.
 
 Tools: Bash, Read, Write, Agent. Working directory: repo root. Say little: the script summary lines and the final report.
 
+Temporary files (pending questions, verdicts, evidence inputs, agent drafts, the person's evidence review) all go in
+`data/csf/bank_build/work/` (gitignored). Delete that folder at the end of the build.
+
 ## 1 — CSET path
 The CSET repo is `~/workstuff/cset` unless the user says otherwise (expand `~`).
 If that folder does not exist, clone the public repo there (only the SQL folder, with full history; tell the user):
@@ -37,33 +40,33 @@ relay the message and stop. Add `--force` only if the user asks.
 `.venv/bin/python ./scripts/build_question_bank.py`
 
 - **Exit 0**: all six banks written. Go to Step 5.
-- **Exit 2**: some candidates need a judgement. It wrote `data/csf/bank_build/pending_judgements.json` (each question
+- **Exit 2**: some candidates need a judgement. It wrote `data/csf/bank_build/work/pending_judgements.json` (each question
   once, whatever the sector) and no bank. Go to Step 4.
 
 ## 4 — Judge the pending questions (agent)
 `prompts/question_bank_judge.md` is your complete instruction for this step.
 
-1. Read `data/csf/bank_build/pending_judgements.json`; work through `items` in batches of about 25.
+1. Read `data/csf/bank_build/work/pending_judgements.json`; work through `items` in batches of about 25.
 2. For each item write only the verdicts it `needs`, in the format the prompt defines, all into
-   `data/csf/bank_build/verdicts.json`.
+   `data/csf/bank_build/work/verdicts.json`.
 3. Save them (your model id):
    ```bash
-   .venv/bin/python ./scripts/record_bank.py csf-cset data/csf/bank_build/verdicts.json \
-       --pending data/csf/bank_build/pending_judgements.json --model <model id>
+   .venv/bin/python ./scripts/record_bank.py csf-cset data/csf/bank_build/work/verdicts.json \
+       --pending data/csf/bank_build/work/pending_judgements.json --model <model id>
    ```
    If it lists problems, fix those entries and run it again; nothing is saved until it passes.
 4. Run Step 3 again: it should now exit 0.
 
 Verdicts are stored in `data/csf/bank_build/cset_judgements.json` and reused by every domain and every later build; they
 are redone only for questions CSET has changed. Each recording also writes a write-once record to
-`data/csf/bank_build/judgement_log/`. Delete `verdicts.json` once recorded.
+`data/csf/bank_build/judgement_log/`.
 
 ## 5 — Evidence prompts (agents, then a person for what still fails)
 Each CSF subcategory gets its own evidence prompt once: the "Evidence Required" line of the CSF sheet, the same for
 every sector, stored in `data/csf/evidence_prompts.json` `by_subcategory`. The questions stay CSET's; only this line
 is written. A subcategory is asked again only while nothing is decided for it.
 
-1. `.venv/bin/python ./scripts/record_bank.py csf-evidence-prepare` writes `data/csf/bank_build/evidence_input.json`
+1. `.venv/bin/python ./scripts/record_bank.py csf-evidence-prepare` writes `data/csf/bank_build/work/evidence_input.json`
    (subcategories with no evidence line decided, with NIST's implementation examples; it says how many). Nothing to do
    when it says 0.
 2. **Writers** (fresh subagents, Sonnet, started together): follow `prompts/csf_evidence_writer.md` with that input, one
@@ -72,18 +75,16 @@ is written. A subcategory is asked again only while nothing is decided for it.
    `prompts/csf_evidence_evaluator.md` with the input and one writer's file; write `work/evidence_<part>_eval.json`.
 4. Record each part: `.venv/bin/python ./scripts/record_bank.py csf-evidence data/csf/bank_build/work/evidence_<part>.json
    --review data/csf/bank_build/work/evidence_<part>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
-   Passing prompts are stored; failures go to `data/csf/bank_build/evidence_revise.json` with the evaluator's reason.
+   Passing prompts are stored; failures go to `data/csf/bank_build/work/evidence_revise.json` with the evaluator's reason.
 5. **Revision** (only if `evidence_revise.json` exists): one fresh writer revises every item in it (same prompt, its
    Revision section) into `work/evidence_revision.json`; one fresh evaluator checks it into
    `work/evidence_revision_eval.json`; record with the same command plus `--revision`. Passing prompts are stored;
-   what fails again goes to `data/csf/bank_build/evidence_review.json`.
+   what fails again goes to `data/csf/bank_build/work/evidence_review.json`.
 6. **A person** (only if `evidence_review.json` exists): **STOP.** Tell the user how many items it has and that each
    shows the outcome, NIST's examples and both drafts with why they failed. For each item they set `"prompt"` to their
    own line (30 to 400 characters) or `"keep_category_line": true`. When they say it is done, run
    `.venv/bin/python ./scripts/record_bank.py csf-evidence-reviewed`; if it exits 1, show what it lists and wait again.
    Their decisions are final: those subcategories are never asked again.
-
-Delete `evidence_input.json` and the `work/` files at the end.
 
 ## 6 — Report
 Relay the script output: subcategories with candidates (and how many have maturity-model questions), empty ones, the routing counts (accept/schema, accept/agent,

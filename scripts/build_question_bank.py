@@ -4,7 +4,7 @@ Builds the six CSF question banks, one per sector, together from the collected C
 Called by: /build-csf-bank (step 3)
 Input:     data/csf/bank_build/cset_candidates.json and cset_judgements.json (earlier agent decisions); the routing
            rules in data/csf/bank_rules.json
-Output:    data/csf/banks/question_bank_<sector>.json for every sector, or pending_judgements.json (exit 2)
+Output:    data/csf/banks/question_bank_<sector>.json for every sector, or work/pending_judgements.json (exit 2)
 
 Usage: .venv/bin/python ./scripts/build_question_bank.py [--fanout-threshold N] [--allow-pending] [--output-dir DIR]
                                                  [--cache-dir DIR]
@@ -40,7 +40,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (BANK_BUILD, CROSSWALK_DIRS, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER,  # noqa: E402
+from config import (BANK_BUILD, BANK_WORK, CROSSWALK_DIRS, CSF_BANKS, CSF_BANK_RULES, CSF_CORE, CSF_FUNCTION_ORDER,  # noqa: E402
                      DOMAINS, EVIDENCE_PROMPTS, bank_path)
 import audit  # noqa: E402
 
@@ -328,9 +328,9 @@ def record_cset(file: str, pending: str | None, model: str, session: str | None,
 EVIDENCE_WRITER = "prompts/csf_evidence_writer.md"
 EVIDENCE_EVALUATOR = "prompts/csf_evidence_evaluator.md"
 EVIDENCE_MIN, EVIDENCE_MAX = 30, 400
-EVIDENCE_INPUT = BANK_BUILD / "evidence_input.json"     # round 1: the writers' input
-EVIDENCE_REVISE = BANK_BUILD / "evidence_revise.json"   # round 2: what failed round 1, with the evaluator's reason
-EVIDENCE_REVIEW = BANK_BUILD / "evidence_review.json"   # what failed both rounds: a person decides
+EVIDENCE_INPUT = BANK_WORK / "evidence_input.json"     # round 1: the writers' input
+EVIDENCE_REVISE = BANK_WORK / "evidence_revise.json"   # round 2: what failed round 1, with the evaluator's reason
+EVIDENCE_REVIEW = BANK_WORK / "evidence_review.json"   # what failed both rounds: a person decides
 
 
 def evidence_targets() -> dict[str, dict]:
@@ -400,6 +400,7 @@ def evidence_prepare() -> None:
             sys.exit(f"[build_question_bank] ERROR: {f.name} exists: finish {what} first.")
     ev = audit.begin(BANK_BUILD / "audit.jsonl", "csf_evidence_prepare", {})
     items = [{"id": sid, **t} for sid, t in evidence_targets().items()]
+    EVIDENCE_INPUT.parent.mkdir(parents=True, exist_ok=True)
     EVIDENCE_INPUT.write_text(json.dumps({"items": items}, indent=2, ensure_ascii=False))
     ev.finish(inputs=[CSF_CORE, EVIDENCE_PROMPTS], outputs=[EVIDENCE_INPUT], detail=f"{len(items)} subcategories")
     print(f"[build_question_bank] wrote {EVIDENCE_INPUT.name}: {len(items)} subcategories without an "
@@ -531,8 +532,9 @@ def main():
             item["needs"] += [n for n in p["needs"] if n not in item["needs"]]
             item["fit_subcategories"] += [s for s in p["fit_subcategories"] if s not in item["fit_subcategories"]]
 
-    pending_path = cache / "pending_judgements.json"
+    pending_path = cache / "work" / "pending_judgements.json"
     if pending:
+        pending_path.parent.mkdir(parents=True, exist_ok=True)
         pending_path.write_text(json.dumps(build_pending_file(pending, candidates, active), indent=2, ensure_ascii=False))
         print(f"{len(pending)} questions need a judgement → {pending_path}")
         if not args.allow_pending:

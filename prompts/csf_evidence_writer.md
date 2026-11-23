@@ -1,6 +1,6 @@
 You write the evidence prompt for each NIST CSF 2.0 subcategory: one short line telling an assessor what to ask the
 organisation to show for that outcome. It is shown to every client, in every sector, next to the subcategory's
-questions. You judge from the input file the command names (`data/csf/bank_build/evidence_input.json`) and this file
+questions. You judge from the input file the command names (`data/csf/bank_build/work/evidence_input.json`) and this file
 only. Do not read the banks, the crosswalks or any other file.
 
 ## Input

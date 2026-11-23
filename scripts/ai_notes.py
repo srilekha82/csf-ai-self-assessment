@@ -16,7 +16,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_BUILD, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
+from config import AI_WORK, AI_CIS_CSF_XLSX, AI_QUESTION_RULES, CSF_CORE, CSF_IMPACT_NOTES  # noqa: E402
 from ai_bank_common import load_json  # noqa: E402
 import audit  # noqa: E402
 
@@ -121,7 +121,7 @@ def validate_notes(data, from_sheet: bool = False) -> list[str]:
     csf = load_json(CSF_CORE, "csf2_core.json")["subcategories"]
     valid = {s["subcategory_id"] for s in csf if not s["subcategory_text"].startswith("[Withdrawn")}
     existing = load_json(CSF_IMPACT_NOTES, "ai_impact_notes.json")["notes"] if CSF_IMPACT_NOTES.is_file() else {}
-    pending_path = AI_BUILD / "impact_pending.json"
+    pending_path = AI_WORK / "impact_pending.json"
     mapped = None
     if pending_path.is_file():
         mapped = {i["subcategory_id"] for i in load_json(pending_path, "impact_pending.json")["items"]}

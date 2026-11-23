@@ -48,6 +48,9 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    line on success; keep detail in a file read only on failure. The intake is saved by `scripts/intake.py` as
    `csf_intake.json` and `ai_intake.json` in the run folder; later steps read those files and never ask or pass the answers
    again. The intake is asked as numbered choices; the script, not the agent, turns numbers into values.
+   Temporary files (prepared inputs, agent drafts, verdicts) go in a gitignored `work/` folder
+   (`data/<csf|ai>/bank_build/work/`) and are deleted when the build ends; a client run's whole folder is gitignored.
+   Only kept inputs, approvals and results are committed.
 10. **Prompts and docs stand alone.** A prompt carries its own rules; it does not point to a design document. Shared
     definitions (AI areas in `data/ai/ai_areas.json`; roles, producer details and impacts in `data/ai/question_rules.json`)
     reach agents through the files scripts prepare.

@@ -4,12 +4,12 @@ Prepares the input for the AI impact notes on the CSF side. No judgement.
 Called by: /build-ai-bank (step 7)
 Input:     the CIS -> CSF 2.0 mapping (xlsx), data/ai/cis_ai_safeguards.json, data/ai/parse_config.json (the AI
            text length)
-Output:    data/ai/bank_build/impact_pending.json
+Output:    data/ai/bank_build/work/impact_pending.json
 
 Usage: .venv/bin/python ./scripts/prepare_ai_notes.py [--xlsx PATH] [--output PATH]
 
 Links CIS's official CIS -> CSF 2.0 mapping (xlsx) to the AI text of the MCP and Agents guide safeguards, so each CSF
-subcategory gets the AI text of the safeguards mapped to it. Writes data/ai/bank_build/impact_pending.json:
+subcategory gets the AI text of the safeguards mapped to it. Writes data/ai/bank_build/work/impact_pending.json:
   items      CSF subcategories with AI text to write a note from
   unmapped   CSF subcategories with nothing to go on, and why (no CIS mapping, or no AI text); never guessed
 
@@ -26,7 +26,7 @@ from pathlib import Path
 import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import AI_BUILD, AI_CIS_CSF_XLSX, AI_PARSE_CONFIG, AI_SAFEGUARDS, CSF_CORE  # noqa: E402
+from config import AI_BUILD, AI_WORK, AI_CIS_CSF_XLSX, AI_PARSE_CONFIG, AI_SAFEGUARDS, CSF_CORE  # noqa: E402
 import audit  # noqa: E402
 
 SHEET, UNMAPPED_SHEET = "All CIS Controls & Safeguards", "Unmapped CSF"
@@ -77,7 +77,7 @@ def read_mapping(xlsx: Path, expected_per_control: dict) -> tuple[list[dict], se
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--xlsx", default=str(AI_CIS_CSF_XLSX))
-    parser.add_argument("--output", default=str(AI_BUILD / "impact_pending.json"))
+    parser.add_argument("--output", default=str(AI_WORK / "impact_pending.json"))
     args = parser.parse_args()
 
     ev = audit.begin(AI_BUILD / "audit.jsonl", "prepare_ai_notes", {"xlsx": args.xlsx, "output": args.output})

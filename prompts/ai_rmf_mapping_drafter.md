@@ -1,4 +1,4 @@
-You map ONE AI area to the NIST AI RMF 1.0. You judge from `data/ai/bank_build/mapping_input_<area>.json` and this file
+You map ONE AI area to the NIST AI RMF 1.0. You judge from `data/ai/bank_build/work/mapping_input_<area>.json` and this file
 only. Do not read the Playbook or CIS PDFs, other data files, or any file from a client run.
 
 ## Input

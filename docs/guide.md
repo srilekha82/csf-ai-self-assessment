@@ -228,7 +228,7 @@ data/
 │   ├── evidence_prompts.json  evidence hint per CSF category
 │   ├── crosswalks/          ISO 27001 and PCI DSS mappings
 │   ├── banks/               question_bank_<domain>.json
-│   └── bank_build/          cset_candidates.json, cset_judgements.json (cannot be regenerated; back it up), judgement_log/, audit.jsonl
+│   └── bank_build/          cset_candidates.json, cset_judgements.json (cannot be regenerated; back it up), judgement_log/, audit.jsonl, work/ (temporary)
 ├── audit.jsonl              data refresh and freshness checks (created on first run)
 └── ai/
     ├── source/                 AI RMF Playbook, CIS companion guides, CIS → CSF mapping (not in the repo; see source/README.md; SHA-256 in metadata.json)
@@ -248,7 +248,7 @@ data/
     ├── scope_rules.json        engagement policy: AI area rules for the intake, roles each client is asked as, notes
     ├── evidence_prompts.json   evidence hint per question (foundation, or by the impacts of the rows it covers)
     ├── banks/                  question_bank_ai_rmf_<foundation|areas>.json
-    └── bank_build/             audit.jsonl, pending/work files, judgement_log/ (write-once records of agent steps)
+    └── bank_build/             mapping_accepted.json, pilot_accepted.json, audit.jsonl, judgement_log/ (write-once records of agent steps), work/ (temporary)
 ```
 
 ### Runs (`runs/<Org>_<date>/`)
