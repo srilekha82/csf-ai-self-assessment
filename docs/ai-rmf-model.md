@@ -239,7 +239,7 @@ check.
 - **Selection** (`pick_questions.py (--framework ai)`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,
   consumer; consumer; producer; both -> consumer and producer), producer details from the intake, and for area
   questions the client's AI areas. Nothing is ranked, capped or rewritten. Questions are reviewed once, when the bank is
-  built; a client run only picks them, by fixed rules that `tests/test_picks.py` checks against typical clients.
+  built; a client run only picks them, by fixed rules that `tests/check_picks.py` checks against typical clients.
 - **Scoring** (several areas on one subcategory) is decided in Stage 2; every question keeps its subcategory and rows.
 - **No gap rule.** Every question asks how something is done for AI: for the area ("for your AI agents ...") or for AI
   in the organisation, never general security (the evaluator fails a question that would read the same with the AI

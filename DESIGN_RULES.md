@@ -37,8 +37,8 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    enforces it); two turns at most; what still fails goes to a person (a review sheet), whose decisions are never
    overwritten. An evaluator is never the same conversation that generated the draft.
    **Questions are reviewed once, when a bank is built, never per client run.** A client run only picks from the banks
-   by fixed rules, so the picks are verified by tests (`tests/test_picks.py`, typical clients against the committed
-   banks), not on every run. Never edit a run's drafts by hand: re-run the step that wrote them.
+   by fixed rules, so the picks are verified by a data check (`tests/check_picks.py`, typical clients against the
+   committed banks, run after a rebuild), not on every run. Never edit a run's drafts by hand: re-run the step that wrote them.
    **A client run never builds or rebuilds a bank.** It checks only the banks' age (`check_bank_age.py`,
    limits in `data/metadata.json`) and stops if one is missing or too old, naming the build command to run.
 8. **Few scripts, small files, one job each.** Reuse by importing a shared helper when the logic is the same; do not
@@ -59,7 +59,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
 - **CSF questions come from CSET only; they are never generated.** CSF is a mature practice: the
   bank holds CSET's own CSF 2.0 set (`NCSF_V2`, one question per subcategory, first) and the maturity-model questions
   CSET maps to CSF 2.0 (practice detail). A gap is closed by reading more of CSET, not by writing questions. A
-  client run never rewords them; CSET's own CSF 2.0 question is always kept (`tests/test_picks.py` checks it).
+  client run never rewords them; CSET's own CSF 2.0 question is always kept (`tests/check_picks.py` checks it).
   Only if the bank has no question for a subcategory does a client run ask the fixed fallback in `scope_rules.json`
   (built from NIST's outcome text); the run's summary counts these.
   The Evidence Required line is NIST's implementation examples for the subcategory, word for word; no agent

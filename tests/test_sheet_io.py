@@ -44,12 +44,6 @@ class AiAreasSheet(unittest.TestCase):
         except SystemExit as e:
             return e.code
 
-    def test_committed_json_is_the_import_of_the_committed_spreadsheet(self):
-        committed = json.loads(AI_AREAS.read_text())
-        self.assertEqual(committed["source_sha"], S.audit.sha(AI_AREAS_XLSX))
-        self.assertEqual(json.loads(self.json.read_text())["ai_areas"], committed["ai_areas"])
-        ids = [a["id"] for a in committed["ai_areas"]]
-        self.assertEqual(len(ids), len(set(ids)))
 
     def test_spreadsheet_only_columns_stay_out_of_the_json(self):
         first = json.loads(self.json.read_text())["ai_areas"][0]

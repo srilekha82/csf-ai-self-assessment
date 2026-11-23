@@ -1,6 +1,8 @@
 """The client-run picker (pick_questions.py, both frameworks) gives each client exactly the questions its intake
 calls for. Runs intake, scope and the picker (both frameworks) on the committed banks for typical clients, then checks every pick
-with the rules below. The picker is fixed rules, so this is checked here, once per code change, not in every run.
+with the rules below. The picker is fixed rules, so this is checked here, not in every run.
+A data check (it needs the committed banks): run it at the end-to-end step, after a bank rebuild:
+    .venv/bin/python -m unittest discover -s tests -p "check_*.py"
 
 CSF:    every subcategory in scope has questions and none outside it; the right question type; GOVERN always asked in
         full; "confirm with evidence" questions flagged LOW; no blank, repeated or extra questions; every question from
