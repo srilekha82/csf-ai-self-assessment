@@ -21,10 +21,10 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    appends to the folder's `audit.jsonl`. Do not invent another logging scheme. Use `audit.write_once_record` for
    write-once records.
 6. **Policy and content live in data files, not code.** Max questions per type, scope rules, categories, definitions,
-   evidence hints, expected counts: `data/csf/*.json`, `data/ai/*.json`; facts both tracks share (intake menus, domains,
+   evidence hints, expected counts: `data/csf/*.json`, `data/ai/*.json`; facts both tracks share (intake menus, sectors,
    certifications, question types) in `data/common/intake_options.json`. Changing a rule means editing JSON. Keep each
    constant in one place only: scripts import shared facts (read from those files) and paths from `scripts/config.py`;
-   a script never defines its own copy of a domain list, function order or bank name.
+   a script never defines its own copy of a sector list, function order or bank name.
    **Spreadsheet layouts live in `templates/`, not in code.** The questionnaire's sheets, headers, colours, widths and
    drop-downs are `templates/questionnaire_template.xlsx`, edited in Excel; `write_questionnaire.py` copies it into the
    run folder and only fills rows, writing each value under its header by name. Per client it only hides: the AI

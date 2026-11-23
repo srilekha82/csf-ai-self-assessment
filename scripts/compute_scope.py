@@ -80,13 +80,13 @@ def main():
     run_dir = Path(parser.parse_args().run_dir)
 
     intake = load_csf_intake(run_dir)
-    domain, certs = intake["domain"], intake["certs"]
-    ev = audit.begin(audit.run_log(run_dir), "compute_scope", {"domain": domain, "certs": certs})
+    sector, certs = intake["sector"], intake["certs"]
+    ev = audit.begin(audit.run_log(run_dir), "compute_scope", {"sector": sector, "certs": certs})
     inputs = [run_dir / "csf_intake.json", CSF_CORE, SCOPE_RULES]
 
     rules = load_rules()
     rank = lambda state: SEVERITY_ORDER.index(rules["states"][state]["type"])  # noqa: E731
-    bumps = set(rules["sector_bumps"].get(domain, []))
+    bumps = set(rules["sector_bumps"].get(sector, []))
     crosswalks = {c: json.loads((CROSSWALK_DIRS[CERT_FILES[c]] / CERT_FILES[c]).read_text()) for c in certs}
 
     soa, soa_path = None, run_dir / "soa_parsed.json"
@@ -119,7 +119,7 @@ def main():
                  "applicable_raw": f'"{row.get("applicable_raw", "")}"'}
         qtype, reason = policy["type"], policy["reason"].format(**facts)
         if sid in bumps and qtype != SEVERITY_ORDER[-1]:
-            qtype, reason = SEVERITY_ORDER[SEVERITY_ORDER.index(qtype) + 1], reason + " [domain bump applied]"
+            qtype, reason = SEVERITY_ORDER[SEVERITY_ORDER.index(qtype) + 1], reason + " [sector bump applied]"
         scope.append({"subcategory_id": sid, "question_type": qtype, "state": state, "reason": reason,
                       "confidence": policy["confidence"], "note": policy.get("note", "").format(**facts),
                       "mapped_controls": controls})

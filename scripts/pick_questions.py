@@ -97,7 +97,7 @@ def csf_evidence_prompt(subcategory: dict, frames: dict) -> str:
 
 def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
     intake = load_csf_intake(run_dir)
-    bank_file = bank_path(intake["domain"])
+    bank_file = bank_path(intake["sector"])
     if not bank_file.is_file():
         ev.fail(f"[pick_questions] ERROR: {bank_file} not found. Run /build-csf-bank first.")
     rules = json.loads(SCOPE_RULES.read_text())

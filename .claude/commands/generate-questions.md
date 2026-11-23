@@ -16,7 +16,7 @@ role is Build or Both (the menu says so); the two "How / What" menus may be left
 (each AI area's name and what it covers) and `data/ai/question_rules.json` (roles, and `producer_flags` for the two producer details). Then:
 
 ```bash
-.venv/bin/python ./scripts/intake.py write --org "<name>" --domain N --certs "N N" --ai-in-use N \
+.venv/bin/python ./scripts/intake.py write --org "<name>" --sector N --certs "N N" --ai-in-use N \
     [--role N [--built-on-existing-model N --given-to-others N] --ai-usage "N N" --ai-components "N N"]
 ```
 
@@ -29,7 +29,7 @@ later step; nothing else needs the answers repeated.
 ## 2 — Check the banks are recent enough
 `.venv/bin/python ./scripts/check_bank_age.py --run <run_dir>`
 
-It checks only the build date of the banks this run uses (the CSF bank of the domain and the two AI RMF banks) against
+It checks only the build date of the banks this run uses (the CSF bank of the sector and the two AI RMF banks) against
 the limits in `data/metadata.json` (`question_banks`). It needs no source files.
 
 - Exit 0: go on.

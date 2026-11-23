@@ -40,9 +40,9 @@ class Priority(unittest.TestCase):
         self.assertEqual(lvl(harm="Yes"), "High")
         self.assertEqual(lvl(fin=""), "High")
 
-    def priorities(self, systems, domain="finance", areas=("internal_process", "customer_facing")):
+    def priorities(self, systems, sector="finance", areas=("internal_process", "customer_facing")):
         subs = ["GOVERN 1.1", "MAP 1.5", "MAP 1.4", "MAP 3.3", "MEASURE 2.11", "MEASURE 2.6"]
-        return AP.subcategory_priorities(subs, systems, domain, areas, CTX, self.rules)
+        return AP.subcategory_priorities(subs, systems, sector, areas, CTX, self.rules)
 
     def test_areas_take_their_systems_and_foundation_takes_the_whole_organisation(self):
         got = self.priorities([system("HR screening", ["internal_process"], rep="Local"),
@@ -59,9 +59,9 @@ class Priority(unittest.TestCase):
         self.assertEqual((got["MAP 1.4"], got["MAP 3.3"]), ("High", "High"))
         self.assertEqual(set(self.priorities([]).values()), {"High"})
 
-    def test_the_domain_floor_raises_people_rows_and_safety(self):
+    def test_the_sector_floor_raises_people_rows_and_safety(self):
         systems = [system("HR screening", ["internal_process"]), system("Chatbot", ["customer_facing"])]
-        fin, hc = self.priorities(systems), self.priorities(systems, domain="healthcare")
+        fin, hc = self.priorities(systems), self.priorities(systems, sector="healthcare")
         self.assertEqual((fin["MEASURE 2.11"], hc["MEASURE 2.11"]), ("Low", "High"))
         self.assertEqual(hc["MEASURE 2.6"], "High")
         self.assertEqual((fin["MAP 3.3"], hc["MAP 3.3"]), ("Low", "Low"))   # a process row stays as it was

@@ -17,7 +17,7 @@ from config import AI_AREAS, AI_SCOPE_RULES  # noqa: E402
 
 
 def args(**over):
-    base = dict(replace=False, org="Acme Corp", domain="1", certs="2 3", ai_in_use="2", role="1",
+    base = dict(replace=False, org="Acme Corp", sector="1", certs="2 3", ai_in_use="2", role="1",
                 built_on_existing_model=None, given_to_others=None, ai_usage="1 3", ai_components="2", date="2026-10-14", runs_dir=None)
     base.update(over)
     return type("A", (), base)()
@@ -46,7 +46,7 @@ class Options(unittest.TestCase):
 
     def test_every_sector_has_its_bumps_and_every_cert_a_file(self):
         bumps = json.loads(OPT.SCOPE_RULES.read_text())["sector_bumps"]
-        self.assertEqual(set(bumps) - {"description"}, set(OPT.DOMAINS))
+        self.assertEqual(set(bumps) - {"description"}, set(OPT.SECTORS))
         menu = [o["value"] for o in next(q for q in OPT.INTAKE_QUESTIONS if q["key"] == "certs")["options"]]
         self.assertEqual(set(OPT.CERT_FILES), set(menu) - {"none"})
 
@@ -72,7 +72,7 @@ class Intake(unittest.TestCase):
     def test_numbers_become_the_csf_and_ai_answers(self):
         self.assertEqual(self.go(), 0)
         intake = json.loads((self.run_dir() / "csf_intake.json").read_text())
-        self.assertEqual((intake["domain"], intake["certs"]), ("finance", ["iso27001", "pci_dss"]))
+        self.assertEqual((intake["sector"], intake["certs"]), ("finance", ["iso27001", "pci_dss"]))
         usage = self.usage()
         self.assertEqual(usage["ai_areas"], ["internal_process", "customer_facing", "invisible_usage", "input", "output",
                                              "mcp_tools"])
@@ -108,7 +108,7 @@ class Intake(unittest.TestCase):
         self.assertEqual(usage["role"], "consumer")
 
     def test_bad_input_is_rejected_and_writes_nothing(self):
-        for bad in (dict(domain="9"), dict(domain="x"), dict(domain="1 2"), dict(certs="1 2"), dict(certs=""),
+        for bad in (dict(sector="9"), dict(sector="x"), dict(sector="1 2"), dict(certs="1 2"), dict(certs=""),
                     dict(ai_usage="9"), dict(ai_components="1 7"), dict(role=None), dict(role="4"),
                     dict(built_on_existing_model="1"),                        # producer follow-up for a consumer
                     dict(role="2", built_on_existing_model=None, given_to_others="2"),  # follow-up missing for a producer
@@ -120,12 +120,12 @@ class Intake(unittest.TestCase):
 
     def test_an_existing_intake_is_not_overwritten_without_replace(self):
         self.assertEqual(self.go(), 0)
-        self.assertEqual(self.go(domain="2"), 1)
-        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["domain"], "finance")
-        self.assertEqual(self.go(domain="2", replace=True), 0)
-        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["domain"], "healthcare")
+        self.assertEqual(self.go(sector="2"), 1)
+        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["sector"], "finance")
+        self.assertEqual(self.go(sector="2", replace=True), 0)
+        self.assertEqual(json.loads((self.run_dir() / "csf_intake.json").read_text())["sector"], "healthcare")
 
-    def test_downstream_scripts_find_domain_and_certs(self):
+    def test_downstream_scripts_find_sector_and_certs(self):
         self.go()
         self.assertEqual(OPT.load_csf_intake(self.run_dir())["certs"], ["iso27001", "pci_dss"])
         with self.assertRaises(SystemExit):
