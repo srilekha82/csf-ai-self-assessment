@@ -1,5 +1,5 @@
 {
-  "description": "Rules for the AI RMF mapping (AI area x AI RMF function -> subcategory, CIS safeguards, impact). prepare_ai_bank.py mapping uses area_cis to give the drafter a short list of candidate CIS safeguards; record_ai_bank.py mapping rejects a draft that breaks any rule here. Model: AI_RMF_Mapping_Sheet_Design.md. There is no row count: an area gets as many rows as it has real questions.",
+  "description": "Rules for the AI RMF mapping (AI area x AI RMF function -> subcategory, CIS safeguards, impact). prepare_ai_bank.py mapping uses area_cis to give the drafter a short list of candidate CIS safeguards; record_bank.py ai-mapping rejects a draft that breaks any rule here. Model: docs/ai-rmf-model.md. There is no row count: an area gets as many rows as it has real questions.",
   "functions": ["MAP", "MEASURE", "MANAGE"],
   "foundation": {
     "description": "Functions that are the foundation: how the organisation works with AI (policies, roles, inventory, culture, third parties). Not mapped to an AI area; asked once for the organisation, questions written per subcategory in the bank build and picked at engagement time by the intake role (none, consumer, producer). They count as reached in the coverage check. Every AI RMF function is either here or in functions, never both.",
