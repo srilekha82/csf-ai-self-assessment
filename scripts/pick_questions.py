@@ -6,7 +6,8 @@ Why:       the banks hold every question that could be asked. A client must get 
            for, worded for what they hold, in the same order every time.
 Called by: /csf-questionnaire (step 4) with --framework csf, /ai-questionnaire (step 2) with --framework ai
 Input:     csf: <run_dir>/csf_intake.json and csf_scope.json, the CSF bank of the client's sector,
-                data/csf/scope_rules.json (how many questions, the wording), data/csf/evidence_prompts.json
+                data/csf/scope_rules.json (how many questions, the wording), data/csf/csf2_core.json (the outcomes and
+                NIST's implementation examples)
            ai:  <run_dir>/ai_intake.json, the two AI RMF banks, data/ai/scope_rules.json and question_rules.json,
                 data/ai/evidence_prompts.json, the AI area labels, data/ai/ai_rmf_core.json (the outcomes)
 Output:    csf: <run_dir>/csf_questions_draft.json and csf_question_bank_used.json (a copy of the bank used)
@@ -18,7 +19,9 @@ Usage: .venv/bin/python ./scripts/pick_questions.py <run_dir> --framework csf|ai
 CSF rules: per subcategory, the first few bank questions (how many: scope_rules.json max_questions, by the question
 type compute_scope.py set), worded for the certifications held with the fixed sentences in scope_rules.json frames
 ("Your ISO 27001 certification should cover control(s) 5.9. Please confirm ..."). A subcategory with no bank question
-gets one generic question. The Confidence column gets the scope's note for the client, else the LOW flag.
+gets one generic question. The Evidence Required column is NIST's implementation examples for the subcategory, word
+for word (scope_rules.json frames fallback_evidence if it has none). The Confidence column gets the scope's note for
+the client, else the LOW flag.
 
 AI rules: a question is picked when all three hold:
   role       it is for a role the organisation is asked as ("none" -> none; "unsure" -> none and consumer;
@@ -44,7 +47,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_AREA_LABELS, AI_CORE, AI_EVIDENCE_PROMPTS, AI_FUNCTION_ORDER,  # noqa: E402
                     AI_QUESTION_BANKS, AI_QUESTION_RULES, AI_SCOPE_RULES, CERT_LABELS, CSF_CORE, CSF_FUNCTION_ORDER,
-                    EVIDENCE_PROMPTS, SCOPE_RULES, ai_bank_path, bank_path, load_csf_intake)
+                    SCOPE_RULES, ai_bank_path, bank_path, load_csf_intake)
 from ai_bank_common import core_subcategories  # noqa: E402
 import audit  # noqa: E402
 
@@ -87,11 +90,9 @@ def csf_frame_question(base_text: str, question_type: str, mapped_controls: list
     return frame.format(cert=f"Your {csf_cert_phrase(list(certs))}", controls=controls, text=base_text)
 
 
-def csf_evidence_prompt(subcategory_id: str, evidence: dict) -> str:
-    """The subcategory's own evidence prompt (written once, /build-csf-bank), else its category's line."""
-    category = subcategory_id.rsplit("-", 1)[0]
-    return (evidence.get("by_subcategory", {}).get(subcategory_id)
-            or evidence["by_category"].get(category, evidence["default"]))
+def csf_evidence_prompt(subcategory: dict, frames: dict) -> str:
+    """NIST's implementation examples for the subcategory, word for word, one per line; the fixed fallback if none."""
+    return "\n".join(subcategory.get("implementation_examples") or []) or frames["fallback_evidence"]
 
 
 def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
@@ -99,9 +100,10 @@ def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
     bank_file = bank_path(intake["domain"])
     if not bank_file.is_file():
         ev.fail(f"[pick_questions] ERROR: {bank_file} not found. Run /build-csf-bank first.")
-    rules, evidence = json.loads(SCOPE_RULES.read_text()), json.loads(EVIDENCE_PROMPTS.read_text())
+    rules = json.loads(SCOPE_RULES.read_text())
     bank = json.loads(bank_file.read_text())["questions"]
-    outcomes = {s["subcategory_id"]: s["subcategory_text"] for s in json.loads(CSF_CORE.read_text())["subcategories"]}
+    core = {s["subcategory_id"]: s for s in json.loads(CSF_CORE.read_text())["subcategories"]}
+    outcomes = {sid: s["subcategory_text"] for sid, s in core.items()}
 
     entries, fallback = [], 0
     for scope in json.loads((run_dir / "csf_scope.json").read_text()):
@@ -122,14 +124,14 @@ def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
         flag = scope.get("note") or ("LOW — assessor verification required"
                                      if scope.get("confidence") == "low" or qtype == "confirmatory" else "")
         entries.append(draft_entry(sid, sid.split(".")[0], outcomes.get(sid, ""), qtype, questions,
-                                   csf_evidence_prompt(sid, evidence), flag))
+                                   csf_evidence_prompt(core.get(sid, {}), rules["frames"]), flag))
     entries.sort(key=lambda e: (CSF_FUNCTION_ORDER.get(e["function"], 99), e["subcategory_id"]))
 
     outputs = write_draft(run_dir, "csf_questions_draft.json", entries, bank_file, "csf_question_bank_used.json")
     by_type = {t: sum(1 for e in entries if e["question_type"] == t) for t in rules["max_questions"]}
     detail = (f"csf: {len(entries)} subcategories, {sum(len(e['questions']) for e in entries)} questions; "
               f"by type {by_type}; generic question (no bank match): {fallback}")
-    return [run_dir / "csf_intake.json", run_dir / "csf_scope.json", bank_file, SCOPE_RULES, EVIDENCE_PROMPTS], \
+    return [run_dir / "csf_intake.json", run_dir / "csf_scope.json", bank_file, SCOPE_RULES, CSF_CORE], \
         outputs, detail
 
 

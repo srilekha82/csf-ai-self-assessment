@@ -15,7 +15,8 @@
     "gap": "{cert} covers control(s) {controls}, which partially addresses this area. Beyond that coverage: {text}",
     "confirmatory": "{cert} should cover control(s) {controls}. Please confirm and provide named evidence: {text}",
     "no_controls": "existing controls",
-    "fallback_question": "How does your organisation address: {outcome}? Who owns this?"
+    "fallback_question": "How does your organisation address: {outcome}? Who owns this?",
+    "fallback_evidence": "Documents or records that show this outcome is achieved, and who owns them."
   },
   "function_states": {"GV": "govern"},
   "states": {

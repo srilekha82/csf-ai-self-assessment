@@ -34,11 +34,9 @@ CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_c
 CSF_CORE = CSF / "csf2_core.json"
 CSF_BANK_RULES = CSF / "bank_rules.json"   # how CSET questions are flagged and routed when a CSF bank is built
 SCOPE_RULES = CSF / "scope_rules.json"   # state -> question type policy, max questions per type
-EVIDENCE_PROMPTS = CSF / "evidence_prompts.json"   # evidence an assessor asks for, by CSF category
 CSF_CROSSWALKS = CSF / "crosswalks"      # olir_iso27001.json, olir_pcidss.json
 CSF_BANKS = CSF / "banks"                # question_bank_<domain>.json (shared, rebuilt when CSET changes)
 BANK_BUILD = CSF / "bank_build"          # kept input: cset_candidates.json; logs
-BANK_WORK = BANK_BUILD / "work"          # temporary build files (gitignored; cleared after a build)
 
 # AI track
 AI = DATA / "ai"
