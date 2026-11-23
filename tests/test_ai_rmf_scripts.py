@@ -60,6 +60,7 @@ class Recording(unittest.TestCase):
         R.AI_BANKS, R.AI_BUILD, R.AI_LOG_DIR = self.tmp / "banks", self.tmp / "build", self.tmp / "build" / "log"
         R.AI_MAPPING = AI_MAPPING                   # the accepted mapping, read only (other classes redirect it)
         P.AI_BANKS, P.AI_BUILD, PL.AI_BANKS = R.AI_BANKS, R.AI_BUILD, R.AI_BANKS
+        R.AI_WORK = P.AI_WORK = R.AI_BUILD / "work"
         self.addCleanup(setattr, P, "mapping_status", P.mapping_status)   # tests stub the accept gate
         R.AI_BUILD.mkdir(parents=True, exist_ok=True)
         self.inp = R.load_inputs()
@@ -586,6 +587,7 @@ class Mapping(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         R.AI_MAPPING, R.AI_BUILD, R.AI_LOG_DIR = self.tmp / "mapping.json", self.tmp / "build", self.tmp / "build" / "log"
         P.AI_BUILD = R.AI_BUILD
+        P.AI_WORK = R.AI_BUILD / "work"
         R.AI_BUILD.mkdir(parents=True, exist_ok=True)
         self.inp = R.load_inputs()
         self.inp["has_text"] = True   # structure only; the CIS text is local only

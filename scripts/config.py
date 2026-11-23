@@ -37,7 +37,8 @@ SCOPE_RULES = CSF / "scope_rules.json"   # state -> question type policy, max qu
 EVIDENCE_PROMPTS = CSF / "evidence_prompts.json"   # evidence an assessor asks for, by CSF category
 CSF_CROSSWALKS = CSF / "crosswalks"      # olir_iso27001.json, olir_pcidss.json
 CSF_BANKS = CSF / "banks"                # question_bank_<domain>.json (shared, rebuilt when CSET changes)
-BANK_BUILD = CSF / "bank_build"          # cset_candidates.json, cset_judgements.json, pending/verdicts
+BANK_BUILD = CSF / "bank_build"          # kept inputs: cset_candidates.json, cset_judgements.json
+BANK_WORK = BANK_BUILD / "work"          # temporary build files (gitignored; cleared after a build)
 
 # AI track
 AI = DATA / "ai"
@@ -51,7 +52,8 @@ AI_PARSE_CONFIG = AI / "parse_config.json"      # expected counts and source fil
 AI_SCOPE_RULES = AI / "scope_rules.json"        # engagement-time policy for the AI RMF questionnaire
 AI_EVIDENCE_PROMPTS = AI / "evidence_prompts.json"  # evidence hint per question (foundation, or by impact)
 AI_BANKS = AI / "banks"                  # question_bank_ai_rmf_<foundation|areas>.json
-AI_BUILD = AI / "bank_build"             # audit.jsonl, pending/verdict files, judgement_log/
+AI_BUILD = AI / "bank_build"             # kept: mapping_accepted.json, pilot_accepted.json; logs
+AI_WORK = AI_BUILD / "work"              # temporary build files (gitignored; cleared after a build)
 AI_CIS_CSF_XLSX = AI_SOURCE / "CIS_Controls_v8.1_Mapping_to_NIST_CSF_v2.0_2024-06-24.xlsx"
 CSF_IMPACT_NOTES = CSF / "ai_impact_notes.json"  # AI-world notes per CSF subcategory (Step 5)
 AI_AUTHORING = AI / "authoring"          # spreadsheets a person writes or reviews (committed; not source/)

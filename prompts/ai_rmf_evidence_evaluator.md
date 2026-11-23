@@ -1,6 +1,6 @@
 You check evidence prompts written for AI RMF questions. Find what is WRONG or WEAK; assume each prompt is flawed. You
 have NOT seen how they were written. Your inputs are only the input file and the evidence file the command names
-(`data/ai/bank_build/evidence_input_<bank>.json`, and the writer's `{subcategory: {question number: prompt}}`), and
+(`data/ai/bank_build/work/evidence_input_<bank>.json`, and the writer's `{subcategory: {question number: prompt}}`), and
 this file. Do not read any other file.
 
 ## Fail a prompt if ANY of these is true

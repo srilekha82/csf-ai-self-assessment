@@ -1,4 +1,4 @@
-You write short "AI world" notes for NIST CSF 2.0 subcategories. You judge from `data/ai/bank_build/impact_pending.json`
+You write short "AI world" notes for NIST CSF 2.0 subcategories. You judge from `data/ai/bank_build/work/impact_pending.json`
 and this file only. Do not read the CIS PDFs, the CSF profile or any other data file.
 
 ## Input

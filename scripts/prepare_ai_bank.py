@@ -4,20 +4,20 @@ or whole banks. It decides and stores nothing.
 
 Called by: /build-ai-bank (steps 3-4 mapping, 5 questions, 6b evidence)
 Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks)
-Output:    data/ai/bank_build/mapping_input_<area>.json or batch_<bank>_<tag>.json
+Output:    data/ai/bank_build/work/mapping_input_<area>.json, batch_<bank>_<tag>.json or evidence_input_<bank>.json
 
 Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
        .venv/bin/python ./scripts/prepare_ai_bank.py batch <areas|foundation> (--ids ID ... | --function MAP | --all)
                                                            [--missing] [--tag NAME]
        .venv/bin/python ./scripts/prepare_ai_bank.py evidence <areas|foundation>
 
-  mapping --area ID   -> data/ai/bank_build/mapping_input_<area>.json, for the mapping drafter and evaluator: the AI
+  mapping --area ID   -> data/ai/bank_build/work/mapping_input_<area>.json, for the mapping drafter and evaluator: the AI
                          area, the four AI RMF functions, every MAP / MEASURE / MANAGE subcategory with its suggested
                          actions, and the area's candidate CIS safeguards.
-  batch areas         -> data/ai/bank_build/batch_areas_<tag>.json, for the question generator and evaluator: per
+  batch areas         -> data/ai/bank_build/work/batch_areas_<tag>.json, for the question generator and evaluator: per
                          subcategory, its outcome, suggested actions and every AI area's mapping row on it (so areas
                          can share a question). Needs the mapping approved as it is now.
-  batch foundation    -> data/ai/bank_build/batch_foundation_<tag>.json: the subcategories asked once per
+  batch foundation    -> data/ai/bank_build/work/batch_foundation_<tag>.json: the subcategories asked once per
                          organisation (GOVERN and the other foundation subcategories).
   --missing           only subcategories not yet in that bank.
   evidence            the questions in a bank that still have no evidence line, for the evidence writer.
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_CORE, AI_FUNCTION_ORDER, AI_MAPPING,  # noqa: E402
+from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_WORK, AI_CORE, AI_FUNCTION_ORDER, AI_MAPPING,  # noqa: E402
                      AI_MAPPING_RULES, AI_QUESTION_BANKS as QUESTION_BANKS, AI_QUESTION_RULES, AI_SAFEGUARDS,
                      AI_SCOPE_RULES, ai_bank_path)
 from ai_bank_common import (area_candidates, area_roles, area_rules, check_mapping_rules,  # noqa: E402
@@ -127,7 +127,8 @@ def prepare_batch(inp: dict, bank: str, ids: list[str], function: str | None, ev
         doc = {"bank": bank, "definitions": definitions, "area_question_rule": qrules["area_question_rule"],
                **area_context(inp, qrules, items), "items": items}
     name = tag or (function if function else "ids" if ids else "all")
-    out = AI_BUILD / f"batch_{bank}_{name}.json"
+    out = AI_WORK / f"batch_{bank}_{name}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
     return out
 
@@ -147,7 +148,8 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
         if s["function"] in subs and s["subcategory_id"] not in rules["foundation"]["subcategories"]:
             subs[s["function"]].append({"id": s["subcategory_id"], "outcome": s["outcome"],
                                         "actions": [trunc(a, ACTION_CHARS) for a in s["suggested_actions"][:MAX_ACTIONS]]})
-    out = AI_BUILD / f"mapping_input_{area_id}.json"
+    out = AI_WORK / f"mapping_input_{area_id}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
         "area": areas[area_id],
         "other_areas": [{k: a[k] for k in ("id", "name", "applies_to", "covers")}
@@ -179,7 +181,8 @@ def prepare_evidence(inp: dict, bank: str) -> Path:
               for n, q in enumerate(e["questions"], 1) if not q.get("evidence_prompt")]
         if qs:
             items[sid] = {"outcome": inp["subs"][sid]["outcome"], "questions": qs}
-    out = AI_BUILD / f"evidence_input_{bank}.json"
+    out = AI_WORK / f"evidence_input_{bank}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"bank": bank, "items": items}, indent=2, ensure_ascii=False))
     return out
 

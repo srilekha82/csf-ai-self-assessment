@@ -10,6 +10,9 @@ Use your tools (Bash, Read, Write, Agent). Working directory: repo root. Say lit
 
 Replace `<model id>` in the record commands with the model id of the agent that produced the file.
 
+Temporary files (prepared inputs, agent drafts and verdicts) all go in `data/ai/bank_build/work/` (gitignored).
+Delete that folder at the end of the build.
+
 ---
 
 ## Step 1 — Freshness gate
@@ -45,14 +48,13 @@ Agents read these files, never the PDFs.
 Maps each AI area (`data/ai/ai_areas.json`, decided by the user in `data/ai/authoring/ai_areas.xlsx`) to AI RMF
 subcategories of MAP, MEASURE and MANAGE, with the CIS safeguards that prove them. GOVERN is the foundation (asked once
 for the organisation, by role) and is never mapped to an area. Run only when the user asks for it, one AI area at a
-time; the first run is a pilot on one area the user names, then stop and report. Work files go under
-`data/ai/bank_build/work/` (delete them once the area is recorded).
+time; the first run is a pilot on one area the user names, then stop and report.
 
 1. Prepare the area's input:
    ```bash
    .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area <area id>
    ```
-   It writes `data/ai/bank_build/mapping_input_<area>.json`.
+   It writes `data/ai/bank_build/work/mapping_input_<area>.json`.
 2. **Drafter** (a fresh subagent): follow `prompts/ai_rmf_mapping_drafter.md` with that input; write
    `work/mapping_<area>_draft1.json`. Pass paths, not content.
 3. **Evaluator** (another fresh subagent; it must not see the drafter's prompt): follow
@@ -114,14 +116,12 @@ Propose about 6 subcategories and show them to the user before running (wait for
 - one MAP subcategory on usage areas (e.g. MAP 1.4)
 
 ### The loop (per batch: the pilot's ids of one bank, or one AI RMF function in a full run)
-Work files go under `data/ai/bank_build/work/` (create it; delete the files once the batch is recorded).
-
 1. Prepare the batch input:
    ```bash
    .venv/bin/python ./scripts/prepare_ai_bank.py batch <foundation|areas> --ids "<ID>" ... --tag <tag>   # pilot
    .venv/bin/python ./scripts/prepare_ai_bank.py batch <foundation|areas> --function MEASURE --missing    # full
    ```
-   It writes `data/ai/bank_build/batch_<bank>_<tag>.json`.
+   It writes `data/ai/bank_build/work/batch_<bank>_<tag>.json`.
 2. **Generator** (a fresh subagent via the Agent tool, Sonnet): tell it to follow
    `prompts/ai_rmf_question_generator.md` with the batch file as input and to write its output to `work/<tag>_gen1.json`.
    Pass paths, not content.
@@ -185,7 +185,7 @@ Each bank question gets its own evidence prompt once, so every client gets a spe
 Per bank (`foundation`, then `areas`):
 
 1. `.venv/bin/python ./scripts/prepare_ai_bank.py evidence <bank>` writes
-   `data/ai/bank_build/evidence_input_<bank>.json` (only questions with no evidence prompt; it says how many).
+   `data/ai/bank_build/work/evidence_input_<bank>.json` (only questions with no evidence prompt; it says how many).
    Nothing to do when it says 0.
 2. **Writer** (a fresh subagent, Sonnet): follow `prompts/ai_rmf_evidence_writer.md` with that input; write
    `work/evidence_<bank>.json`. For the area bank, split by function (MAP, MEASURE, MANAGE) if the input is large.
@@ -195,7 +195,7 @@ Per bank (`foundation`, then `areas`):
    --review data/ai/bank_build/work/evidence_<bank>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
    A failed prompt is not stored (the question keeps the generic line from `data/ai/evidence_prompts.json`; review
    it in the questions sheet); one pass, no revision turn. Then refresh the review sheet
-   (`sheet_io.py export area_questions` / `foundation_questions`) and delete the work and input files.
+   (`sheet_io.py export area_questions` / `foundation_questions`).
 
 ## Step 7 — AI impact notes (agent; skip if sources are unchanged and notes exist)
 
@@ -206,32 +206,30 @@ Notes for orgs reached by external agents or AI-enabled attackers, and where AI 
 ```
 
 It joins the CIS → CSF 2.0 mapping to the MCP and agents guide safeguards and writes
-`data/ai/bank_build/impact_pending.json` (about 48 CSF subcategories; the unmapped ones are listed, not guessed). Read
+`data/ai/bank_build/work/impact_pending.json` (about 48 CSF subcategories; the unmapped ones are listed, not guessed). Read
 `prompts/ai_impact_notes_writer.md` and that file. Run the two layers in order, each as a patch file, each recorded:
 
 1. Layer 1 (exposure, only where the safeguard text supports something real for an org with no AI): write
-   `data/ai/bank_build/notes_layer1.json`, then
-   `.venv/bin/python ./scripts/record_bank.py ai-notes data/ai/bank_build/notes_layer1.json --model <model id>`
-2. Layer 2 (use): write `data/ai/bank_build/notes_layer2.json` for the subset where use changes the reading, then
+   `data/ai/bank_build/work/notes_layer1.json`, then
+   `.venv/bin/python ./scripts/record_bank.py ai-notes data/ai/bank_build/work/notes_layer1.json --model <model id>`
+2. Layer 2 (use): write `data/ai/bank_build/work/notes_layer2.json` for the subset where use changes the reading, then
    the same command with that file.
 
 Fix-and-rerun on problems. A note a person decided in the review sheet is refused; leave it out of the patch.
 
 3. Review (a fresh subagent, Opus, `model: "opus"`; it must not see the writer's prompt): follow
    `prompts/ai_impact_notes_evaluator.md` with `impact_pending.json` and `data/csf/ai_impact_notes.json`, writing the
-   flagged notes to `data/ai/bank_build/notes_review1.json`, then
-   `.venv/bin/python ./scripts/record_bank.py ai-notes-review data/ai/bank_build/notes_review1.json --model <model id>`
+   flagged notes to `data/ai/bank_build/work/notes_review1.json`, then
+   `.venv/bin/python ./scripts/record_bank.py ai-notes-review data/ai/bank_build/work/notes_review1.json --model <model id>`
    (every note not yet reviewed and not decided by a person gets status pass or needs_human_review).
    If notes were flagged: a fresh writer (Sonnet) follows the writer prompt's "Revision turn" with
-   `impact_pending.json` and the notes file, writes `data/ai/bank_build/notes_revision.json` (every flagged
+   `impact_pending.json` and the notes file, writes `data/ai/bank_build/work/notes_revision.json` (every flagged
    subcategory, complete), recorded with `record_bank.py ai-notes` (a rewritten note loses its status); then a fresh
    evaluator reviews again into `notes_review2.json`, recorded with `notes-review`: it judges only the rewritten notes,
    the others keep their verdict. Two turns at most; what still fails goes to the user in the review sheet.
 4. Refresh the review sheet: `.venv/bin/python ./scripts/sheet_io.py export impact_notes`
    (`data/ai/authoring/impact_notes.xlsx`; the user decides flagged notes in chat, Claude applies them and runs
    `sheet_io.py import impact_notes`).
-
-Delete the pending, patch and review files once recorded.
 
 ## Step 8 — Report
 

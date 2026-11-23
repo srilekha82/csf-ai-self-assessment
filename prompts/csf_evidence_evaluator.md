@@ -1,6 +1,6 @@
 You check evidence prompts written for NIST CSF 2.0 subcategories. Find what is WRONG or WEAK; assume each prompt is
 flawed. You have NOT seen how they were written. Your inputs are only the input file and the evidence file the command
-names (`data/csf/bank_build/evidence_input.json`, or `evidence_revise.json` in a revision, and the writer's
+names (`data/csf/bank_build/work/evidence_input.json`, or `evidence_revise.json` in a revision, and the writer's
 `{subcategory: prompt}`), and this file. Do not read any other file. In a revision, judge the new prompts afresh by the
 same checks; the earlier draft and reason are there only for context.
 
