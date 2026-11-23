@@ -1,14 +1,7 @@
 # /build-csf-bank
 
 Builds or refreshes the CSF 2.0 question banks, all six sectors together, from CISA's CSET.
-
-- **Who runs it:** the maintainer, when a bank is missing or too old, or when CSET changes. Not part of a client run.
-- **Argument:** none. The six sector banks are always built together, from the same CSET collection and agent
-  judgements, so they share one record of what they were built from.
-- **Reads:** a local copy of the CSET repository (its SQL files) and `data/csf/csf2_core.json`.
-- **Writes:** `data/csf/banks/question_bank_<sector>.json` for every sector: per CSF subcategory, CSET's own CSF 2.0 question first,
-  then the maturity-model questions CSET maps to it. Working files go to `data/csf/bank_build/`.
-- **Files explained:** `docs/guide.md`, sections "Building a bank" and "Data".
+No argument.
 
 Scripts do everything the CSET schema decides; an agent step (Step 4) judges only what the schema cannot (the sector
 of generic questions, rewording statement-only practices as questions, loose subcategory mappings). Do not

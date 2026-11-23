@@ -2,24 +2,11 @@
 
 Builds or refreshes the AI RMF mapping, the two AI RMF question banks and the CSF AI impact notes.
 
-- **Who runs it:** the maintainer, quarterly, when a bank is too old, or when a source file changes. Not part of a
-  client run.
-- **Reads:** the AI RMF Playbook and the three CIS AI companion guides (downloaded into `data/ai/source/`), the AI
-  areas (`data/ai/ai_areas.json`) and the rules in `data/ai/`.
-- **Writes:** the mapping (`data/ai/mapping.json`: which AI RMF subcategories apply to each AI area), the two banks
-  (`data/ai/banks/question_bank_ai_rmf_foundation.json`, asked once per organisation, and
-  `question_bank_ai_rmf_areas.json`, per AI area), and the CSF AI impact notes (`data/csf/ai_impact_notes.json`).
-- **Files explained:** `docs/guide.md`, sections "AI RMF track" and "Data"; the model is in `docs/ai-rmf-model.md`.
-- **Terms** (AI area, mapping row, foundation, impact, folded subcategory, required check, pilot, needs human review):
-  `docs/guide.md`, section "Glossary".
-
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
 `scripts/record_bank.py` (its `ai-…` modes), which rejects a whole file if anything is wrong. The judging rules are in the prompts
 named in each step. Do not re-implement any parsing or validation inline.
 
-Use your tools (Bash, Read, Write, Agent). Working directory: repo root.
-
-Say little: the script summary lines and the final report.
+Use your tools (Bash, Read, Write, Agent). Working directory: repo root. Say little: the script summary lines and the final report.
 
 Replace `<model id>` in the record commands with the model id of the agent that produced the file.
 
