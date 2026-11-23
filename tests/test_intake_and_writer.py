@@ -271,14 +271,10 @@ class CsetCsf2Set(unittest.TestCase):
 
 class CsfEvidencePrompts(unittest.TestCase):
     def test_a_subcategory_prompt_wins_over_the_category_line(self):
-        import build_questions as BQ
-        old = BQ.EVIDENCE
-        try:
-            BQ.EVIDENCE = {"default": "d", "by_category": {"PR.DS": "cat"}, "by_subcategory": {"PR.DS-11": "own"}}
-            self.assertEqual((BQ.evidence_prompt("PR.DS-11"), BQ.evidence_prompt("PR.DS-01"), BQ.evidence_prompt("XX.YY-01")),
-                             ("own", "cat", "d"))
-        finally:
-            BQ.EVIDENCE = old
+        from pick_questions import evidence_prompt
+        ev = {"default": "d", "by_category": {"PR.DS": "cat"}, "by_subcategory": {"PR.DS-11": "own"}}
+        self.assertEqual((evidence_prompt("PR.DS-11", ev), evidence_prompt("PR.DS-01", ev), evidence_prompt("XX.YY-01", ev)),
+                         ("own", "cat", "d"))
 
     def test_the_writer_file_and_the_review_are_validated_together(self):
         import build_question_bank as RC

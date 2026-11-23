@@ -236,7 +236,7 @@ check.
   checked by an evidence evaluator (`/build-ai-bank` Step 6b, `record_bank.py ai-evidence`). A prompt the evaluator
   fails is not stored and there is no revision turn: the question keeps the generic line of
   `data/ai/evidence_prompts.json`. Editable in the question review sheets (a blank cell keeps the bank's prompt).
-- **Selection** (`build_ai_questions.py`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,
+- **Selection** (`pick_questions.py (--framework ai)`): roles from `scope_rules.json` `client_roles` (none -> none; unsure -> none,
   consumer; consumer; producer; both -> consumer and producer), producer details from the intake, and for area
   questions the client's AI areas. Nothing is ranked, capped or rewritten. Questions are reviewed once, when the bank is
   built; a client run only picks them, by fixed rules that `tests/test_picks.py` checks against typical clients.

@@ -1,5 +1,5 @@
 {
-  "description": "Policy for the AI RMF questionnaire at engagement time. build_ai_questions.py picks a client's questions from the two banks (data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json) by filtering on the usage profile (runs/<Org>_<date>/ai_intake.json): the roles the client is asked as (client_roles), its producer flags and, for area questions, its AI areas. Change policy by editing this file, not the code.",
+  "description": "Policy for the AI RMF questionnaire at engagement time. pick_questions.py (--framework ai) picks a client's questions from the two banks (data/ai/banks/question_bank_ai_rmf_<foundation|areas>.json) by filtering on the usage profile (runs/<Org>_<date>/ai_intake.json): the roles the client is asked as (client_roles), its producer flags and, for area questions, its AI areas. Change policy by editing this file, not the code.",
   "function_order": [
     "GOVERN",
     "MAP",

@@ -1,6 +1,6 @@
-"""The client-run pickers (build_questions.py, build_ai_questions.py) give each client exactly the questions its intake
-calls for. Runs intake, scope and both pickers on the committed banks for typical clients, then checks every pick
-with the rules below. The pickers are fixed scripts, so this is checked here, once per code change, not in every run.
+"""The client-run picker (pick_questions.py, both frameworks) gives each client exactly the questions its intake
+calls for. Runs intake, scope and the picker (both frameworks) on the committed banks for typical clients, then checks every pick
+with the rules below. The picker is fixed rules, so this is checked here, once per code change, not in every run.
 
 CSF:    every subcategory in scope has questions and none outside it; the right question type; GOVERN always asked in
         full; "confirm with evidence" questions flagged LOW; no blank, repeated or extra questions; every question from
@@ -19,7 +19,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, SCOPE_RULES, load_csf_intake  # noqa: E402
-from build_ai_questions import client_roles, pick  # noqa: E402
+from pick_questions import client_roles, pick  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
 DETAIL_WORDS = {"built_on_existing_model": "built on an existing model", "given_to_others": "given to others"}
@@ -170,8 +170,8 @@ def make_run(runs: Path, name: str) -> Path:
     if name == "iso_soa_both":
         (run / "soa_parsed.json").write_text(json.dumps(SOA))
     script(*scope)
-    script("build_questions.py", run)
-    script("build_ai_questions.py", run)
+    script("pick_questions.py", run, "--framework", "csf")
+    script("pick_questions.py", run, "--framework", "ai")
     return run
 
 

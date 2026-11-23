@@ -1,5 +1,5 @@
 {
-  "description": "Evidence an assessor asks for, per AI RMF question. build_ai_questions.py gives a foundation question the foundation line and an area question the lines of the impacts of the rows it covers for the client (impacts are defined in question_rules.json); the assessor sharpens it per question.",
+  "description": "Evidence an assessor asks for, per AI RMF question. pick_questions.py (--framework ai) gives a foundation question the foundation line and an area question the lines of the impacts of the rows it covers for the client (impacts are defined in question_rules.json); the assessor sharpens it per question.",
   "foundation": "AI policy or standard and how staff are told about it, AI inventory or register with owners, criticality and approvals, role descriptions, risk register entries, impact assessments, vendor contracts or DPAs, minutes of review decisions.",
   "by_impact": {
     "data": "Data classification rules for AI inputs and sources, data-flow diagram showing what reaches the model and retrieval stores, retention and training opt-out settings, provenance records, access lists for data stores.",

@@ -40,7 +40,7 @@ read it or re-apply it by hand. A control the SoA excludes, or whose entry canno
 asked in full, with a note telling the client they may answer "Not applicable" with the reason.
 
 ## 4 — Questions from the bank
-`.venv/bin/python ./scripts/build_questions.py <run_dir>`
+`.venv/bin/python ./scripts/pick_questions.py <run_dir> --framework csf`
 
 Picks candidates from `data/csf/banks/question_bank_<domain>.json` per subcategory and writes `csf_questions_draft.json` and
 a snapshot `csf_question_bank_used.json`.
