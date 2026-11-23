@@ -2,11 +2,6 @@
 
 Makes one questionnaire (`questionnaire.xlsx`, a CSF sheet and an AI RMF sheet) for one organisation.
 
-- **Who runs it:** anyone assessing an organisation.
-- **Reads:** the intake answers you give, and the question banks already in the repo.
-- **Writes:** a run folder `runs/<Org>_<date>/` with the intake, the picked questions and `questionnaire.xlsx`.
-- **Files explained:** `docs/guide.md`, section "Runs".
-
 Steps: intake → check the banks are recent enough (stops and names the bank to rebuild if not) → `/csf-questionnaire`
 (CSF sheet) → `/ai-questionnaire` (AI RMF sheet). It never builds a bank: that is `/build-csf-bank` and `/build-ai-bank`.
 

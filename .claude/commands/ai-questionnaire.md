@@ -2,14 +2,8 @@
 
 Picks the AI RMF 1.0 questions for one organisation and writes the AI RMF sheet of its questionnaire.
 
-- **Who runs it:** normally `/generate-questions`, which first checks the banks are recent enough. Run it alone only
-  on an existing run folder, to redo the AI RMF sheet.
-- **Argument:** the run folder (`runs/<Org>_<date>`).
-- **Reads:** `ai_intake.json` (how the organisation uses AI) and the two AI RMF banks (`data/ai/banks/`).
-- **Writes:** `ai_scope.json` (what was picked per subcategory, and why), `ai_questions_draft_<bank>.json` (the picked
-  questions, one file per bank), `ai_question_bank_used_<bank>.json` (copies of the banks used), and the AI RMF sheet
-  of `questionnaire.xlsx`.
-- **Files explained:** `docs/guide.md`, section "Runs".
+Argument: the run folder (`runs/<Org>_<date>`). Normally run by `/generate-questions`; run it alone only to redo
+the AI RMF sheet of an existing run folder.
 
 Scripts decide everything here; there is no agent judgement in this command.
 
