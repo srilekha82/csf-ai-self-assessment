@@ -48,7 +48,6 @@
       "invisible_usage"
     ]
   },
-  "area_question_rule": "Each mapping row is asked, for each role it can carry, by one question, or by two when its why holds two different practices (row_questions max). One question may carry several roles and cover several rows of the same subcategory when they check the same single practice.",
   "row_questions": {
     "max": 2
   },

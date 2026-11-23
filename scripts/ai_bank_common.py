@@ -2,6 +2,8 @@
 Helpers shared by the AI RMF bank scripts: loading the inputs, row ids, which roles an AI area allows, the
 foundation subcategories, and which prompt files each build step uses.
 
+Why:       every AI step reads the same parsed sources, rules and prompt list; loading and naming them in one place
+           keeps the steps consistent.
 Called by: prepare_ai_bank, record_bank, ai_mapping, ai_questions, ai_notes, pick_questions
            (imported, never run)
 Input:     data/ai/ (AI RMF core, CIS safeguards, AI areas, rules)

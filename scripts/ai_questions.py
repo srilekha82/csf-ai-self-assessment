@@ -4,6 +4,9 @@ stored, combines the generator's and checker's files (assemble), says whether a 
 banks to and from their review spreadsheets, and records your approval of the pilot (pilot_accepted.json, with
 fingerprints of the generator and evaluator prompts: change either and a new pilot is needed).
 
+Why:       the questions reach clients. A script checks what agents get wrong (every mapping row asked for every role
+           its area allows, real Playbook actions, the row's safeguards only, roles and producer flags) before
+           anything is stored, and says when a bank no longer matches the mapping.
 Called by: record_bank.py (ai-questions, ai-evidence, ai-assemble, ai-accept-pilot), sheet_io.py (the question
            sheets), check_freshness.py (bank completeness, pilot status)
 Input:     data/ai/mapping.json, data/ai/question_rules.json, data/ai/scope_rules.json, the parsed AI RMF and CIS data
@@ -394,10 +397,7 @@ def questions_from_sheet(bank: str, lines: list[dict], doc: dict, inp: dict) -> 
                 e.update(rows_record(ctx, sid))
         else:
             e["review_reason"] = data[sid]["reason"]
-    passed = sum(1 for e in new["subcategories"].values() if e["status"] == "pass")
-    new["summary"] = {"subcategories": len(new["subcategories"]), "passed": passed,
-                      "needs_human_review": len(new["subcategories"]) - passed,
-                      "questions": sum(len(e["questions"]) for e in new["subcategories"].values())}
+    new.pop("summary", None)
     return new, [], len(changed)
 
 
@@ -525,13 +525,12 @@ def store_questions(data: dict, args, inp: dict) -> tuple[Path, str]:
     bank.update({"description": BANK_DESCRIPTION[args.bank], "built_on": today,
                  "playbook_sha256_16": inp["core"]["source_sha256_16"],
                  "guide_sha256_16": {g: s["sha256_16"] for g, s in inp["sg_doc"]["sources"].items()}})
-    passed = sum(1 for e in bank["subcategories"].values() if e["status"] == "pass")
-    review = len(bank["subcategories"]) - passed
-    bank["summary"] = {"subcategories": len(bank["subcategories"]), "passed": passed, "needs_human_review": review,
-                       "questions": sum(len(e["questions"]) for e in bank["subcategories"].values())}
+    bank.pop("summary", None)
     path.write_text(json.dumps(bank, indent=2, ensure_ascii=False))
-    return path, (f"{args.bank} bank: recorded {len(data)} subcategories; bank has {passed} passed, {review} needing "
-                  f"human review, {bank['summary']['questions']} questions")
+    review = sum(1 for e in bank["subcategories"].values() if e["status"] != "pass")
+    questions = sum(len(e["questions"]) for e in bank["subcategories"].values())
+    return path, (f"{args.bank} bank: recorded {len(data)} subcategories; bank has "
+                  f"{len(bank['subcategories']) - review} passed, {review} needing human review, {questions} questions")
 
 
 def store_evidence(data: dict, args, inp: dict) -> tuple[Path, str]:

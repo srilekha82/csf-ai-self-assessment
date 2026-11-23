@@ -22,5 +22,5 @@ One verdict per prompt in the evidence file, as a JSON list, to the file the com
  {"subcategory_id": "MAP 4.1", "question_number": 3, "verdict": "fail", "reason": "Check 2: generic; names no artefact for vendor AI terms."}]
 ```
 
-A failed prompt is not stored: the question keeps the generic evidence line, which the engagement's reviewer
-sharpens. A `pass` is a claim you must be able to defend.
+A failed prompt is not stored: the question keeps the generic evidence line, which a person can sharpen in the
+questions review sheet. A `pass` is a claim you must be able to defend.

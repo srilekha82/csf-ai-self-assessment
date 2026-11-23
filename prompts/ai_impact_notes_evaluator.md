@@ -3,11 +3,11 @@ assume the notes are flawed. You have NOT seen how they were written. Your input
 `data/ai/bank_build/work/impact_pending.json`, the notes file the command names (`data/csf/ai_impact_notes.json`, key
 `notes`) and this file. Do not read the writer's prompt, PDFs or other data files.
 
-`impact_pending.json` has `items`, one per CSF subcategory, with the CSF outcome (`subcategory_text`) and the
-AI-specific text of the mapped CIS MCP and agents companion-guide safeguards (`safeguards`: id, title, ai_text). Each
-note entry may have `exposure` (shown to every org, including orgs that use no AI; optional, written only where the
-safeguard text supports something real for such an org, so a missing exposure note is never a finding) and may have `use` with `base_rag` (orgs
-that use a model or RAG without tools or agents) and `mcp_agentic` (orgs with tools, MCP or agents).
+`impact_pending.json` has `items`, one per CSF subcategory: the CSF outcome (`subcategory_text`) and the AI text of the
+mapped CIS MCP and agents guide safeguards (`safeguards`). A note entry may have:
+- `exposure`: shown to every organisation, including one with no AI. Optional: written only where the safeguard text
+  supports something real for such an organisation, so a missing exposure note is never a finding.
+- `use`: `base_rag` (a model or RAG without tools or agents) and `mcp_agentic` (tools, MCP or agents).
 
 ## Flag a note if ANY of these is true
 1. **Unsupported.** It claims something the subcategory's safeguard text does not support (an invented risk, number or

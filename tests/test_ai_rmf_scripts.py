@@ -130,7 +130,8 @@ class Recording(unittest.TestCase):
             self.assertEqual(self.run_mode("questions", data, "areas"), 1, name)
         self.assertEqual(self.run_mode("questions", good, "areas"), 0)
         bank = json.loads((R.AI_BANKS / "question_bank_ai_rmf_areas.json").read_text())
-        self.assertEqual(bank["summary"], {"subcategories": 1, "passed": 1, "needs_human_review": 0, "questions": len(qs)})
+        self.assertEqual((list(bank["subcategories"]), bank["subcategories"][sid]["status"]), ([sid], "pass"))
+        self.assertNotIn("summary", bank)
         self.assertTrue(bank["subcategories"][sid]["rows_sha"])
         cited = [dict(q, cis_refs=ctx["rows"][sid][some_row]["cis_refs"][:1]) if some_row in q["rows"] else q for q in qs]
         self.assertEqual(self.run_mode("questions", {sid: dict(good[sid], questions=cited)}, "areas"), 0)
