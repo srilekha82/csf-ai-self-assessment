@@ -68,7 +68,7 @@ def write_draft(run_dir: Path, draft_name: str, entries: list, bank_file: Path, 
 
 # ── CSF: count by question type, worded for the certifications held ─────────
 
-def cert_phrase(certs: list) -> str:
+def csf_cert_phrase(certs: list) -> str:
     """'ISO 27001 certification', 'PCI DSS certification', 'ISO 27001 and PCI DSS certifications'."""
     labels = [CERT_LABELS[c] for c in certs if c in CERT_LABELS]
     if not labels:
@@ -76,17 +76,18 @@ def cert_phrase(certs: list) -> str:
     return " and ".join(labels) + (" certifications" if len(labels) > 1 else " certification")
 
 
-def frame_question(base_text: str, question_type: str, mapped_controls: list, frames: dict, certs: list = ()) -> str:
+def csf_frame_question(base_text: str, question_type: str, mapped_controls: list, frames: dict,
+                       certs: list = ()) -> str:
     """The bank question, worded for the certifications held (the wording is in scope_rules.json `frames`)."""
     frame = frames.get(question_type)
     if frame is None:
         return base_text
     controls = (", ".join(c.replace("Annex A Controls: ", "") for c in mapped_controls)
                 if mapped_controls else frames["no_controls"])
-    return frame.format(cert=f"Your {cert_phrase(list(certs))}", controls=controls, text=base_text)
+    return frame.format(cert=f"Your {csf_cert_phrase(list(certs))}", controls=controls, text=base_text)
 
 
-def evidence_prompt(subcategory_id: str, evidence: dict) -> str:
+def csf_evidence_prompt(subcategory_id: str, evidence: dict) -> str:
     """The subcategory's own evidence prompt (written once, /build-csf-bank), else its category's line."""
     category = subcategory_id.rsplit("-", 1)[0]
     return (evidence.get("by_subcategory", {}).get(subcategory_id)
@@ -111,7 +112,7 @@ def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
             selected = [{"question_text": rules["frames"]["fallback_question"].format(outcome=outcomes.get(sid, sid)),
                          "cset_question_id": None}]
         questions = [{
-            "question_text": frame_question(c["question_text"], qtype, scope.get("mapped_controls", []),
+            "question_text": csf_frame_question(c["question_text"], qtype, scope.get("mapped_controls", []),
                                             rules["frames"], intake["certs"]),
             "source_reference": (f"CSET {c['cset_set']}: {c['cset_question_id']}" if c.get("cset_set")
                                  else f"CSET: {c['cset_question_id']}" if c.get("cset_question_id")
@@ -121,7 +122,7 @@ def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
         flag = scope.get("note") or ("LOW — assessor verification required"
                                      if scope.get("confidence") == "low" or qtype == "confirmatory" else "")
         entries.append(draft_entry(sid, sid.split(".")[0], outcomes.get(sid, ""), qtype, questions,
-                                   evidence_prompt(sid, evidence), flag))
+                                   csf_evidence_prompt(sid, evidence), flag))
     entries.sort(key=lambda e: (CSF_FUNCTION_ORDER.get(e["function"], 99), e["subcategory_id"]))
 
     outputs = write_draft(run_dir, "csf_questions_draft.json", entries, bank_file, "csf_question_bank_used.json")
@@ -134,7 +135,7 @@ def pick_csf(run_dir: Path, ev) -> tuple[list, list, str]:
 
 # ── AI RMF: filter by role, producer details and AI areas ───────────────────
 
-def validate_profile(p: dict, areas: list[str], qrules: dict) -> list[str]:
+def ai_check_intake(p: dict, areas: list[str], qrules: dict) -> list[str]:
     if not isinstance(p, dict):
         return ["ai_intake.json must be a JSON object"]
     if p.get("ai_in_use") not in ("none", "some", "unsure"):
@@ -158,11 +159,11 @@ def validate_profile(p: dict, areas: list[str], qrules: dict) -> list[str]:
     return errors
 
 
-def client_roles(p: dict, rules: dict) -> list[str]:
+def ai_client_roles(p: dict, rules: dict) -> list[str]:
     return rules["client_roles"][p["role"] if p["ai_in_use"] == "some" else p["ai_in_use"]]
 
 
-def pick(bank: str, rec: dict, roles: list, flags: list, areas: list) -> list[tuple[dict, list[str]]]:
+def ai_questions_for(bank: str, rec: dict, roles: list, flags: list, areas: list) -> list[tuple[dict, list[str]]]:
     """(question, the client's rows it covers) for every question of one bank entry the client gets."""
     out = []
     for q in rec["questions"]:
@@ -175,7 +176,7 @@ def pick(bank: str, rec: dict, roles: list, flags: list, areas: list) -> list[tu
     return out
 
 
-def evidence_for(bank: str, rec: dict, rows: list, evidence: dict, impact_order: list) -> str:
+def ai_evidence_prompt(bank: str, rec: dict, rows: list, evidence: dict, impact_order: list) -> str:
     if bank == "foundation":
         return evidence["foundation"]
     impacts = {i for r in rows for i in rec["rows"][r]["impact"]}
@@ -195,7 +196,7 @@ def ai_entry(bank: str, sid: str, rec: dict, picked: list, outcome: str, names: 
                            rules["covers_note"].format(areas="; ".join(client_areas)) if len(q["rows"]) > 1
                            else client_areas[0]),
             "rows": rows,
-            "evidence_prompt": q.get("evidence_prompt") or evidence_for(bank, rec, rows, evidence, impact_order),
+            "evidence_prompt": q.get("evidence_prompt") or ai_evidence_prompt(bank, rec, rows, evidence, impact_order),
         })
     flag = rules["review_flag"] if rec["status"] == "needs_human_review" else ""
     return draft_entry(sid, sid.split()[0], outcome, rules["default_type"], questions,
@@ -220,11 +221,11 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
                 f"{', '.join(a for a, n in names.items() if not n)}", inputs)
     outcomes = {s["subcategory_id"]: s["outcome"] for s in core_subcategories(json.loads(AI_CORE.read_text()))}
     profile = json.loads(usage_path.read_text())
-    errors = validate_profile(profile, list(names), qrules)
+    errors = ai_check_intake(profile, list(names), qrules)
     if errors:
         ev.reject(errors, "ai_intake.json", inputs)
 
-    roles = client_roles(profile, rules)
+    roles = ai_client_roles(profile, rules)
     flags = [f for f, v in (profile.get("producer") or {}).items() if v]
     scope, outputs, summary = {}, [], []
     for bank in AI_QUESTION_BANKS:
@@ -234,7 +235,7 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
         inputs.append(bank_file)
         entries, scope[bank] = [], []
         for sid, rec in json.loads(bank_file.read_text())["subcategories"].items():
-            picked = pick(bank, rec, roles, flags, profile["ai_areas"])
+            picked = ai_questions_for(bank, rec, roles, flags, profile["ai_areas"])
             covered = sorted({rec["rows"][r]["area"] for _, rows in picked for r in rows})
             reason = rules["reason"].format(roles=", ".join(roles),
                                             areas=f"; areas {', '.join(names[a] for a in covered)}" if covered else "")
@@ -243,7 +244,8 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
             if picked:
                 entries.append(ai_entry(bank, sid, rec, picked, outcomes[sid], names, rules, evidence,
                                         list(qrules["impacts"])))
-        entries.sort(key=lambda e: (AI_FUNCTION_ORDER.get(e["function"], 99), list(outcomes).index(e["subcategory_id"])))
+        entries.sort(key=lambda e: (AI_FUNCTION_ORDER.get(e["function"], 99),
+                                    list(outcomes).index(e["subcategory_id"])))
         outputs += write_draft(run_dir, f"ai_questions_draft_{bank}.json", entries, bank_file,
                                f"ai_question_bank_used_{bank}.json")
         summary.append(f"{bank}: {len(entries)} subcategories, {sum(len(e['questions']) for e in entries)} questions")
