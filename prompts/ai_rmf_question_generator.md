@@ -34,8 +34,8 @@ batch file the command names (`prepare_ai_bank.py batch`) and this file. Do not 
 
 ## Area bank
 - **Every row, every allowed role.** Each row is asked, for each role in its area's `roles_allowed`, by one question,
-  or by two when its `why` holds two different practices (e.g. staff reaching AI services, and outside agents calling
-  your systems). Never more than two; never split one practice.
+  or by two when its `why` holds two different practices (e.g. finding the AI tools staff use, and blocking the ones
+  not allowed). Never more than two; never split one practice.
 - **The core of the `why`.** Ask the practice at its centre, keeping its main subject (what is logged, tested or
   decided) and every `folded` outcome; trim only extra details. Stay inside the area: what its `covers` gives to
   another area is not asked here.
@@ -43,7 +43,7 @@ batch file the command names (`prepare_ai_bank.py batch`) and this file. Do not 
   `playbook_refs` cites an action of each.
 - **Once for all AI systems, framed by criticality.** Never once per AI system. Start with `criticality_frame` ("for
   your highest-criticality AI systems, ...") where the row is about systems the organisation runs. Leave it out where
-  it is not (AI used without approval, outside agents reaching in). Optional for the areas in
+  it is not (AI used without approval). Optional for the areas in
   `criticality_frame_optional`; for a producer's own model, data or build, never "for your highest-criticality AI
   systems, how ... your model": frame by the model ("for the models behind your most critical AI systems") or leave
   it out.

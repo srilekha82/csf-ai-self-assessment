@@ -16,7 +16,7 @@ Impact, What it covers, Example question (spreadsheet only).
 | Customer-facing application | usage | both | process, data, people |
 | Vendor AI (vendors and products running AI on the org's data: Jira, Slack, ServiceNow, GitHub, RPA) | usage | both | data |
 | Model building (owning a model, built from scratch or on an existing one: purpose and design, evaluation before use, the base model, release to others) | usage | producer | assets |
-| Invisible AI usage (unapproved inside, or others' agents, MCP clients and scrapers reaching in) | usage | both | data, access |
+| Invisible AI usage (shadow AI: unapproved use inside; outside AI is on the External AI sheet) | usage | both | data, access |
 | Input | component | both | data |
 | Output (wrong answers that are then trusted: steered by an attacker, or simply inaccurate, inconsistent or drifting) | component | both | process, people |
 | Test, tuning and evaluation data (including the harness reliability is measured with, and feedback reused for tuning) | component | producer | data, assets |
