@@ -9,6 +9,7 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
 - Unit tests (every change; they must pass): `.venv/bin/python -m unittest discover -s tests` (`test_*.py`; their own
   inputs, stores redirected to a temp dir; keep it that way). The AI tests read a frozen copy of the AI rules, areas
   and mapping (`tests/fixtures/ai/`, set up by `tests/ai_fixture.py`), so changing the real data does not break them.
+  GitHub Actions runs them on every pull request and push to main (`.github/workflows/unit-tests.yml`).
 - Data checks (the committed banks and data files; at the end-to-end run, after a rebuild):
   `.venv/bin/python -m unittest discover -s tests -p "check_*.py"`.
 
