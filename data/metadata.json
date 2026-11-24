@@ -1,6 +1,6 @@
 {
   "csf2_core.json": {
-    "last_refreshed": "2026-07-27",
+    "last_refreshed": "2026-11-24",
     "source": "NIST CSF 2.0 Informative References (CPRT export)",
     "download_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
     "download_instructions": "Click 'Download English (xlsx)', save as data/csf/source/csf2.xlsx, then run: .venv/bin/python ./scripts/parse_csf_source.py --output ./data",
@@ -11,29 +11,29 @@
     "notes": "Stable — NIST updates only when a new CSF version is published. Parsed alongside OLIR files from csf2.xlsx."
   },
   "olir_iso27001.json": {
-    "last_refreshed": "2026-07-27",
+    "last_refreshed": "2026-11-24",
     "source": "NIST CSF 2.0 Informative References (CPRT export)",
     "download_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
     "download_instructions": "Same file as csf2_core — run parse_csf_source.py after downloading data/csf/source/csf2.xlsx",
     "version": "ISO/IEC 27001:2022 → CSF 2.0",
-    "record_count": null,
+    "record_count": 106,
     "is_placeholder": false,
     "refresh_threshold_days": 365,
     "notes": "Parsed from the ISO 27001 references column in the NIST CPRT export."
   },
   "olir_pcidss.json": {
-    "last_refreshed": "2026-07-27",
+    "last_refreshed": "2026-11-24",
     "source": "NIST CSF 2.0 Informative References (CPRT export)",
     "download_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
     "download_instructions": "Same file as csf2_core — run parse_csf_source.py after downloading data/csf/source/csf2.xlsx",
     "version": "PCI DSS v4.0.1 → CSF 2.0",
-    "record_count": null,
+    "record_count": 101,
     "is_placeholder": false,
     "refresh_threshold_days": 365,
     "notes": "Parsed from the PCI DSS references column in the NIST CPRT export. Not the official PCI SSC OLIR."
   },
   "olir_cis_v81.json": {
-    "last_refreshed": "2026-07-27",
+    "last_refreshed": "2026-11-24",
     "source": "NIST CSF 2.0 Informative References (CPRT export)",
     "download_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
     "download_instructions": "Same file as csf2_core — run parse_csf_source.py after downloading data/csf/source/csf2.xlsx",
