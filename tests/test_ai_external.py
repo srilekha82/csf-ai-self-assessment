@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import ai_fixture  # noqa: E402,F401  (the frozen AI data: tests/fixtures/ai/)
 import ai_external as X  # noqa: E402
+import pick_questions as PQ  # noqa: E402
 import prepare_ai_bank as P  # noqa: E402
 from ai_bank_modules import R  # noqa: E402
 
@@ -156,6 +157,27 @@ class ExternalBank(unittest.TestCase):
             self.assertTrue(X.from_sheet(rows, doc)[1], name)
         new, problems, changed = X.from_sheet([ln for ln in lines if ln["subcategory"] != "DE.AE-02"], doc)
         self.assertEqual((problems, changed, list(new["subcategories"])), ([], 1, ["PR.AA-05"]))   # dropped
+
+    def test_every_client_gets_every_reviewed_question(self):
+        import audit
+        self.assertEqual(self.record({"PR.AA-05": self.entry(Q, Q + " Who owns it?")}), 0)   # DE.AE-02: none yet
+        self.addCleanup(setattr, PQ, "AI_BANK_EXTERNAL", PQ.AI_BANK_EXTERNAL)
+        PQ.AI_BANK_EXTERNAL = X.AI_BANK_EXTERNAL
+        run = self.tmp / "run"
+        run.mkdir()
+        ev = audit.begin(run / "audit.jsonl", "pick_questions", {})
+        _, outputs, detail = PQ.pick_external(run, ev)
+        self.assertIn("not asked (no questions yet, or needs human review): 1", detail)
+        (entry,) = json.loads((run / "external_questions_draft.json").read_text())
+        nist = {s["subcategory_id"]: s for s in json.loads(PQ.CSF_CORE.read_text())["subcategories"]}["PR.AA-05"]
+        self.assertEqual((entry["subcategory_id"], entry["threat"], entry["outcome"]),
+                         ("PR.AA-05", THREAT, nist["subcategory_text"]))
+        self.assertEqual(entry["evidence_prompt"], "\n".join(nist["implementation_examples"]))   # NIST's, word for word
+        self.assertEqual([q["question_text"] for q in entry["questions"]], [Q, Q + " Who owns it?"])
+        cis = entry["questions"][0]["cis_reference"]
+        self.assertTrue(cis.startswith("CIS Controls v8.1 ") and "companion guides:" in cis)
+        self.assertNotIn("-", cis.split("\n")[0].split(" (")[0])                               # ids, not guide-ids
+        self.assertTrue((run / "external_question_bank_used.json").is_file())
 
     def test_writer_input(self):
         self.inp["has_text"] = True   # the CIS text is local only; the input's structure is what is checked

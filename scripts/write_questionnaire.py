@@ -3,20 +3,23 @@ Writes the picked questions into the questionnaire workbook, one row per questio
 
 Why:       the client answers in Excel. Filling a fixed template (its layout edited in Excel, not in code) gives every
            client the same workbook, with what does not apply to them hidden.
-Called by: /csf-questionnaire and /ai-questionnaire (last step)
-Input:     <run_dir>/csf_questions_draft.json, or the two ai_questions_draft_<bank>.json files; <run_dir>/ai_intake.json
-           (which AI areas to show); templates/questionnaire_template.xlsx (the layout)
-Output:    <run_dir>/questionnaire.xlsx (its CSF sheet, or its AI RMF and AI systems sheets)
+Called by: /csf-questionnaire and /ai-questionnaire (last steps)
+Input:     <run_dir>/csf_questions_draft.json, the two ai_questions_draft_<bank>.json files, or
+           external_questions_draft.json; <run_dir>/ai_intake.json (which AI areas to show);
+           templates/questionnaire_template.xlsx (the layout)
+Output:    <run_dir>/questionnaire.xlsx (its CSF sheet, its AI RMF and AI systems sheets, or its External AI sheet)
 
-Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai]
+Usage: .venv/bin/python ./scripts/write_questionnaire.py <questions_json>... <output_xlsx> [--framework csf|ai|external]
 
   csf (default)  csf_questions_draft.json -> sheet "CSF Questionnaire"
   ai             ai_questions_draft_foundation.json and ai_questions_draft_areas.json -> sheet "AI RMF Questionnaire",
                  with an Area column (whole organisation, one AI area, or "This question covers: ...")
+  external       external_questions_draft.json -> sheet "External AI Questionnaire" (CSF subcategory, outcome, AI
+                 threat, question, NIST's evidence, CIS reference), in CSF order
 
 The layout (sheets, headers, colours, widths, drop-downs) lives in the template, not here: change it in Excel. The first
 run copies the template into the run folder; each mode then clears and refills only its own sheet, writing each value
-under its header by name, so the two can be written in any order and a column can be moved in the template.
+under its header by name, so the sheets can be written in any order and a column can be moved in the template.
 
 The AI systems sheet (the client lists its AI systems for the GOVERN 1.6 inventory question) is shown only when that
 question is asked: AI in use "none" does not get it, so it is hidden. Its AI area columns show only the client's own AI
@@ -38,11 +41,16 @@ from config import (AI_AREA_LABELS, AI_FUNCTION_ORDER, AI_QUESTION_BANKS, AI_QUE
 import audit  # noqa: E402
 
 FRAMEWORKS = {"csf": {"sheet": "CSF Questionnaire", "order": CSF_FUNCTION_ORDER},
-              "ai": {"sheet": "AI RMF Questionnaire", "order": AI_FUNCTION_ORDER}}
+              "ai": {"sheet": "AI RMF Questionnaire", "order": AI_FUNCTION_ORDER},
+              "external": {"sheet": "External AI Questionnaire", "order": CSF_FUNCTION_ORDER}}
 
 
 def row_values(framework: str, entry: dict, q_num: int, q: dict) -> dict:
     """{header: value} for one question row. Answer and Evidence stay blank for the client."""
+    if framework == "external":
+        return {"CSF subcategory": entry.get("subcategory_id", ""), "Outcome": entry.get("outcome", ""),
+                "AI threat": entry.get("threat", ""), "Question": q.get("question_text", ""),
+                "Evidence Required": entry.get("evidence_prompt", ""), "CIS reference": q.get("cis_reference", "")}
     row = {"Function": entry.get("function", ""), "Subcategory ID": entry.get("subcategory_id", ""), "Q#": q_num,
            "Outcome": entry.get("outcome", ""), "Question Type": entry.get("question_type", ""),
            "Question": q.get("question_text", ""), "Source": q.get("source_reference", ""),
@@ -100,8 +108,8 @@ def main():
     parser.add_argument("paths", nargs="+", help="question file(s), then the output xlsx")
     parser.add_argument("--framework", choices=list(FRAMEWORKS), default="csf")
     args = parser.parse_args()
-    if len(args.paths) < 2 or (args.framework == "csf" and len(args.paths) != 2):
-        parser.error("give one question file (csf) or one or two (ai), then the output xlsx")
+    if len(args.paths) < 2 or (args.framework != "ai" and len(args.paths) != 2):
+        parser.error("give one question file (csf, external) or one or two (ai), then the output xlsx")
     *question_files, output = args.paths
     entries = [e for f in question_files for e in json.loads(Path(f).read_text())]
     outpath = Path(output)

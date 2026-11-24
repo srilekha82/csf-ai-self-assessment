@@ -1,20 +1,24 @@
 """
-Picks this client's questions from the question banks, for one framework (the CSF or the AI RMF sheet). Fixed
-rules, no agent: the questions were written and checked when the banks were built.
+Picks this client's questions from the question banks, for one sheet (CSF, AI RMF or External AI). Fixed rules, no
+agent: the questions were written and checked when the banks were built.
 
 Why:       the banks hold every question that could be asked. A client must get only the ones their intake calls
            for, worded for what they hold, in the same order every time.
-Called by: /csf-questionnaire (step 4) with --framework csf, /ai-questionnaire (step 2) with --framework ai
+Called by: /csf-questionnaire (step 4) with --framework csf, /ai-questionnaire (steps 2 and 4) with --framework ai and
+           --framework external
 Input:     csf: <run_dir>/csf_intake.json and csf_scope.json, the CSF bank of the client's sector,
                 data/csf/scope_rules.json (how many questions, the wording), data/csf/csf2_core.json (the outcomes and
                 NIST's implementation examples)
            ai:  <run_dir>/ai_intake.json, the two AI RMF banks, data/ai/scope_rules.json and question_rules.json,
                 data/ai/evidence_prompts.json, the AI area labels, data/ai/ai_rmf_core.json (the outcomes)
+           external: the External AI bank, data/csf/csf2_core.json (the outcomes and NIST's implementation examples),
+                data/ai/question_rules.json external_bank (how the CIS reference is written)
 Output:    csf: <run_dir>/csf_questions_draft.json and csf_question_bank_used.json (a copy of the bank used)
            ai:  <run_dir>/ai_questions_draft_<bank>.json, ai_question_bank_used_<bank>.json, and ai_scope.json (why
                 each subcategory was picked or left out)
+           external: <run_dir>/external_questions_draft.json and external_question_bank_used.json
 
-Usage: .venv/bin/python ./scripts/pick_questions.py <run_dir> --framework csf|ai
+Usage: .venv/bin/python ./scripts/pick_questions.py <run_dir> --framework csf|ai|external
 
 CSF rules: per subcategory, the first few bank questions (how many: scope_rules.json max_questions, by the question
 type compute_scope.py set), worded for the certifications held with the fixed sentences in scope_rules.json frames
@@ -35,7 +39,12 @@ after a hand edit):
   {"ai_in_use": "none" | "some" | "unsure", "role": "consumer" | "producer" | "both" | null,
    "producer": {"built_on_existing_model": bool, "given_to_others": bool} | null, "ai_areas": [AI area ids]}
 
-Both write one draft entry per subcategory in the shape write_questionnaire.py reads.
+External AI rules: every client gets every question of the External AI bank, whether it uses AI or not (no intake
+filter), in CSF order, with the subcategory's threat. Only subcategories whose questions passed review (status pass)
+are asked; the others are counted in the summary line, not asked. Evidence Required is NIST's implementation examples
+for the subcategory, as on the CSF sheet. CIS reference: the CIS safeguard ids and companion guide names (no CIS text).
+
+Each writes one draft entry per subcategory in the shape write_questionnaire.py reads.
 """
 
 import argparse
@@ -45,7 +54,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_AREA_LABELS, AI_CORE, AI_EVIDENCE_PROMPTS, AI_FUNCTION_ORDER,  # noqa: E402
+from config import (AI_AREAS, AI_AREA_LABELS, AI_BANK_EXTERNAL, AI_CORE, AI_EVIDENCE_PROMPTS, AI_FUNCTION_ORDER,  # noqa: E402
                     AI_QUESTION_BANKS, AI_QUESTION_RULES, AI_SCOPE_RULES, CERT_LABELS, CSF_CORE, CSF_FUNCTION_ORDER,
                     SCOPE_RULES, ai_bank_path, bank_path, load_csf_intake)
 from ai_bank_common import core_subcategories  # noqa: E402
@@ -263,14 +272,41 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
     return inputs, [scope_path, *outputs], detail
 
 
+# ── External AI: every question, for every client ─────────────────────────
+
+def pick_external(run_dir: Path, ev) -> tuple[list, list, str]:
+    import ai_external as X
+    inputs = [AI_BANK_EXTERNAL, CSF_CORE, SCOPE_RULES, AI_QUESTION_RULES]
+    if not AI_BANK_EXTERNAL.is_file():
+        ev.fail(f"[pick_questions] ERROR: {AI_BANK_EXTERNAL} not found. Run /build-ai-bank first.", inputs)
+    r, frames = X.rules(), json.loads(SCOPE_RULES.read_text())["frames"]
+    core = {s["subcategory_id"]: s for s in json.loads(CSF_CORE.read_text())["subcategories"]}
+    entries, not_asked = [], []
+    for sid, e in json.loads(AI_BANK_EXTERNAL.read_text())["subcategories"].items():
+        if not e.get("questions") or e.get("status") != "pass":
+            not_asked.append(sid)
+            continue
+        cis = X.cis_reference(e["cis_refs"], r)
+        questions = [{"question_text": q["question_text"], "source_reference": "", "cis_reference": cis}
+                     for q in e["questions"]]
+        entries.append(draft_entry(sid, sid.split(".")[0], core[sid]["subcategory_text"], "full_discovery", questions,
+                                   csf_evidence_prompt(core[sid], frames), "", threat=e["threat"]))
+    entries.sort(key=lambda e: (CSF_FUNCTION_ORDER.get(e["function"], 99), e["subcategory_id"]))
+    outputs = write_draft(run_dir, "external_questions_draft.json", entries, AI_BANK_EXTERNAL,
+                          "external_question_bank_used.json")
+    detail = (f"external: {len(entries)} subcategories, {sum(len(e['questions']) for e in entries)} questions; "
+              f"not asked (no questions yet, or needs human review): {len(not_asked)}")
+    return inputs, outputs, detail
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_dir")
-    parser.add_argument("--framework", choices=["csf", "ai"], required=True)
+    parser.add_argument("--framework", choices=["csf", "ai", "external"], required=True)
     args = parser.parse_args()
     run_dir = Path(args.run_dir)
     ev = audit.begin(audit.run_log(run_dir), "pick_questions", {"framework": args.framework})
-    inputs, outputs, detail = (pick_csf if args.framework == "csf" else pick_ai)(run_dir, ev)
+    inputs, outputs, detail = {"csf": pick_csf, "ai": pick_ai, "external": pick_external}[args.framework](run_dir, ev)
     print(f"[pick_questions] {detail} → {run_dir}", file=sys.stderr)
     ev.finish(inputs=inputs, outputs=outputs, detail=detail)
 

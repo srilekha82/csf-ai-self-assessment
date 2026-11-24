@@ -1,9 +1,10 @@
 # /generate-questions
 
-Makes one questionnaire (`questionnaire.xlsx`, a CSF sheet and an AI RMF sheet) for one organisation.
+Makes one questionnaire (`questionnaire.xlsx`: a CSF sheet, an AI RMF sheet and an External AI sheet) for one
+organisation.
 
 Steps: intake → check the banks are recent enough (stops and names the bank to rebuild if not) → `/csf-questionnaire`
-(CSF sheet) → `/ai-questionnaire` (AI RMF sheet). It never builds a bank: that is `/build-csf-bank` and `/build-ai-bank`.
+(CSF sheet) → `/ai-questionnaire` (AI RMF and External AI sheets). It never builds a bank: that is `/build-csf-bank` and `/build-ai-bank`.
 
 Tools: Bash, Read, Skill. Working directory: repo root. Say little: the script summary lines, and anything you need
 from the user.
@@ -29,7 +30,8 @@ later step; nothing else needs the answers repeated.
 ## 2 — Check the banks are recent enough
 `.venv/bin/python ./scripts/check_bank_age.py --run <run_dir>`
 
-It checks only the build date of the banks this run uses (the CSF bank of the sector and the two AI RMF banks) against
+It checks only the build date of the banks this run uses (the CSF bank of the sector, the two AI RMF banks and the
+External AI bank) against
 the limits in `data/metadata.json` (`question_banks`). It needs no source files.
 
 - Exit 0: go on.
@@ -41,9 +43,9 @@ the limits in `data/metadata.json` (`question_banks`). It needs no source files.
 Run `/csf-questionnaire <run_dir>` (Skill tool). It has its own STOP for the SoA question when ISO 27001 is held: wait for
 the user's answer.
 
-## 4 — AI RMF questions
-Run `/ai-questionnaire <run_dir>`.
+## 4 — AI questions
+Run `/ai-questionnaire <run_dir>` (AI RMF and External AI sheets).
 
 ## Done
-Tell the user: the run folder, the counts each step printed, and that `questionnaire.xlsx` (CSF sheet + AI RMF sheet)
-is ready to send to the control owners. The answers filled into it go to Stage 2.
+Tell the user: the run folder, the counts each step printed, and that `questionnaire.xlsx` (CSF, AI RMF and External
+AI sheets) is ready to send to the control owners. The answers filled into it go to Stage 2.

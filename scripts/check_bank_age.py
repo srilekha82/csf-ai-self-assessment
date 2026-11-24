@@ -4,8 +4,8 @@ Checks that the question banks a client run uses are there and recent enough. It
 Why:       a client run never builds a bank, so it needs a quick way to stop before using one that is missing or out of
            date, and to name the build command that fixes it.
 Called by: /generate-questions (step 2)
-Input:     the build date in each bank the run uses (the CSF bank of its sector, the two AI RMF banks); the age limits in
-           data/metadata.json "question_banks"
+Input:     the build date in each bank the run uses (the CSF bank of its sector, the two AI RMF banks, the External AI
+           bank); the age limits in data/metadata.json "question_banks" (the External AI bank has the AI limit)
 Output:    a report on screen; exit 1 when a bank is missing or too old
 
 Usage: .venv/bin/python ./scripts/check_bank_age.py --run runs/<Org>_<date>   (or --sector finance)
@@ -23,7 +23,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_BANKS, AI_QUESTION_BANKS, DATA_AUDIT, SECTORS, METADATA, ai_bank_path, bank_path,  # noqa: E402
+from config import (AI_BANK_EXTERNAL, AI_BANKS, AI_QUESTION_BANKS, DATA_AUDIT, SECTORS, METADATA, ai_bank_path, bank_path,  # noqa: E402
                     load_csf_intake)
 import audit  # noqa: E402
 
@@ -38,6 +38,7 @@ def bank_problems(sector: str, today: date | None = None, limits: dict | None = 
     banks = [(f"CSF bank {sector}", csf_file or bank_path(sector), limits["csf_max_age_days"], "/build-csf-bank")]
     banks += [(f"AI bank {b}", ai_bank_path(b, ai_dir), limits["ai_max_age_days"], "/build-ai-bank")
               for b in AI_QUESTION_BANKS]
+    banks.append(("External AI bank", ai_dir / AI_BANK_EXTERNAL.name, limits["ai_max_age_days"], "/build-ai-bank"))
     problems = []
     for name, path, limit, command in banks:
         built = json.loads(path.read_text()).get("built_on") if path.is_file() else None

@@ -291,9 +291,30 @@ class Workbook(unittest.TestCase):
         self.write("csf", csf, out=out)     # then CSF: used to wipe the AI sheet
         self.write("csf", csf, out=out)     # and a CSF re-run must keep it
         wb = openpyxl.load_workbook(out)
-        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire"])
+        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire", "External AI Questionnaire"])
         self.assertEqual(wb["AI RMF Questionnaire"].max_row, 2)
         self.assertEqual(wb["CSF Questionnaire"].max_row, 2)
+
+    def test_the_external_ai_sheet_has_one_row_per_question_in_csf_order(self):
+        import openpyxl
+        tmp = Path(tempfile.mkdtemp())
+        ext, out = tmp / "external.json", tmp / "questionnaire.xlsx"
+        entry = lambda f, sid, qs: {"subcategory_id": sid, "function": f, "outcome": "o " + sid, "threat": "t " + sid,  # noqa: E731
+                                    "question_type": "full_discovery", "evidence_prompt": "Ex1: e",
+                                    "confidence_flag": "", "questions": [
+                                        {"question_text": q, "source_reference": "", "cis_reference": "CIS 8.11"}
+                                        for q in qs]}
+        ext.write_text(json.dumps([entry("DE", "DE.AE-02", ["How are agents told apart?"]),
+                                   entry("PR", "PR.AA-05", ["How are agent sign-ins limited?", "Who reviews it?"])]))
+        self.write("external", ext, out=out)
+        ws = openpyxl.load_workbook(out)["External AI Questionnaire"]
+        rows = [[c.value for c in r] for r in ws.iter_rows()]
+        self.assertEqual(rows[0], ["CSF subcategory", "Outcome", "AI threat", "Question", "Evidence Required",
+                                   "CIS reference", "Answer", "Evidence"])
+        self.assertEqual([r[0] for r in rows[1:]], ["PR.AA-05", "PR.AA-05", "DE.AE-02"])   # CSF order: PR before DE
+        self.assertEqual(rows[1][1:6], ["o PR.AA-05", "t PR.AA-05", "How are agent sign-ins limited?", "Ex1: e",
+                                        "CIS 8.11"])
+        self.assertEqual(rows[1][6:], [None, None])                                         # Answer, Evidence blank
 
     def test_the_ai_system_inventory_sheet_shows_only_when_asked(self):
         import openpyxl
@@ -303,12 +324,14 @@ class Workbook(unittest.TestCase):
         ai.write_text(json.dumps(self.entries("GOVERN", "GOVERN 1.1", "How is AI governed?", bank="foundation")))
         self.write("ai", ai, out=out)
         inv = json.loads(AI_QUESTION_RULES.read_text())["ai_system_inventory"]
-        self.assertEqual(self.visible(openpyxl.load_workbook(out)), ["CSF Questionnaire", "AI RMF Questionnaire"])
+        self.assertEqual(self.visible(openpyxl.load_workbook(out)), ["CSF Questionnaire", "AI RMF Questionnaire",
+                                                                     "External AI Questionnaire"])
         ai.write_text(json.dumps(self.entries("GOVERN", inv["subcategory"], "In the AI systems sheet, list ...",
                                               bank="foundation")))
         self.write("ai", ai, out=out)                                    # a re-run that asks it shows the sheet again
         wb = openpyxl.load_workbook(out)
-        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire", inv["sheet"]])
+        self.assertEqual(self.visible(wb), ["CSF Questionnaire", "AI RMF Questionnaire", "External AI Questionnaire",
+                                            inv["sheet"]])
         ws = wb[inv["sheet"]]
         hidden = [c.value for c in ws[2] if ws.column_dimensions[c.column_letter].hidden]
         self.assertEqual(hidden, [])                                      # no ai_intake.json: treated as unsure, all shown

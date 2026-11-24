@@ -82,9 +82,11 @@
     "rows": 30
   },
   "external_bank": {
-    "description": "The External AI bank (ai_external.py): questions per CSF subcategory, and which CIS companion guides give the safeguards shown with them (and their AI text to the question writer).",
+    "description": "The External AI bank (ai_external.py): questions per CSF subcategory; which CIS companion guides give the safeguards shown with them (and their AI text to the question writer); and how the client's CIS reference column names them (one line per CIS safeguard).",
     "questions": {"min": 1, "max": 2},
-    "guides": ["LLM", "MCP", "AGENT"]
+    "guides": ["LLM", "MCP", "AGENT"],
+    "guide_labels": {"LLM": "AI and LLM", "MCP": "MCP", "AGENT": "AI Agents"},
+    "cis_reference": "CIS Controls v8.1 {cis_id} (companion guides: {guides})"
   },
   "text_limits": {
     "description": "Length limits record_bank.py applies to agent output in the AI RMF bank build: a question or an evidence line shorter than min_chars, an evidence line longer than evidence_max_chars, or an impact note shorter than note_min_chars is rejected.",
