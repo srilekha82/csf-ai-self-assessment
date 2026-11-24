@@ -25,8 +25,7 @@ ai_external.py)
                                             banks re-checked against the current rules, plus every freshness stage
   ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
                                             ones to redraft
-  ai-accept-mapping [--note T] [--by-build] you approve the mapping as it is now (approved again if it changes);
-                                            --by-build: /build-ai-bank, when every row passed and nothing is left for you
+  ai-accept-mapping [--note T]              you approve the mapping as it is now (approved again if it changes)
   ai-assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F [--kind external]
                                             joins the question writer's and checker's files (up to two rounds) into
                                             one file for ai-questions (or ai-external); what still fails is marked for
@@ -133,8 +132,6 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("ai-confirm-current")
     for m in ("ai-accept-mapping", "ai-accept-pilot"):
         sub.add_parser(m).add_argument("--note")
-    sub.choices["ai-accept-mapping"].add_argument(
-        "--by-build", action="store_true", help="accepted by /build-ai-bank: every row passed, nothing left for a person")
     return ap
 
 
@@ -180,9 +177,8 @@ def main():
         run_step("ai_confirm_current", {}, [], [ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS] + [AI_BANK_EXTERNAL],
                  lambda: restamp_banks(check_freshness.ai_stages()))
     elif mode == "ai-accept-mapping":
-        note = args.note or ("accepted by /build-ai-bank: every row passed its evaluator" if args.by_build else None)
-        run_step("ai_accept_mapping", {"note": note, "by_build": args.by_build}, [AI_MAPPING], [AI_MAPPING_ACCEPTED],
-                 lambda: (accept_mapping(note), False), actor="script" if args.by_build else "human")
+        run_step("ai_accept_mapping", {"note": args.note}, [AI_MAPPING], [AI_MAPPING_ACCEPTED],
+                 lambda: (accept_mapping(args.note), False), actor="human")
     elif mode == "ai-accept-pilot":
         run_step("ai_accept_pilot", {"note": args.note}, [REPO_ROOT / p for p in AI_PROMPTS["questions"]],
                  [AI_PILOT], lambda: (accept_pilot(args.note), False), actor="human")

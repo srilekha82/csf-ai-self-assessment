@@ -16,8 +16,8 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
 - **Generate questions:** `/generate-questions` (one numbered intake, CSF + AI RMF + External AI, one
   `questionnaire.xlsx`). Parts on an existing run folder: `/csf-questionnaire` (CSF sheet), `/ai-questionnaire` (AI RMF
   and External AI sheets).
-- **Build or refresh the AI banks (AI RMF and External AI):** `/build-ai-bank` (pilot first; it does the AI mapping first if it is not
-  accepted; `/ai-mapping` alone redoes only the mapping). CSF banks: `/build-csf-bank`.
+- **Build or refresh the AI banks (AI RMF and External AI):** `/build-ai-bank` (pilot first; it needs the AI mapping accepted:
+  `/ai-mapping` drafts it and you review and accept it, rarely redone). CSF banks: `/build-csf-bank`.
 - **Questions about how something works or what a term means:** answer from `docs/guide.md` (it has an "I want to…" table
   and a glossary).
 - **Maturity XLS (Stage 2):** the XLS writer and answer session are not built yet.
