@@ -1,7 +1,7 @@
 {
   "description": "One entry per spreadsheet that scripts/sheet_io.py converts between XLSX (for people) and JSON (for scripts and agents). Columns, required cells and allowed values live here, not in code. `xlsx`, `json` and `audit` name constants in scripts/config.py. A column with \"in_json\": false is kept in the spreadsheet only. `decision` says which side is the decision: spreadsheet (default) or json (the sheet is exported for review and its edits imported back). `shape` names a converter for a JSON that is not a flat list (mapping, questions: ai_mapping.py, ai_questions.py).",
   "review_words": {
-    "description": "Words the review sheets show (scripts/ai_questions.py, ai_notes.py, ai_mapping.py): reasons, notes and the mapping Coverage sheet.",
+    "description": "Words the review sheets show (scripts/ai_questions.py, ai_external.py, ai_notes.py, ai_mapping.py): reasons, notes and the mapping Coverage sheet.",
     "whole_subcategory": "Whole subcategory: ",
     "rows_changed": "the mapping rows changed since these questions were written: check them against the rows, then set pass",
     "flagged": "flagged in the review sheet",
@@ -207,6 +207,52 @@
          "help": "Do not edit. Which note the evaluator flagged and why."},
         {"key": "decided_by", "header": "Decided by", "type": "text", "required": false, "width": 10, "in_json": false,
          "help": "Do not edit. agent, or human once you changed the line."}
+      ]
+    },
+    "external_questions": {
+      "xlsx": "AI_EXTERNAL_XLSX",
+      "json": "AI_BANK_EXTERNAL",
+      "audit": "AI_BUILD",
+      "sheet": "External AI questions",
+      "shape": "external",
+      "decision": "json",
+      "list_key": "subcategories",
+      "key": null,
+      "freeze": "C2",
+      "readme": [
+        "The External AI questions for review: one line per question. Every client gets them, whether it uses AI or not: they ask how the organisation's practice for a CSF outcome has changed for AI outside it (other people's agents, MCP clients, scrapers, AI-enabled attackers).",
+        "Only CSF subcategories NIST links to CIS Controls v8.1 can be here. The AI threat is yours to decide; the questions are written from it by /build-ai-bank and checked by a second agent.",
+        "Filter Status = needs_human_review for what the evaluator still failed.",
+        "data/ai/banks/question_bank_external.json is the decision; this sheet is exported from it. After editing, run",
+        "  .venv/bin/python ./scripts/sheet_io.py import external_questions",
+        "which checks every line (a subcategory NIST links to CIS v8.1, one threat per subcategory, 1 or 2 distinct questions) and writes the bank. If anything is wrong it lists the problems and writes nothing.",
+        "You may: edit a threat or a question; add or delete question lines; add a subcategory (a line with its threat; leave the question blank for /build-ai-bank to write it); drop a subcategory (delete all its lines). To have a subcategory's questions rewritten after you changed its threat, blank its questions (one line, Question empty).",
+        "A subcategory you change (or whose Status you set) is stored as decided_by human; a later generator run does not overwrite it unless asked to.",
+        "Refresh the sheet after questions are recorded with",
+        "  .venv/bin/python ./scripts/sheet_io.py export external_questions",
+        "which refuses to overwrite edits you have not imported."
+      ],
+      "columns": [
+        {"key": "subcategory", "header": "CSF subcategory", "type": "text", "required": true, "width": 13,
+         "help": "The CSF 2.0 subcategory. Only one NIST links to CIS Controls v8.1 (data/csf/crosswalks/olir_cis_v81.json)."},
+        {"key": "outcome", "header": "CSF outcome", "type": "text", "required": false, "width": 40, "in_json": false,
+         "help": "Do not edit. The CSF 2.0 outcome."},
+        {"key": "threat", "header": "AI threat", "type": "text", "required": true, "width": 55,
+         "help": "What AI outside the organisation changes for this outcome, for any organisation, including one that uses no AI. Yours to decide; the questions are written from it. The same text on every line of the subcategory."},
+        {"key": "q", "header": "Q#", "type": "text", "required": false, "width": 5, "in_json": false,
+         "help": "Do not edit. The question's number in its subcategory."},
+        {"key": "question_text", "header": "Question", "type": "text", "required": false, "width": 60,
+         "help": "The question, asked of every client. Blank: none yet (/build-ai-bank writes it). A subcategory has 1 or 2."},
+        {"key": "cis_refs", "header": "CIS safeguards", "type": "codes", "required": false, "width": 22, "in_json": false,
+         "help": "Do not edit. The AI companion guide safeguards for the CIS safeguards NIST lists for the subcategory (worked out by the script)."},
+        {"key": "status", "header": "Status", "type": "enum", "required": true, "width": 14,
+         "allowed": ["pass", "needs_human_review"],
+         "help": "pass, or needs_human_review (the evaluator still failed this question, or the whole subcategory). Set pass once you have decided."},
+        {"key": "review_reason", "header": "Evaluator's reason", "type": "text", "required": false, "width": 40,
+         "in_json": false,
+         "help": "Do not edit. Why the evaluator failed this question; 'Whole subcategory:' is a failure of the subcategory as a whole."},
+        {"key": "decided_by", "header": "Decided by", "type": "text", "required": false, "width": 10, "in_json": false,
+         "help": "Do not edit. agent, or human once you changed the subcategory in this sheet."}
       ]
     },
     "foundation_questions": {

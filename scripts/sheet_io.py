@@ -5,7 +5,7 @@ spreadsheets, and reads your edits back after checking them.
 Why:       a person reviews the AI mapping, questions and notes far more easily in a spreadsheet than in JSON. This
            keeps the sheet you edit and the JSON the scripts use in step, and checks every edit before it is stored.
 Called by: /ai-mapping and /build-ai-bank (after each step that a person reviews)
-Input:     export: data/ai/ JSON (AI areas, mapping, both banks, impact notes); import: your edited spreadsheet
+Input:     export: data/ai/ JSON (AI areas, mapping, the AI banks, impact notes); import: your edited spreadsheet
 Output:    export: spreadsheets in data/ai/authoring/; import: the updated JSON
 
 Usage: .venv/bin/python ./scripts/sheet_io.py export <sheet> [--xlsx PATH] [--json PATH] [--force]
@@ -22,6 +22,8 @@ Sheets:
                           area x subcategory, mapped or not, plus a Coverage sheet.
   area_questions,         the two AI RMF question banks, one line per question. Lines may be edited, added or
   foundation_questions    deleted; subcategories cannot be added or dropped here.
+  external_questions      the External AI bank, one line per question (a subcategory with none yet: one blank line).
+                          Threats, questions and subcategories may be edited, added or dropped.
   impact_notes            the CSF AI impact notes (data/csf/ai_impact_notes.json), one line per CSF subcategory.
 
 Each sheet's columns and allowed values are in data/common/sheet_specs.json (column types: id, text, enum, list,
@@ -169,6 +171,8 @@ def import_sheet(spec: dict, xlsx: Path, json_path: Path, log: Path) -> str:
         return import_questions(spec, xlsx, json_path, ev, rows)
     if spec.get("shape") == "notes":
         return import_notes(xlsx, json_path, ev, rows)
+    if spec.get("shape") == "external":
+        return import_external(xlsx, json_path, ev, rows)
     keep = [c["key"] for c in json_columns(spec)]
     doc = {"description": spec["json_description"], "source": _rel(xlsx), "source_sha": audit.sha(xlsx),
            "generated_by": f"scripts/sheet_io.py import {spec['name']}",
@@ -226,7 +230,7 @@ def import_questions(spec: dict, xlsx: Path, json_path: Path, ev, rows: list[dic
 
 def import_notes(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     if not json_path.is_file():
-        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record notes first (/build-ai-bank, Step 6)")
+        ev.fail(f"[sheet_io] ERROR: {json_path} not found; record notes first (/build-ai-bank, Step 7)")
     from ai_notes import notes_from_sheet
     doc, problems, changed = notes_from_sheet(rows, json.loads(json_path.read_text()))
     if problems:
@@ -236,6 +240,24 @@ def import_notes(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
     review = sum(1 for v in doc["notes"].values() if v.get("status") == "needs_human_review")
     line = (f"{len(rows)} subcategories from {xlsx.name}, {changed} changed (decided_by human) -> {_rel(json_path)}; "
             f"{review} need human review")
+    print(f"[sheet_io] {line}")
+    ev.finish(inputs=[xlsx], outputs=[json_path], detail=line)
+    return line
+
+
+def import_external(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
+    if not json_path.is_file():
+        ev.fail(f"[sheet_io] ERROR: {json_path} not found")
+    from ai_external import from_sheet
+    doc, problems, changed = from_sheet(rows, json.loads(json_path.read_text()))
+    if problems:
+        ev.reject(problems, xlsx.name, [xlsx], status="rejected")
+    doc["source_sha"] = audit.sha(xlsx)
+    json_path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
+    subs = doc["subcategories"].values()
+    line = (f"{len(rows)} lines from {xlsx.name}, {changed} subcategories changed (decided_by human) -> "
+            f"{_rel(json_path)}; {sum(1 for e in subs if e.get('status') == 'needs_human_review')} need human review, "
+            f"{sum(1 for e in subs if not e.get('questions'))} without questions")
     print(f"[sheet_io] {line}")
     ev.finish(inputs=[xlsx], outputs=[json_path], detail=line)
     return line
@@ -322,6 +344,10 @@ def export_sheet(spec: dict, xlsx: Path, json_path: Path, log: Path, force: bool
         from ai_bank_common import load_inputs
         from ai_questions import question_sheet_rows
         rows = question_sheet_rows(spec["bank"], doc, load_inputs())
+        write_xlsx(spec, rows, xlsx)
+    elif spec.get("shape") == "external":
+        from ai_external import sheet_rows
+        rows = sheet_rows(doc)
         write_xlsx(spec, rows, xlsx)
     elif spec.get("shape") == "notes":
         from ai_notes import notes_sheet_rows

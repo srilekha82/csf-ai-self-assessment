@@ -34,7 +34,8 @@ CSF_SOURCE = CSF / "source" / "csf2.xlsx"   # NIST CPRT export; input to parse_c
 CSF_CORE = CSF / "csf2_core.json"
 CSF_BANK_RULES = CSF / "bank_rules.json"   # how CSET questions are flagged and routed when a CSF bank is built
 SCOPE_RULES = CSF / "scope_rules.json"   # state -> question type policy, max questions per type
-CSF_CROSSWALKS = CSF / "crosswalks"      # olir_iso27001.json, olir_pcidss.json
+CSF_CROSSWALKS = CSF / "crosswalks"      # olir_iso27001.json, olir_pcidss.json, olir_cis_v81.json
+CSF_CIS_CROSSWALK = CSF_CROSSWALKS / "olir_cis_v81.json"   # NIST's CSF -> CIS v8.1 references (External AI)
 CSF_BANKS = CSF / "banks"                # question_bank_<sector>.json (shared, rebuilt when CSET changes)
 BANK_BUILD = CSF / "bank_build"          # kept input: cset_candidates.json; logs
 
@@ -53,7 +54,7 @@ AI_BANKS = AI / "banks"                  # question_bank_ai_rmf_<foundation|area
 AI_BUILD = AI / "bank_build"             # kept: mapping_accepted.json, pilot_accepted.json; logs
 AI_WORK = AI_BUILD / "work"              # temporary build files (gitignored; cleared after a build)
 AI_CIS_CSF_XLSX = AI_SOURCE / "CIS_Controls_v8.1_Mapping_to_NIST_CSF_v2.0_2024-06-24.xlsx"
-CSF_IMPACT_NOTES = CSF / "ai_impact_notes.json"  # AI-world notes per CSF subcategory (/build-ai-bank Step 6)
+CSF_IMPACT_NOTES = CSF / "ai_impact_notes.json"  # AI-world notes per CSF subcategory (/build-ai-bank Step 7)
 AI_AUTHORING = AI / "authoring"          # spreadsheets a person writes or reviews (committed; not source/)
 AI_AREAS_XLSX = AI_AUTHORING / "ai_areas.xlsx"   # AI areas (usage and ecosystem components): the decision, by a person
 AI_AREAS = AI / "ai_areas.json"          # generated from ai_areas.xlsx by sheet_io.py import; scripts read this
@@ -69,6 +70,7 @@ AI_PROMPTS = {
     "evidence": ["prompts/ai_rmf_evidence_writer.md", "prompts/ai_rmf_evidence_evaluator.md"],
     "notes": ["prompts/ai_impact_notes_writer.md"],
     "notes-review": ["prompts/ai_impact_notes_evaluator.md"],
+    "external": ["prompts/ai_external_question_generator.md", "prompts/ai_external_question_evaluator.md"],
     "mapping": ["prompts/ai_rmf_mapping_drafter.md", "prompts/ai_rmf_mapping_evaluator.md"],
 }
 AI_QUESTION_RULES = AI / "question_rules.json"   # question banks: roles, producer flags, impacts (step 4)
@@ -78,12 +80,16 @@ AI_BANK_AREAS = AI_BANKS / "question_bank_ai_rmf_areas.json"             # area 
 AI_QUESTIONS_FOUNDATION_XLSX = AI_AUTHORING / "questions_foundation.xlsx"   # the foundation bank for review (sheet_io.py)
 AI_IMPACT_NOTES_XLSX = AI_AUTHORING / "impact_notes.xlsx"                # the CSF AI impact notes for review
 AI_QUESTIONS_AREAS_XLSX = AI_AUTHORING / "questions_areas.xlsx"             # the area bank for review (sheet_io.py)
+AI_BANK_EXTERNAL = AI_BANKS / "question_bank_external.json"   # External AI: per CSF subcategory, the threat from AI
+                                                              # outside and its questions (ai_external.py)
+AI_EXTERNAL_XLSX = AI_AUTHORING / "questions_external.xlsx"   # the External AI bank for review (sheet_io.py)
 SHEET_SPECS = COMMON / "sheet_specs.json"   # columns and allowed values of every spreadsheet sheet_io.py converts
 
 # Which folder each crosswalk file lives in (also used to resolve metadata.json keys)
 CROSSWALK_DIRS = {
     "olir_iso27001.json": CSF_CROSSWALKS,
     "olir_pcidss.json": CSF_CROSSWALKS,
+    "olir_cis_v81.json": CSF_CROSSWALKS,
 }
 
 
@@ -110,6 +116,7 @@ _certs = [c for c in _common["certs"] if "file" in c]     # the certifications: 
 CERT_LABELS = {c["value"]: c["label"] for c in _certs}
 CERT_FILES = {c["value"]: c["file"] for c in _certs}
 CERT_NIST = {c["value"]: (c["framework"], c["nist_reference_prefix"]) for c in _certs}   # for parse_csf_source.py
+CIS_NIST_PREFIX = json.loads(METADATA.read_text())[CSF_CIS_CROSSWALK.name]["nist_reference_prefix"]   # "CIS Controls v8.1:"
 SEVERITY_ORDER = _common["severity_order"]       # question types, least to most demanding
 _menus = {"sectors": _common["sectors"], "certs": _common["certs"]}
 INTAKE_QUESTIONS = [{**q, "options": _menus[q["options"]] if isinstance(q["options"], str) else q["options"]}

@@ -1,7 +1,7 @@
 # /build-ai-bank
 
-Builds or refreshes the two AI RMF question banks and the CSF AI impact notes, from an accepted mapping
-(`/ai-mapping`).
+Builds or refreshes the two AI RMF question banks, the External AI bank and the CSF AI impact notes, from an accepted
+mapping (`/ai-mapping`).
 
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
 `scripts/record_bank.py` (its `ai-…` modes), which rejects a whole file if anything is wrong. The judging rules are in the prompts
@@ -25,8 +25,8 @@ writes nothing: the stored mapping and banks re-checked against the current rule
 .venv/bin/python ./scripts/check_freshness.py --ai-bank
 ```
 
-One line per stage (parse, bank foundation, bank areas, notes, pilot, ai areas, mapping; the last two are done in
-Step 2): `current`, `missing`, `stale`
+One line per stage (parse, bank foundation, bank areas, bank external, notes, pilot, ai areas, mapping; the last two
+are done in Step 2): `current`, `missing`, `stale`
 or `incomplete`. A
 stage is current only if it was built from the exact source files on disk (each output records the SHA-256 of its inputs).
 
@@ -112,7 +112,30 @@ Per bank (`foundation`, then `areas`):
    --review data/ai/bank_build/work/evidence_<b>_eval.json --model <writer model id> --session "evaluator=<model id>"`.
    One pass: a failed line is not stored (the question keeps its generic line). Then export the bank's review sheet.
 
-## Step 6 — AI impact notes (only when the gate's `notes` line is not current)
+## Step 6 — External AI questions (only when the gate's `bank external` line is not current)
+
+The bank holds, per CSF subcategory, the threat a person decided (`data/ai/authoring/questions_external.xlsx`); agents
+write only the questions. If the gate says the CIS safeguards changed, or `stale`, re-record the subcategories it names
+(`--ids`) or all (`--all`); otherwise only those without questions (`--missing`).
+1. `.venv/bin/python ./scripts/prepare_ai_bank.py external (--missing | --ids ... | --all)` → `work/batch_external.json`.
+2. **Generator** (fresh subagent): `prompts/ai_external_question_generator.md` with the batch → `work/external_gen1.json`.
+3. **Evaluator** (fresh subagent, never sees the generator's prompt): `prompts/ai_external_question_evaluator.md` with
+   the batch and gen1 → `work/external_eval1.json`.
+4. Only if eval1 fails anything: a fresh generator revises the failing subcategories (→ `external_gen2.json`), a
+   fresh evaluator checks it (→ `external_eval2.json`). Two turns at most.
+5. Record (send problems back as in Step 4):
+   ```bash
+   .venv/bin/python ./scripts/record_bank.py ai-assemble --kind external --gen1 data/ai/bank_build/work/external_gen1.json \
+       --eval1 data/ai/bank_build/work/external_eval1.json [--gen2 ... --eval2 ...] --out data/ai/bank_build/work/external_record.json
+   .venv/bin/python ./scripts/record_bank.py ai-external data/ai/bank_build/work/external_record.json \
+       --model <generator model id> --session "evaluator=<evaluator model id>"
+   ```
+   A subcategory the user decided in the review sheet is refused: leave it out, or add `--replace-human` only if the
+   user agreed.
+6. `.venv/bin/python ./scripts/sheet_io.py export external_questions`; the user decides flagged questions in chat, you
+   apply them to the sheet and run `sheet_io.py import external_questions`.
+
+## Step 7 — AI impact notes (only when the gate's `notes` line is not current)
 
 `.venv/bin/python ./scripts/prepare_ai_notes.py` → `work/impact_pending.json` (the CSF subcategories CIS maps to the
 MCP and agents guides). Follow `prompts/ai_impact_notes_writer.md`; record each patch with
@@ -129,7 +152,7 @@ MCP and agents guides). Follow `prompts/ai_impact_notes_writer.md`; record each 
 
 A note a person decided in the review sheet is refused: leave it out of the patch.
 
-## Step 7 — Report
+## Step 8 — Report
 
 Tell the user what was rebuilt or skipped, the counts (passed, needs human review), and what is left to do. List each
 subcategory that needs human review with its reason (read it from the bank file only for those).

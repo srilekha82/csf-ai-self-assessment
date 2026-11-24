@@ -1,5 +1,5 @@
 """The AI RMF bank code as one object for the tests: record_bank.py and the modules it uses (ai_mapping,
-ai_questions, ai_notes).
+ai_questions, ai_external, ai_notes).
 
 Reading a name finds it in whichever module has it. Setting a name (a test pointing a store at a temp folder) sets it
 in every one of those modules that has it, so no module goes on reading or writing the real file.
@@ -9,12 +9,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import ai_bank_common  # noqa: E402
+import ai_external  # noqa: E402
 import ai_mapping  # noqa: E402
 import ai_notes  # noqa: E402
 import ai_questions  # noqa: E402
 import record_bank  # noqa: E402
 
-_SPLIT = (record_bank, ai_mapping, ai_questions, ai_notes)
+_SPLIT = (record_bank, ai_mapping, ai_questions, ai_external, ai_notes)
 
 
 class _AIBank:

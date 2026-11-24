@@ -857,6 +857,11 @@ class FreshnessGate(unittest.TestCase):
         self.addCleanup(setattr, CF, "AI_QUESTIONS_XLSX", real_sheets)
         self.addCleanup(setattr, CF, "AI_IMPACT_NOTES_XLSX", CF.AI_IMPACT_NOTES_XLSX)
         CF.AI_IMPACT_NOTES_XLSX = self.tmp / "impact_notes.xlsx"
+        for name in ("AI_BANK_EXTERNAL", "AI_EXTERNAL_XLSX", "external_completeness"):
+            self.addCleanup(setattr, CF, name, getattr(CF, name))
+        CF.AI_BANK_EXTERNAL, CF.AI_EXTERNAL_XLSX = self.tmp / "external.json", self.tmp / "external.xlsx"
+        CF.external_completeness = lambda doc: (len(doc["subcategories"]) >= self.want,
+                                                f"{len(doc['subcategories'])} of {self.want}")
         CF.AI_BANKS.mkdir()
 
     def sha(self, name):
@@ -877,6 +882,9 @@ class FreshnessGate(unittest.TestCase):
             (CF.AI_BANKS / f"question_bank_ai_rmf_{bank}.json").write_text(json.dumps({
                 "playbook_sha256_16": pb, "guide_sha256_16": g, "subcategories": {f"S{i}": {} for i in range(recorded)},
                 "summary": {"needs_human_review": 1}}))
+        CF.AI_BANK_EXTERNAL.write_text(json.dumps({
+            "guide_sha256_16": g, "cis_links_sha256_16": self.audit.sha(CF.CSF_CIS_CROSSWALK),
+            "subcategories": {f"S{i}": {} for i in range(recorded)}}))
         CF.CSF_IMPACT_NOTES.write_text(json.dumps({"sources_sha256_16": {"cis_csf": self.sha("mapping.xlsx"),
                                                                          "MCP": g["MCP"], "AGENT": g["AGENT"]}}))
         self.accept_pilot()
@@ -918,8 +926,22 @@ class FreshnessGate(unittest.TestCase):
         self.build_everything()
         (self.src / self.files["LLM"]).write_text("changed")
         s = self.states()
-        self.assertFalse(s["parse"] or s["bank foundation"] or s["bank areas"])
+        self.assertFalse(s["parse"] or s["bank foundation"] or s["bank areas"] or s["bank external"])
         self.assertTrue(s["notes"])   # notes use only the MCP and agents guides
+
+    def test_external_bank_stage(self):
+        self.build_everything()
+        self.assertTrue(self.states()["bank external"])
+        CF.AI_EXTERNAL_XLSX.write_text("edited")
+        stages = {s: (ok, text) for s, ok, text in CF.ai_stages()}
+        self.assertIn("sheet_io.py import external_questions", stages["bank external"][1])
+        CF.AI_EXTERNAL_XLSX.unlink()
+        doc = json.loads(CF.AI_BANK_EXTERNAL.read_text())
+        doc["cis_links_sha256_16"] = "0" * 16                    # NIST's CIS references re-parsed with changes
+        CF.AI_BANK_EXTERNAL.write_text(json.dumps(doc))
+        self.assertFalse(self.states()["bank external"])
+        CF.AI_BANK_EXTERNAL.unlink()
+        self.assertEqual(dict((s, t) for s, _, t in CF.ai_stages())["bank external"], "missing")
 
     def test_missing_source_stops_everything(self):
         self.build_everything()

@@ -7,13 +7,14 @@ Called by: /build-csf-bank (step 1b), when NIST publishes a new version of the f
 Input:     data/csf/source/csf2.xlsx (NIST's "Download English (xlsx)"); the certifications and the prefix of their
            references in that file (data/common/intake_options.json certs)
 Output:    data/csf/csf2_core.json, one crosswalk per certification in data/csf/crosswalks/ (olir_iso27001.json,
-           olir_pcidss.json); the refresh date in data/metadata.json
+           olir_pcidss.json), and NIST's CSF -> CIS Controls v8.1 references (olir_cis_v81.json, read by the External
+           AI bank); the refresh date in data/metadata.json
 
 Usage: .venv/bin/python ./scripts/parse_csf_source.py [--input data/csf/source/csf2.xlsx] [--output ./data]
 
 The file's "CSF 2.0" sheet has one row per function, category and subcategory. A subcategory row carries NIST's
 implementation examples ("Ex1: ...") and its informative references, one per line, each starting with its standard
-("ISO/IEC 27001:2022: Annex A Controls: 5.1", "PCI DSS: 12.1.1").
+("ISO/IEC 27001:2022: Annex A Controls: 5.1", "PCI DSS: 12.1.1", "CIS Controls v8.1: 14.1").
 
 csf2_core.json holds the subcategories with their implementation examples. Each crosswalk says which controls of one
 certification map to each subcategory: {"csf_to_controls": {"GV.OC-01": ["Mandatory Clause: 4.1", ...]}}, listing only
@@ -33,7 +34,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import CERT_FILES, CERT_NIST, CSF_SOURCE, crosswalk_path  # noqa: E402
+from config import CERT_FILES, CERT_NIST, CIS_NIST_PREFIX, CSF_CIS_CROSSWALK, CSF_SOURCE, crosswalk_path  # noqa: E402
 import audit  # noqa: E402
 
 SOURCE = {"source_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
@@ -52,18 +53,27 @@ def clean_control_id(line: str, prefix: str) -> str:
     return BARE_CONTROL.sub(r"Annex A Controls: \1", control)
 
 
+REFERENCE_PREFIXES = {**{cert: prefix for cert, (_, prefix) in CERT_NIST.items()}, "cis_v81": CIS_NIST_PREFIX}
+
+
 def parse_references(text: str) -> dict:
-    """{cert: sorted control ids} from one Informative References cell (one reference per line). A line that is only
-    a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:"), or a "None" placeholder, is skipped."""
-    found = {cert: set() for cert in CERT_NIST}
+    """{cert or "cis_v81": sorted control ids} from one Informative References cell (one reference per line). A line
+    that is only a heading with no id ("ISO/IEC 27001:2022: Annex A Controls:"), or a "None" placeholder, is skipped.
+    CIS safeguard ids are text in NIST's file ("4.10" stays "4.10")."""
+    found = {key: set() for key in REFERENCE_PREFIXES}
     for line in (text or "").splitlines():
-        for cert, (_, prefix) in CERT_NIST.items():
+        for cert, prefix in REFERENCE_PREFIXES.items():
             if line.strip().startswith(prefix):
                 control = clean_control_id(line.strip(), prefix)
                 if len(control) > 1 and not control.endswith(":") and not control.endswith(PLACEHOLDER):
                     found[cert].add(control)
                 break
-    return {cert: sorted(ids) for cert, ids in found.items()}
+    return {key: sorted(ids, key=cis_order if key == "cis_v81" else None) for key, ids in found.items()}
+
+
+def cis_order(cis_id: str) -> list[int]:
+    """CIS safeguards in number order ("4.2" before "4.10")."""
+    return [int(p) for p in cis_id.split(".")]
 
 
 def parse_examples(text: str) -> list[str]:
@@ -141,6 +151,17 @@ def main():
         controls = {c for ids in mapping.values() for c in ids}
         print(f"[parse_csf_source] {out}: {len(mapping)} of {len(records)} subcategories mapped, "
               f"{len(controls)} controls")
+
+    cis = build_csf_to_controls(records, "cis_v81")
+    out = crosswalk_path(CSF_CIS_CROSSWALK.name, base=output_dir)
+    out.write_text(json.dumps({"meta": {"framework": "CIS Controls v8.1", "focal_document": "NIST CSF 2.0", **SOURCE,
+                                        "source_file": input_path.name,
+                                        "description": "NIST's own CSF 2.0 -> CIS Controls v8.1 references: the CIS "
+                                                       "safeguards each subcategory lists. Ids only, no CIS text."},
+                               "csf_to_controls": cis}, indent=2))
+    written.append(out)
+    counts[CSF_CIS_CROSSWALK.name] = len(cis)
+    print(f"[parse_csf_source] {out}: {len(cis)} of {len(records)} subcategories reference CIS Controls v8.1")
 
     core_path = output_dir / "csf" / "csf2_core.json"
     core_path.parent.mkdir(parents=True, exist_ok=True)

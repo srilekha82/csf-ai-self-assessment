@@ -1,0 +1,385 @@
+{
+  "bank": "external",
+  "description": "External AI questions: per CSF 2.0 subcategory NIST links to CIS Controls v8.1, the threat AI outside the organisation brings there and the questions asked of every client. Threats are decided by a person (the first 29 were copied from the reviewed exposure notes of ai_impact_notes.json and need your review); questions are written by /build-ai-bank; cis_refs by ai_external.py from NIST's references. Review: sheet_io.py export external_questions.",
+  "subcategories": {
+    "GV.RR-02": {
+      "threat": "Roles and authorities for handling cybersecurity risk should be clear enough to cover new kinds of outside automated activity, such as agents calling your services. Someone needs the authority to block or disable access quickly when it is abused.",
+      "cis_refs": [
+        "LLM-14.9",
+        "MCP-14.9",
+        "AGENT-14.9"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.RR-04": {
+      "threat": "People who join, move or leave may have connected agents or tools to company systems, with delegated access that outlives them. Joiner, mover and leaver steps need to cover agent identities and their credentials, so access is revoked and entitlements removed.",
+      "cis_refs": [
+        "LLM-6.1",
+        "LLM-6.2",
+        "MCP-6.1",
+        "MCP-6.2",
+        "AGENT-6.1",
+        "AGENT-6.2"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-01": {
+      "threat": "Suppliers can adopt agents and AI services that handle your data, so supply chain policy should set requirements even if you use no AI. These include limiting provider access to the data needed and preventing sensitive data from reaching providers without safeguards.",
+      "cis_refs": [
+        "LLM-15.2",
+        "MCP-15.2",
+        "AGENT-15.2"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-02": {
+      "threat": "Suppliers may use AI models, agents or MCP servers to serve you, and roles and expectations should state who is responsible for what. This includes data isolation, retention limits and how incidents are reported.",
+      "cis_refs": [
+        "LLM-15.4",
+        "MCP-15.4",
+        "AGENT-15.4"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-04": {
+      "threat": "Your suppliers may now include model providers, embedding services, tool backends and hosted MCP servers, even when you did not choose them directly. Knowing which suppliers touch your data and how sensitive that access is has become harder.",
+      "cis_refs": [
+        "LLM-15.1",
+        "LLM-15.3",
+        "MCP-15.1",
+        "MCP-15.3",
+        "AGENT-15.1",
+        "AGENT-15.3"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-05": {
+      "threat": "Suppliers may begin using AI agents or tools on your data. Contracts should set data handling and retention terms, breach notification and rapid revocation of access, so a supplier's change in technology does not weaken your protections.",
+      "cis_refs": [
+        "LLM-15.4",
+        "MCP-15.4",
+        "AGENT-15.4"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-06": {
+      "threat": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. Standard questionnaires may not cover this.",
+      "cis_refs": [
+        "LLM-15.5",
+        "MCP-15.5",
+        "AGENT-15.5"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-07": {
+      "threat": "A supplier's risk can change quickly when they add AI features, change capabilities or alter authorization behavior, even without a new contract. Ongoing monitoring should look for such changes and for relevant advisories.",
+      "cis_refs": [
+        "LLM-15.6",
+        "MCP-15.6",
+        "AGENT-15.6"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-08": {
+      "threat": "Suppliers that use AI agents or models need to be part of incident planning, because an agent incident at a supplier can move at machine speed. Agree on incident response SLAs and contacts in advance.",
+      "cis_refs": [
+        "LLM-15.4",
+        "MCP-15.4",
+        "AGENT-15.4"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-09": {
+      "threat": "Suppliers can add AI features to products you already use. Supply chain monitoring over the life cycle should notice version changes, new capabilities and changed authorization behavior in what they provide.",
+      "cis_refs": [
+        "LLM-15.6",
+        "MCP-15.6",
+        "AGENT-15.6"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "GV.SC-10": {
+      "threat": "When a relationship ends, AI-related leftovers can remain: authorizations, tokens, federated identities and data flows. Derived items such as embeddings, tuned model weights and session logs may also persist, so exit steps should cover them.",
+      "cis_refs": [
+        "LLM-15.7",
+        "MCP-15.7",
+        "AGENT-15.7"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "ID.AM-01": {
+      "threat": "Unapproved software that acts on its own can show up on endpoints or in cloud environments without a formal rollout. A hardware and asset inventory that cannot find unmanaged systems will miss assets that bypass normal controls.",
+      "cis_refs": [
+        "LLM-1.1",
+        "MCP-1.1",
+        "AGENT-1.1"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "ID.AM-02": {
+      "threat": "Agent frameworks, MCP clients and servers, and tool libraries can be installed by individuals without any central decision. Software inventory should be able to record such components and their versions, so unknown ones stand out.",
+      "cis_refs": [
+        "LLM-2.1",
+        "MCP-2.1",
+        "AGENT-2.1"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "ID.AM-04": {
+      "threat": "Your services may rely on providers that use AI components, such as model or hosted tool services, behind the scenes. The inventory of supplier services should record what they provide and what capabilities they declare.",
+      "cis_refs": [
+        "LLM-15.1",
+        "MCP-15.1",
+        "AGENT-15.1"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "ID.AM-08": {
+      "threat": "Life cycle management should make sure decommissioned systems leave no usable credentials, tokens or data behind, since automated attackers look for leftover access.",
+      "cis_refs": [
+        "LLM-1.1",
+        "LLM-3.5",
+        "MCP-1.1",
+        "MCP-3.5",
+        "AGENT-1.1",
+        "AGENT-3.5"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "ID.RA-08": {
+      "threat": "Disclosures about MCP and agent components can affect you even if you do not run AI yourself, for example via suppliers or software you depend on. Handling should prioritize by exploitability, privileges and exposure, with remediation timelines.",
+      "cis_refs": [
+        "LLM-7.2",
+        "MCP-7.2",
+        "AGENT-7.2"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.AA-01": {
+      "threat": "Agents and tools can authenticate with service accounts, API keys or delegated credentials that sit outside normal user lifecycles. The identity inventory and central management need to cover them, preferably through the enterprise identity provider.",
+      "cis_refs": [
+        "LLM-5.1",
+        "LLM-5.6",
+        "LLM-6.7",
+        "MCP-5.1",
+        "MCP-5.6",
+        "MCP-6.7",
+        "AGENT-5.1",
+        "AGENT-5.6",
+        "AGENT-6.7"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.AA-05": {
+      "threat": "Agents can call APIs or sign in on behalf of users at machine speed, so permissions sized for humans may be too broad. Roles, scopes and actual tool usage need regular review, with unused or excessive permissions revoked.",
+      "cis_refs": [
+        "LLM-3.3",
+        "LLM-5.1",
+        "LLM-6.8",
+        "MCP-3.3",
+        "MCP-5.1",
+        "MCP-6.8",
+        "AGENT-3.3",
+        "AGENT-5.1",
+        "AGENT-6.8"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.AT-01": {
+      "threat": "All staff can be targeted by AI-enabled attackers, for example with convincing, automated messages. General awareness training should reflect that.",
+      "cis_refs": [
+        "LLM-14.1",
+        "MCP-14.1",
+        "AGENT-14.1"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.DS-01": {
+      "threat": "Automated attackers and outside agents look for stored data they can reach, including credentials and tokens left in configuration files or logs. Data at rest needs encryption, and secrets belong in a secrets manager.",
+      "cis_refs": [
+        "LLM-3.11",
+        "MCP-3.11",
+        "AGENT-3.11"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.DS-11": {
+      "threat": "Backups should include configurations, authorization policies, tool definitions, memory stores and retrieval corpora where these exist. Backups must also be protected so that agents themselves cannot write to or modify them, and restores tested.",
+      "cis_refs": [
+        "LLM-11.2",
+        "LLM-11.3",
+        "LLM-11.5",
+        "MCP-11.2",
+        "MCP-11.3",
+        "MCP-11.5",
+        "AGENT-11.2",
+        "AGENT-11.3",
+        "AGENT-11.5"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.PS-04": {
+      "threat": "Logs need to record MCP and agent activity such as tool calls, data accesses, authorization decisions, token events and attempted policy violations. Without them, activity by an external agent acting on a user's behalf cannot be reconstructed.",
+      "cis_refs": [
+        "LLM-8.2",
+        "MCP-8.2",
+        "AGENT-8.2"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "PR.PS-05": {
+      "threat": "Unauthorized MCP servers, tool wrappers and agent components can be installed by individuals and run with their privileges. Use deny-by-default allowlists with integrity checks and install only from approved registries or repositories.",
+      "cis_refs": [
+        "LLM-2.5",
+        "MCP-2.5",
+        "AGENT-2.5"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "DE.CM-01": {
+      "threat": "Automated agents and AI-enabled attackers leave footprints spread across application logs and network traffic. Isolated alerts are often not enough, so network telemetry and audit logs need to be correlated to spot anomalous behavior.",
+      "cis_refs": [
+        "LLM-13.1",
+        "MCP-13.1",
+        "AGENT-13.1"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "DE.CM-03": {
+      "threat": "Signature-based tools can miss threats from AI agents, which can generate code dynamically or use legitimate system tools. Monitoring user and technology activity needs to include behavior, such as unexpected shell commands, even if the org runs no AI itself.",
+      "cis_refs": [
+        "LLM-10.7",
+        "AGENT-10.7"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "DE.CM-06": {
+      "threat": "Providers you rely on may start using AI agents, MCP servers or models that touch your data without a change to your contract. Monitor supplier behavior for changes in capabilities or authorization behavior and for relevant advisories.",
+      "cis_refs": [
+        "LLM-15.2",
+        "LLM-15.6",
+        "MCP-15.2",
+        "MCP-15.6",
+        "AGENT-15.2",
+        "AGENT-15.6"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "DE.AE-02": {
+      "threat": "Automated activity from outside, including AI-enabled attackers, can arrive at machine speed and look like routine successful requests. Analysis of adverse events should look at how identities are used and at unusual sequences of actions, not only at errors.",
+      "cis_refs": [
+        "LLM-8.11",
+        "MCP-8.11",
+        "AGENT-8.11"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "RS.MA-01": {
+      "threat": "Traditional playbooks may not match the speed of AI-enabled attackers and automated agents. Plans should allow containment steps that can run quickly, such as token revocation and blocking access at the gateway.",
+      "cis_refs": [
+        "LLM-17.4",
+        "MCP-17.4",
+        "AGENT-17.4"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    },
+    "RS.AN-03": {
+      "threat": "Root cause analysis for incidents involving agents needs a chain of events that includes tool calls and parameters, resource access, capability changes, authorization decisions and, where available, tool outputs and memory state. Without such records, it is hard to tell what happened.",
+      "cis_refs": [
+        "LLM-17.8",
+        "MCP-17.8",
+        "AGENT-17.8"
+      ],
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      }
+    }
+  },
+  "built_on": "2026-11-24",
+  "source_sha": "0490cbd4d091f8ca"
+}
