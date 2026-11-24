@@ -1,10 +1,12 @@
 # csf-ai-self-assessment
 
 A self-assessment for cybersecurity and AI. You answer a short intake about your organisation, and the tool builds one
-questionnaire (`questionnaire.xlsx`) with two sheets:
+questionnaire (`questionnaire.xlsx`) with three sheets:
 
 - **NIST CSF 2.0**: cybersecurity, tailored to your sector and the certifications you hold.
 - **NIST AI RMF 1.0**: AI risk, tailored to how you use AI.
+- **External AI**: what AI outside your organisation (other people's agents, AI-enabled attackers) changes for your
+  cybersecurity. Everyone gets it, including organisations that use no AI.
 
 Setup and the quick start are in the [README](https://github.com/srilekha82/csf-ai-self-assessment#readme).
 
@@ -22,6 +24,8 @@ Intake  →  pick from the banks  →  questionnaire.xlsx  →  answers (Stage 2
   asked to show evidence or what you do beyond it, instead of starting from scratch.
 - **AI RMF sheet.** No ready-made question set exists, so the banks were generated from the NIST AI RMF Playbook, checked
   by a second AI agent and reviewed by a person. What you are asked depends on **how you use AI**, not on your sector.
+- **External AI sheet.** For each CSF outcome NIST links to the CIS Controls, a person decides the threat AI outside
+  brings there; an AI agent writes the question, a second checks it. The evidence asked for is NIST's own examples.
 
 ### How the AI RMF sheet is tailored
 
@@ -70,11 +74,12 @@ The questions ask how something is done, by whom and with what proof, not just "
 | Intake answers | `runs/<Org>_<date>/csf_intake.json`, `ai_intake.json` | One folder per assessment. Holds client data, never committed. |
 | CSF framework | `data/csf/csf2_core.json` | The 106 CSF 2.0 subcategories, from NIST |
 | CSF question banks | `data/csf/banks/question_bank_<sector>.json` | CSET questions per subcategory, one file per sector |
-| CSF tailoring rules | `data/csf/scope_rules.json`, `data/csf/crosswalks/` | How certifications change each question; the ISO 27001 and PCI DSS mappings to CSF |
+| CSF tailoring rules | `data/csf/scope_rules.json`, `data/csf/crosswalks/` | How certifications change each question; the ISO 27001, PCI DSS and CIS Controls v8.1 mappings to CSF (from NIST) |
 | AI RMF framework | `data/ai/ai_rmf_core.json` | The 72 AI RMF subcategories and the Playbook's suggested actions |
 | AI areas | `data/ai/authoring/ai_areas.xlsx` → `data/ai/ai_areas.json` | The 14 AI areas. A person decides them in the spreadsheet. |
 | Mapping | `data/ai/mapping.json` (review copy: `data/ai/authoring/mapping.xlsx`) | Which AI RMF subcategories apply to each AI area, and why |
 | AI RMF question banks | `data/ai/banks/` | Foundation questions and area questions |
+| External AI bank | `data/ai/banks/question_bank_external.json` (review copy: `data/ai/authoring/questions_external.xlsx`) | Per CSF subcategory: the threat from AI outside and its questions |
 | CIS safeguards | `data/ai/cis_ai_safeguard_ids.json` | CIS safeguard IDs a question may cite as evidence (IDs only, no CIS text) |
 | Scripts | `scripts/` | Do the deterministic work: intake, picking questions, writing the workbook |
 | AI agent instructions | `prompts/` | How each AI agent judges or writes when the banks are built |

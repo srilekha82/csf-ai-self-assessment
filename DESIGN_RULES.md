@@ -15,7 +15,7 @@ not needed to run the flows (`CLAUDE.md` covers that). `docs/guide.md` explains 
    (model, prompt hash, input hash, output snapshot). The contract lives once, in `audit.record_agent_output`; a recording
    script supplies only its validator and its store. Both bank builds: `record_bank.py` (one mode per kind of agent
    output; the checks live next to the data they guard: `build_csf_bank.py` for CSF, `ai_mapping.py`,
-   `ai_questions.py`, `ai_notes.py` for AI RMF). A client run has no agent output: its scope and picks are fixed rules,
+   `ai_questions.py`, `ai_external.py` for AI). A client run has no agent output: its scope and picks are fixed rules,
    and where a rule cannot be sure (an SoA exclusion) it asks in full rather than ask an agent.
 5. **Everything is audited.** Every script calls `scripts/audit.py` (`begin`, then `finish` / `fail` / `pending`), which
    appends to the folder's `audit.jsonl`. Do not invent another logging scheme. Use `audit.write_once_record` for
@@ -75,11 +75,22 @@ How it works, with a small example (AI area → AI RMF statement → question): 
 - **Ask about practice, not checkboxes** (how, who, how often, what evidence). A policy is asked as practice: where it
   is kept and how people learn about it.
 - **Sources:** the Playbook sets what good looks like (fairness, bias and explainability come from it only); CIS guides
-  give evidence only, never question text; the CIS → CSF mapping is used only for the AI impact notes. OWASP LLM Top 10
-  is not a source.
+  give evidence only, never question text. OWASP LLM Top 10 is not a source.
 - **Read CIS safeguard IDs as text.** The CIS xlsx stores them as numbers, so 4.10 becomes 4.1. The guide tables drop
   IDs: rebuild them from the control number and row order.
 - **The maintainer rebuilds a bank when a source it was built from changed, or when it passes its age limit.** Editing a
   prompt only marks it stale. The pilot (`record_bank.py ai-accept-pilot`) is the one human gate.
-- **AI impact notes only for CSF subcategories with a mapped CIS safeguard;** never invented.
 - **Profile XLS schemas are fixed by the Stage 2 writer;** reporting reads them as they are.
+
+## External AI track
+What AI outside the organisation (other people's agents, MCP clients, scrapers, AI-enabled attackers) changes for a
+CSF outcome. Every organisation gets it, whether it uses AI or not.
+- **Only CSF subcategories NIST links to CIS Controls v8.1,** by NIST's own CSF 2.0 references
+  (`data/csf/crosswalks/olir_cis_v81.json`, from `parse_csf_source.py`). CIS's own mapping spreadsheet is not used.
+- **The threat is a person's decision;** agents write only the questions, from the threat (one, or two when the threat
+  holds two practices). A threat an agent seeds or carries over is stored as `needs_human_review`, and no question is
+  written from it until a person sets it pass in the review sheet.
+- **The CIS safeguards come from NIST's references,** worked out by `ai_external.py`, never by an agent. The client sees
+  their ids and companion guide names, never CIS text.
+- **Evidence Required is NIST's implementation examples,** word for word, as on the CSF sheet. No agent writes it.
+- **A client run asks every reviewed question;** there is no intake filter, and nothing still needing review is asked.

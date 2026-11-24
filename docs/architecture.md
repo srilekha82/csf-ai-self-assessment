@@ -17,7 +17,7 @@ source it was built from changes.
 |---|---|---|
 | Source of the questions | CISA's [CSET](https://github.com/cisagov/cset): its own CSF 2.0 question set plus the maturity-model questions it maps to CSF, read from CSET's SQL files | The AI RMF Playbook's suggested actions. The CIS AI companion guides add the safeguards a question may cite as evidence. |
 | How questions are made | Taken from CSET, never written; scripts pick them by sector. | Written by an AI agent, checked by a second agent, piloted and reviewed by a person |
-| Banks | One per sector: `data/csf/banks/question_bank_<sector>.json` | Two: foundation (asked once per organisation) and areas (per AI area), in `data/ai/banks/` |
+| Banks | One per sector: `data/csf/banks/question_bank_<sector>.json` | Two: foundation (asked once per organisation) and areas (per AI area), in `data/ai/banks/`; plus the External AI bank (below) |
 | Command | `/build-csf-bank` | `/ai-mapping` (the mapping, rarely), then `/build-ai-bank` |
 | Rebuilt when | CSET changes a question | The Playbook or a CIS guide changes, or the mapping changes |
 
@@ -25,24 +25,24 @@ The AI RMF track needs one extra step first: a **mapping** that links each AI ar
 check it (`data/ai/mapping.json`, reviewed and accepted by a person). The full model is in
 [AI RMF model](ai-rmf-model.md).
 
-The AI RMF build also writes **AI impact notes** for the CSF side (`data/csf/ai_impact_notes.json`): a short note per CSF
-subcategory on what AI changes there, so even an organisation with no AI of its own sees the AI threats it is exposed
-to. Each note has two layers: an `exposure` note shown to every organisation, and a `use` note added only when AI is in
-use (`mcp_agentic` for organisations with MCP tools or agents, `base_rag` for the rest). Stage 2 writes them into the
-CSF profile's Considerations column.
+`/build-ai-bank` also builds the **External AI** bank (`data/ai/banks/question_bank_external.json`): per CSF
+subcategory that NIST links to CIS Controls v8.1, the threat AI outside the organisation brings there (decided by a
+person) and one or two questions on how the organisation's practice has changed for it (written by an agent, checked
+by a second). Every organisation gets them, so even one with no AI of its own is asked about the AI threats it is
+exposed to.
 
 ## Stage 1: questionnaire (built)
 
-One intake, two tailored sheets in one workbook.
+One intake, three sheets in one workbook.
 
-| | CSF sheet | AI RMF sheet |
-|---|---|---|
-| Tailored by | Sector and certifications (ISO 27001, PCI DSS), plus the ISO 27001 Statement of Applicability if there is one | How the organisation uses AI: AI in use, role (uses or builds AI) and the AI areas ticked |
-| How | Each subcategory gets a question type: `full_discovery`, `gap` or `confirmatory`, depending on what the certifications already cover (`compute_scope.py`, `pick_questions.py (--framework csf)`) | Questions are filtered from the two banks by role and AI areas (`pick_questions.py (--framework ai)`). All are `full_discovery`: they ask about AI, so certifications change nothing. |
-| Command | `/csf-questionnaire` | `/ai-questionnaire` |
+| | CSF sheet | AI RMF sheet | External AI sheet |
+|---|---|---|---|
+| Tailored by | Sector and certifications (ISO 27001, PCI DSS), plus the ISO 27001 Statement of Applicability if there is one | How the organisation uses AI: AI in use, role (uses or builds AI) and the AI areas ticked | Nothing: every organisation gets every reviewed question |
+| How | Each subcategory gets a question type: `full_discovery`, `gap` or `confirmatory`, depending on what the certifications already cover (`compute_scope.py`, `pick_questions.py (--framework csf)`) | Questions are filtered from the two banks by role and AI areas (`pick_questions.py (--framework ai)`). All are `full_discovery`: they ask about AI, so certifications change nothing. | `pick_questions.py (--framework external)`, in CSF order, with NIST's implementation examples as the evidence |
+| Command | `/csf-questionnaire` | `/ai-questionnaire` | `/ai-questionnaire` |
 
 `/generate-questions` runs the whole stage: the intake (`intake.py`), a check that the banks are recent enough, then
-the two sheets, which `write_questionnaire.py` writes into `runs/<Org>_<date>/questionnaire.xlsx`. The run
+the three sheets, which `write_questionnaire.py` writes into `runs/<Org>_<date>/questionnaire.xlsx`. The run
 folder holds client data and is never committed.
 
 ## Stage 2 and Stage 3 (later)

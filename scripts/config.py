@@ -41,7 +41,7 @@ BANK_BUILD = CSF / "bank_build"          # kept input: cset_candidates.json; log
 
 # AI track
 AI = DATA / "ai"
-AI_SOURCE = AI / "source"                # Playbook, CIS companion guides, CIS -> CSF xlsx (not redistributed)
+AI_SOURCE = AI / "source"                # Playbook (committed), CIS companion guides (not redistributed)
 AI_PILOT = AI / "bank_build" / "pilot_accepted.json"  # written by record_bank.py ai-accept-pilot
 AI_CORE = AI / "ai_rmf_core.json"        # 72 subcategories + Playbook suggested actions (parse_ai_rmf_sources.py)
 AI_SAFEGUARDS = AI / "cis_ai_safeguards.json"   # CIS companion guide safeguards with their text (parse_ai_rmf_sources.py;
@@ -53,8 +53,6 @@ AI_EVIDENCE_PROMPTS = AI / "evidence_prompts.json"  # evidence hint per question
 AI_BANKS = AI / "banks"                  # question_bank_ai_rmf_<foundation|areas>.json
 AI_BUILD = AI / "bank_build"             # kept: mapping_accepted.json, pilot_accepted.json; logs
 AI_WORK = AI_BUILD / "work"              # temporary build files (gitignored; cleared after a build)
-AI_CIS_CSF_XLSX = AI_SOURCE / "CIS_Controls_v8.1_Mapping_to_NIST_CSF_v2.0_2024-06-24.xlsx"
-CSF_IMPACT_NOTES = CSF / "ai_impact_notes.json"  # AI-world notes per CSF subcategory (/build-ai-bank Step 7)
 AI_AUTHORING = AI / "authoring"          # spreadsheets a person writes or reviews (committed; not source/)
 AI_AREAS_XLSX = AI_AUTHORING / "ai_areas.xlsx"   # AI areas (usage and ecosystem components): the decision, by a person
 AI_AREAS = AI / "ai_areas.json"          # generated from ai_areas.xlsx by sheet_io.py import; scripts read this
@@ -68,8 +66,6 @@ AI_MAPPING_ACCEPTED = AI / "bank_build" / "mapping_accepted.json"   # written by
 AI_PROMPTS = {
     "questions": ["prompts/ai_rmf_question_generator.md", "prompts/ai_rmf_question_evaluator.md"],
     "evidence": ["prompts/ai_rmf_evidence_writer.md", "prompts/ai_rmf_evidence_evaluator.md"],
-    "notes": ["prompts/ai_impact_notes_writer.md"],
-    "notes-review": ["prompts/ai_impact_notes_evaluator.md"],
     "external": ["prompts/ai_external_question_generator.md", "prompts/ai_external_question_evaluator.md"],
     "mapping": ["prompts/ai_rmf_mapping_drafter.md", "prompts/ai_rmf_mapping_evaluator.md"],
 }
@@ -78,7 +74,6 @@ AI_SEVERITY_RULES = AI / "severity_rules.json"   # priority (High / Medium / Low
 AI_BANK_FOUNDATION = AI_BANKS / "question_bank_ai_rmf_foundation.json"   # foundation questions (record_bank.py ai-questions)
 AI_BANK_AREAS = AI_BANKS / "question_bank_ai_rmf_areas.json"             # area questions (record_bank.py ai-questions)
 AI_QUESTIONS_FOUNDATION_XLSX = AI_AUTHORING / "questions_foundation.xlsx"   # the foundation bank for review (sheet_io.py)
-AI_IMPACT_NOTES_XLSX = AI_AUTHORING / "impact_notes.xlsx"                # the CSF AI impact notes for review
 AI_QUESTIONS_AREAS_XLSX = AI_AUTHORING / "questions_areas.xlsx"             # the area bank for review (sheet_io.py)
 AI_BANK_EXTERNAL = AI_BANKS / "question_bank_external.json"   # External AI: per CSF subcategory, the threat from AI
                                                               # outside and its questions (ai_external.py)

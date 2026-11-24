@@ -1,8 +1,8 @@
 # csf-ai-self-assessment
 
 A self-assessment for cybersecurity and AI. From a short intake about your organisation, it builds one questionnaire
-(`questionnaire.xlsx`) with two sheets: NIST CSF 2.0 and NIST AI RMF 1.0, tailored to your sector, your certifications
-and how you use AI.
+(`questionnaire.xlsx`) with three sheets: NIST CSF 2.0 and NIST AI RMF 1.0, tailored to your sector, your certifications
+and how you use AI, and External AI: what AI outside your organisation changes for your cybersecurity.
 
 ```
 Stage 1: questionnaire  →  Stage 2: answers → maturity scores  →  Stage 3: reports

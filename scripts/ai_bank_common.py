@@ -3,7 +3,7 @@ Helpers shared by the AI RMF bank scripts: loading the parsed sources, row ids, 
 the foundation subcategories.
 
 Why:       every AI step reads the same parsed sources and rules; loading them in one place keeps the steps consistent.
-Called by: prepare_ai_bank, record_bank, ai_mapping, ai_questions, ai_notes, pick_questions
+Called by: prepare_ai_bank, record_bank, ai_mapping, ai_questions, ai_external, pick_questions
            (imported, never run)
 Input:     data/ai/ (AI RMF core, CIS safeguards, AI areas, rules)
 Output:    -

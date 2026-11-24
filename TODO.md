@@ -1,7 +1,8 @@
 # TODO
 
 ## Stage 1: questionnaire — done
-CSF and AI RMF banks built; `/generate-questions` writes one `questionnaire.xlsx` (CSF sheet + AI RMF sheet).
+`/generate-questions` writes one `questionnaire.xlsx` (CSF, AI RMF and External AI sheets). The CSF banks and the
+External AI questions are to be built (/build-csf-bank, /build-ai-bank) before the end-to-end run.
 
 ## Stage 2: answers → profile XLS — next
 - Freeze the Stage 1 → Stage 2 contract first: questionnaire columns, question ids, answer format.

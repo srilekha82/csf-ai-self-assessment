@@ -98,17 +98,6 @@
     "refresh_threshold_days": 90,
     "notes": "Evidence prompts, context and tagging for the AI RMF banks (agentic rung). License CC BY-NC-ND 4.0: internal non-commercial use only; do not redistribute."
   },
-  "ai/source/CIS_Controls_v8.1_Mapping_to_NIST_CSF_v2.0_2024-06-24.xlsx": {
-    "last_refreshed": "2026-10-14",
-    "source": "CIS Controls v8.1 Mapping to NIST CSF 2.0 (CIS, published 2024-06-25)",
-    "download_url": "https://www.cisecurity.org/insights/white-papers/cis-controls-v8-1-mapping-to-nist-csf-2-0",
-    "download_instructions": "Gated download form on the CIS page; save the xlsx under data/ai/source/",
-    "version": "CIS Controls v8.1 → CSF 2.0",
-    "record_count": null,
-    "is_placeholder": false,
-    "refresh_threshold_days": 365,
-    "notes": "Used only for the 'no AI but exposed' notes (CIS safeguard -> CSF subcategory join). Sparse: ~46 of 153 safeguards map; 48 of 106 CSF subcategories reached. Safeguard IDs are stored as numbers (4.10 collapses to 4.1): read as text. License CC BY-NC-ND 4.0: internal non-commercial use only."
-  },
   "templates/csf_org_profile_template.xlsx": {
     "last_refreshed": null,
     "source": "NIST CSF 2.0 Organizational Profile Template",

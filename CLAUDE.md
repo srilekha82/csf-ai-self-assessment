@@ -1,6 +1,6 @@
 # csf-ai-self-assessment
 
-Stage 1 of the assessment pipeline: one questionnaire (CSF 2.0 sheet + AI RMF 1.0 sheet) for a client. `docs/guide.md`
+Stage 1 of the assessment pipeline: one questionnaire (CSF 2.0, AI RMF 1.0 and External AI sheets) for a client. `docs/guide.md`
 has the flow and file layout. **Before changing a script, prompt, command or data file, or adding a stage, read
 `DESIGN_RULES.md`.** You do not need it to run the flows below.
 
@@ -13,9 +13,10 @@ has the flow and file layout. **Before changing a script, prompt, command or dat
   `.venv/bin/python -m unittest discover -s tests -p "check_*.py"`.
 
 ## What to run
-- **Generate questions:** `/generate-questions` (one numbered intake, CSF + AI RMF, one `questionnaire.xlsx`). Parts on an
-  existing run folder: `/csf-questionnaire` (CSF sheet), `/ai-questionnaire` (AI RMF sheet).
-- **Build or refresh the AI RMF banks:** `/build-ai-bank` (pilot first; it does the AI mapping first if it is not
+- **Generate questions:** `/generate-questions` (one numbered intake, CSF + AI RMF + External AI, one
+  `questionnaire.xlsx`). Parts on an existing run folder: `/csf-questionnaire` (CSF sheet), `/ai-questionnaire` (AI RMF
+  and External AI sheets).
+- **Build or refresh the AI banks (AI RMF and External AI):** `/build-ai-bank` (pilot first; it does the AI mapping first if it is not
   accepted; `/ai-mapping` alone redoes only the mapping). CSF banks: `/build-csf-bank`.
 - **Questions about how something works or what a term means:** answer from `docs/guide.md` (it has an "I want to…" table
   and a glossary).
