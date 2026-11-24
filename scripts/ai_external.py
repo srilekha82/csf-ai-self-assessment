@@ -77,6 +77,16 @@ def load_bank(path: Path | None = None) -> dict:
     return load_json(path, path.name)
 
 
+def cis_reference(cis_refs: list[str], r: dict) -> str:
+    """The client's CIS reference cell: one line per CIS safeguard with the companion guides that cover it
+    ("CIS Controls v8.1 8.11 (companion guides: AI and LLM, AI Agents)"); ids and guide names only, no CIS text."""
+    by_id: dict[str, list[str]] = {}
+    for ref in cis_refs:
+        guide, cis_id = ref.split("-", 1)
+        by_id.setdefault(cis_id, []).append(r["guide_labels"][guide])
+    return "\n".join(r["cis_reference"].format(cis_id=c, guides=", ".join(g)) for c, g in by_id.items())
+
+
 # ── agent output ────────────────────────────────────────────────────────────
 
 def check_questions(sid: str, qs, r: dict) -> list[str]:

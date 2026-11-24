@@ -554,7 +554,8 @@ class Scope(unittest.TestCase):
             sys.argv = argv
             WQ.main()
         wb = openpyxl.load_workbook(out)
-        self.assertEqual([s.title for s in wb if s.sheet_state == "visible"], ["CSF Questionnaire", "AI RMF Questionnaire"])
+        self.assertEqual([s.title for s in wb if s.sheet_state == "visible"], ["CSF Questionnaire", "AI RMF Questionnaire",
+                                                                                    "External AI Questionnaire"])
         ws = wb["AI RMF Questionnaire"]
         header = [c.value for c in ws[1]]
         area = [row[header.index("Area")].value for row in ws.iter_rows(min_row=2)]
@@ -1184,6 +1185,7 @@ class BankAge(unittest.TestCase):
         self.write(self.csf, csf)
         for bank in BA.AI_QUESTION_BANKS:
             self.write(self.tmp / f"question_bank_ai_rmf_{bank}.json", ai)
+        self.write(self.tmp / BA.AI_BANK_EXTERNAL.name, ai)
 
     def test_banks_within_their_limit_have_no_problems(self):
         self.write_all("2026-01-01", "2026-09-01")
@@ -1193,7 +1195,13 @@ class BankAge(unittest.TestCase):
         self.write_all("2026-01-01", "2026-08-01")   # AI: 108 days, limit 90; CSF fine
         self.assertEqual(self.problems(), [
             "AI bank foundation is too old (built 2026-08-01, limit 90 days): run /build-ai-bank",
-            "AI bank areas is too old (built 2026-08-01, limit 90 days): run /build-ai-bank"])
+            "AI bank areas is too old (built 2026-08-01, limit 90 days): run /build-ai-bank",
+            "External AI bank is too old (built 2026-08-01, limit 90 days): run /build-ai-bank"])
+
+    def test_the_external_ai_bank_is_checked_too(self):
+        self.write_all("2026-01-01", "2026-09-01")
+        (self.tmp / BA.AI_BANK_EXTERNAL.name).write_text(json.dumps({"subcategories": {}}))   # threats, never built
+        self.assertEqual(self.problems(), ["External AI bank is missing: run /build-ai-bank"])
 
     def test_a_missing_bank_names_the_command_to_build_it(self):
         self.assertIn("CSF bank finance is missing: run /build-csf-bank", self.problems())

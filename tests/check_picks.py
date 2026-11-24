@@ -1,5 +1,5 @@
-"""The client-run picker (pick_questions.py, both frameworks) gives each client exactly the questions its intake
-calls for. Runs intake, scope and the picker (both frameworks) on the committed banks for typical clients, then checks every pick
+"""The client-run picker (pick_questions.py, every framework) gives each client exactly the questions its intake
+calls for. Runs intake, scope and the picker (every framework) on the committed banks for typical clients, then checks every pick
 with the rules below. The picker is fixed rules, so this is checked here, not in every run.
 A data check (it needs the committed banks): run it at the end-to-end step, after a bank rebuild:
     .venv/bin/python -m unittest discover -s tests -p "check_*.py"
@@ -9,6 +9,8 @@ CSF:    every subcategory in scope has questions and none outside it; the right 
         the bank, with CSET's own CSF 2.0 question kept; nothing worded for a certification the organisation lacks.
 AI RMF: every question is in the bank; each is for a role, producer details and AI areas the organisation has; nothing
         the bank gives this organisation is missing.
+External AI: every client gets every question of every reviewed (pass) subcategory of the bank, word for word, with
+        its threat and NIST's implementation examples; nothing else.
 """
 import json
 import shutil
@@ -20,7 +22,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
-from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, SCOPE_RULES, load_csf_intake  # noqa: E402
+from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, CSF_CORE, SCOPE_RULES, load_csf_intake  # noqa: E402
 from pick_questions import ai_client_roles, ai_questions_for  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
@@ -85,6 +87,26 @@ def check_csf(run_dir: Path) -> list[str]:
         own = [c["cset_question_id"] for c in candidates if c.get("cset_set") == "NCSF_V2"]
         if own and own[0] not in {q.get("cset_question_id") for q in questions}:
             problems.append(f"CSF {sid}: CSET's own CSF 2.0 question ({own[0]}) is missing")
+    return problems
+
+
+def check_external(run_dir: Path) -> list[str]:
+    draft, bank = load(run_dir / "external_questions_draft.json"), load(run_dir / "external_question_bank_used.json")
+    if draft is None or bank is None:
+        return ["External AI: external_questions_draft.json and external_question_bank_used.json must both exist "
+                "(run /ai-questionnaire)"]
+    core = {s["subcategory_id"]: s for s in json.loads(CSF_CORE.read_text())["subcategories"]}
+    want = {sid: e for sid, e in bank["subcategories"].items() if e.get("questions") and e.get("status") == "pass"}
+    got = {e["subcategory_id"]: e for e in draft}
+    problems = [f"External AI {sid}: missing" for sid in want if sid not in got]
+    problems += [f"External AI {sid}: not a reviewed subcategory of the bank" for sid in got if sid not in want]
+    for sid in set(want) & set(got):
+        if [q["question_text"] for q in got[sid]["questions"]] != [q["question_text"] for q in want[sid]["questions"]]:
+            problems.append(f"External AI {sid}: questions differ from the bank")
+        if got[sid].get("threat") != want[sid]["threat"]:
+            problems.append(f"External AI {sid}: threat differs from the bank")
+        if got[sid].get("evidence_prompt") != "\n".join(core[sid]["implementation_examples"]):
+            problems.append(f"External AI {sid}: Evidence Required is not NIST's implementation examples")
     return problems
 
 
@@ -174,6 +196,7 @@ def make_run(runs: Path, name: str) -> Path:
     script(*scope)
     script("pick_questions.py", run, "--framework", "csf")
     script("pick_questions.py", run, "--framework", "ai")
+    script("pick_questions.py", run, "--framework", "external")
     return run
 
 
@@ -192,6 +215,7 @@ class Picks(unittest.TestCase):
             with self.subTest(client=name):
                 self.assertEqual(check_csf(run), [])
                 self.assertEqual(check_ai(run), [])
+                self.assertEqual(check_external(run), [])
 
     def test_the_clients_differ(self):
         # guard against a check that passes on anything: the five clients really get different questionnaires
@@ -221,6 +245,10 @@ class Picks(unittest.TestCase):
         text = "\n".join(check_ai(run))
         self.assertIn("are missing", text)
         self.assertIn("not in the bank", text)
+        ext = json.loads((run / "external_questions_draft.json").read_text())
+        ext.append({"subcategory_id": "GV.OC-01", "questions": []})
+        (run / "external_questions_draft.json").write_text(json.dumps(ext))
+        self.assertIn("not a reviewed subcategory", "\n".join(check_external(run)))
 
 
 if __name__ == "__main__":

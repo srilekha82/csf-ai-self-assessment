@@ -1,9 +1,10 @@
 # /ai-questionnaire
 
-Picks the AI RMF 1.0 questions for one organisation and writes the AI RMF sheet of its questionnaire.
+Picks the AI questions for one organisation and writes the two AI sheets of its questionnaire: AI RMF (how the
+organisation uses AI) and External AI (what AI outside it changes; every organisation gets it).
 
 Argument: the run folder (`runs/<Org>_<date>`). Normally run by `/generate-questions`; run it alone only to redo
-the AI RMF sheet of an existing run folder.
+the AI sheets of an existing run folder.
 
 Scripts decide everything here; there is no agent judgement in this command.
 
@@ -31,5 +32,15 @@ here. Exit 1 lists what is wrong with `ai_intake.json`: tell the user, fix it wi
 It fills only the AI RMF sheet, and shows the AI systems sheet with the client's own AI areas when the inventory
 question is asked (it stays hidden otherwise).
 
+## 4 — External AI questions
+`.venv/bin/python ./scripts/pick_questions.py <run_dir> --framework external`
+
+Every client gets every reviewed question of the External AI bank (no intake filter), with NIST's implementation
+examples as the evidence. It writes `external_questions_draft.json` and a snapshot `external_question_bank_used.json`.
+
+## 5 — Write the External AI sheet
+`.venv/bin/python ./scripts/write_questionnaire.py <run_dir>/external_questions_draft.json <run_dir>/questionnaire.xlsx --framework external`
+
 ## Done
-Tell the user: the run folder and the counts per bank (subcategories, questions).
+Tell the user: the run folder and the counts per bank (subcategories, questions), including how many External AI
+subcategories were not asked (no reviewed questions yet).
