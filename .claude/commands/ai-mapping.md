@@ -13,11 +13,17 @@ Replace `<model id>` with the model id of the agent that produced the file.
 
 Temporary files go in `data/ai/bank_build/work/` (gitignored). Delete that folder at the end.
 
+**Review sheets** (`data/ai/authoring/*.xlsx`): the user edits the sheet in Excel, saves it and tells you. You run
+`.venv/bin/python ./scripts/sheet_io.py import <sheet>`: it checks every edit against `data/common/sheet_specs.json`,
+writes the JSON and stores the edits as decided by a person (no agent overwrites them). Show the user what it
+reports. Never edit a review sheet or the JSON behind it yourself.
+
 ## 1 — What needs doing
 `.venv/bin/python ./scripts/check_freshness.py --ai-bank`: read its `parse`, `ai areas` and `mapping` lines.
 - `parse` not current: `.venv/bin/python ./scripts/parse_ai_rmf_sources.py` (`sources: missing`: point to
   `data/ai/source/README.md` and stop).
-- `ai areas` edited but not imported: `.venv/bin/python ./scripts/sheet_io.py import ai_areas`.
+- `ai areas` edited but not imported: ask the user whether `ai_areas.xlsx` is finished, then
+  `.venv/bin/python ./scripts/sheet_io.py import ai_areas`.
 - Rules or another area's row changed: `.venv/bin/python ./scripts/record_bank.py ai-revalidate` (no agent); it names
   the areas to re-draft.
 
@@ -37,12 +43,14 @@ Area `<a>`. Pass subagents paths, not content.
    .venv/bin/python ./scripts/record_bank.py ai-mapping data/ai/bank_build/work/mapping_<a>_draft<N>.json \
        --review data/ai/bank_build/work/mapping_<a>_eval<N>.json --model <drafter model id> --session "evaluator=<model id>"
    ```
-6. `.venv/bin/python ./scripts/sheet_io.py export mapping`. If it refuses (sheet edits not imported), ask the user to run
-   `sheet_io.py import mapping` first.
+6. `.venv/bin/python ./scripts/sheet_io.py export mapping`. If it refuses (the sheet has edits not imported), ask the
+   user whether the sheet is finished, then import it (review sheets, above) and export.
 
 Then **stop** (after the pilot area, or after the areas the gate named). Show the recorded rows, what the evaluator
-failed, missing rows, notes and unreached subcategories, and point the user to `data/ai/authoring/mapping.xlsx`.
+failed, missing rows, notes and unreached subcategories, and point the user to `data/ai/authoring/mapping.xlsx`
+(review sheets, above).
 
 ## 3 — Accept
-When every area is recorded and reviewed (nothing needs human review, edits imported), the user runs
-`.venv/bin/python ./scripts/record_bank.py ai-accept-mapping` (it refuses while anything needs a person). Re-drafting an area later keeps the user's decisions.
+When every area is recorded and reviewed (nothing needs human review, edits imported) and the user says the mapping
+is good: `.venv/bin/python ./scripts/record_bank.py ai-accept-mapping --note "<what the user said>"` (it refuses while
+anything needs a person). Re-drafting an area later keeps the user's decisions.
