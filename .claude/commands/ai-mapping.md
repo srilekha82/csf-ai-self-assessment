@@ -21,8 +21,8 @@ Temporary files go in `data/ai/bank_build/work/` (gitignored). Delete that folde
 - Rules or another area's row changed: `.venv/bin/python ./scripts/record_bank.py ai-revalidate` (no agent); it names
   the areas to re-draft.
 
-## 2 — Draft each area (one at a time; run alone, the first run is a pilot on the area the user names; run by
-`/build-ai-bank`, no pilot: draft every area the gate names)
+## 2 — Draft each area (one at a time: the areas the gate names, or for a new mapping a pilot on the area the user
+names first)
 
 Area `<a>`. Pass subagents paths, not content.
 
@@ -40,10 +40,9 @@ Area `<a>`. Pass subagents paths, not content.
 6. `.venv/bin/python ./scripts/sheet_io.py export mapping`. If it refuses (sheet edits not imported), ask the user to run
    `sheet_io.py import mapping` first.
 
-After the pilot: **stop.** Show the recorded rows, what the evaluator failed, missing rows, notes and unreached
-subcategories, and point the user to `data/ai/authoring/mapping.xlsx`.
+Then **stop** (after the pilot area, or after the areas the gate named). Show the recorded rows, what the evaluator
+failed, missing rows, notes and unreached subcategories, and point the user to `data/ai/authoring/mapping.xlsx`.
 
 ## 3 — Accept
 When every area is recorded and reviewed (nothing needs human review, edits imported), the user runs
-`.venv/bin/python ./scripts/record_bank.py ai-accept-mapping` (`/build-ai-bank` runs it with `--by-build`; it refuses
-while anything needs a person). Re-drafting an area later keeps the user's decisions.
+`.venv/bin/python ./scripts/record_bank.py ai-accept-mapping` (it refuses while anything needs a person). Re-drafting an area later keeps the user's decisions.

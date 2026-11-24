@@ -38,12 +38,14 @@ stage is current only if it was built from the exact source files on disk (each 
 
 ## Step 2 — Mapping
 
-If the `mapping` line of Step 1 is not `accepted`, do the mapping here without asking the user: follow
-`.claude/commands/ai-mapping.md` steps 1 and 2 for the areas the gate names, using Step 1's lines instead of running
-the check again (no pilot stop), then
-`.venv/bin/python ./scripts/record_bank.py ai-accept-mapping --by-build`. It accepts only when every row passed its
-evaluator and nothing is left for a person; if it refuses, stop and show the user what it lists (rows to review in
-`data/ai/authoring/mapping.xlsx`).
+Read the `mapping` line of Step 1:
+- `accepted`: go on.
+- `to recheck` and nothing else (rules or other areas changed; no row is re-drafted): run
+  `.venv/bin/python ./scripts/record_bank.py ai-revalidate` (no agent; the rows and the acceptance stay as they are).
+  If it reports no problems, go on; otherwise stop as below.
+- Anything else (an area to re-draft or missing, rows to review, not accepted): **stop.** Tell the user to run
+  `/ai-mapping <the areas the line names>`, review and accept it, then run `/build-ai-bank` again. A re-drafted mapping
+  is always reviewed by a person before questions are built on it.
 
 ## Step 3 — Parse the sources
 
