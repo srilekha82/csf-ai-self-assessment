@@ -4,14 +4,18 @@ or whole banks. It decides and stores nothing.
 
 Why:       an agent given everything (PDFs, the whole mapping, whole banks) costs many tokens and wanders off its task.
            Each agent gets one file with only what its step needs, so its judgement is focused, cheap and repeatable.
-Called by: /ai-mapping (step 2; also run by /build-ai-bank step 2), /build-ai-bank (step 4 questions, 5b evidence)
-Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks)
-Output:    data/ai/bank_build/work/mapping_input_<area>.json, batch_<bank>_<tag>.json or evidence_input_<bank>.json
+Called by: /ai-mapping (step 2; also run by /build-ai-bank step 2), /build-ai-bank (step 4 questions, 5b evidence,
+           6 External AI)
+Input:     data/ai/ (AI RMF core, AI areas, mapping, rules, banks); External AI also data/csf/ (CSF outcomes and
+           NIST's CSF -> CIS references)
+Output:    data/ai/bank_build/work/mapping_input_<area>.json, batch_<bank>_<tag>.json, evidence_input_<bank>.json or
+           batch_external.json
 
 Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
        .venv/bin/python ./scripts/prepare_ai_bank.py batch <areas|foundation> (--ids ID ... | --function MAP | --all)
                                                            [--missing] [--tag NAME]
        .venv/bin/python ./scripts/prepare_ai_bank.py evidence <areas|foundation>
+       .venv/bin/python ./scripts/prepare_ai_bank.py external (--ids ID ... | --missing | --all)
 
   mapping --area ID   -> data/ai/bank_build/work/mapping_input_<area>.json, for the mapping drafter and evaluator: the AI
                          area, the four AI RMF functions, every MAP / MEASURE / MANAGE subcategory with its suggested
@@ -23,6 +27,10 @@ Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
                          organisation (GOVERN and the other foundation subcategories).
   --missing           only subcategories not yet in that bank.
   evidence            the questions in a bank that still have no evidence line, for the evidence writer.
+  external            -> data/ai/bank_build/work/batch_external.json, for the External AI question writer and
+                         evaluator: per CSF subcategory of the External AI bank, its outcome, NIST's implementation
+                         examples, the threat a person decided, and the AI text of the CIS safeguards NIST links to it.
+                         --missing: only subcategories with no questions yet.
 
 Terms (AI area, mapping row, foundation, impact, folded subcategory, required check, needs human review): see
 docs/guide.md, Glossary. The full model: docs/ai-rmf-model.md.
@@ -36,7 +44,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_WORK, AI_CORE, AI_FUNCTION_ORDER, AI_MAPPING,  # noqa: E402
                      AI_MAPPING_RULES, AI_QUESTION_BANKS as QUESTION_BANKS, AI_QUESTION_RULES, AI_SAFEGUARDS,
-                     AI_SCOPE_RULES, ai_bank_path)
+                     AI_SCOPE_RULES, AI_BANK_EXTERNAL, CSF_CORE, ai_bank_path)
 from ai_bank_common import (area_roles, foundation_subcategories, load_inputs, load_json, rel,  # noqa: E402
                             require_cis_text, row_id)
 from ai_mapping import area_candidates, area_rules, check_mapping_rules, mapping_status  # noqa: E402
@@ -196,14 +204,44 @@ def prepare_evidence(inp: dict, bank: str) -> Path:
     return out
 
 
+def prepare_external(inp: dict, ids: list[str], missing_only: bool, everything: bool) -> Path:
+    """The External AI question writer's and evaluator's input (ai_external.py has the bank and its rules)."""
+    import ai_external as X
+    require_cis_text(inp, "the External AI batch")
+    bank, active, r = X.load_bank()["subcategories"], X.outcomes(), X.rules()
+    if ids:
+        bad = [i for i in ids if i not in bank]
+        if bad:
+            sys.exit(f"[prepare_ai_bank] ERROR: not in the External AI bank: {bad}")
+        chosen = ids
+    elif missing_only or everything:
+        chosen = [s for s, e in bank.items() if everything or not e.get("questions")]
+    else:
+        sys.exit("[prepare_ai_bank] ERROR: give --ids, --missing or --all")
+    if not chosen:
+        sys.exit("[prepare_ai_bank] ERROR: no subcategories selected (all already have questions)")
+    cut = limits()["ai_text_chars"]
+    items = [{"subcategory_id": sid, "outcome": active[sid]["subcategory_text"],
+              "implementation_examples": active[sid]["implementation_examples"], "threat": bank[sid]["threat"],
+              "cis_safeguards": [{"id": c, "title": inp["safeguards"][c]["title"],
+                                  "ai_text": trunc(inp["safeguards"][c]["ai_applicability"], cut)}
+                                 for c in bank[sid]["cis_refs"]]} for sid in chosen]
+    out = AI_WORK / "batch_external.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({"bank": "external", "questions_per_subcategory": r["questions"], "items": items},
+                              indent=2, ensure_ascii=False))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("what", choices=["batch", "mapping", "evidence"])
+    ap.add_argument("what", choices=["batch", "mapping", "evidence", "external"])
     ap.add_argument("bank", nargs="?", choices=QUESTION_BANKS)
     ap.add_argument("--ids", nargs="*", default=[])
     ap.add_argument("--function", choices=AI_FUNCTION_ORDER)
     ap.add_argument("--all", action="store_true")
-    ap.add_argument("--missing", action="store_true", help="only subcategories not yet recorded in the bank")
+    ap.add_argument("--missing", action="store_true", help="only subcategories not yet recorded in the bank (external: "
+                    "with no questions yet)")
     ap.add_argument("--tag")
     ap.add_argument("--area", help="mapping: the AI area id")
     args = ap.parse_args()
@@ -219,6 +257,12 @@ def main():
         ev.finish(inputs=[ai_bank_path(args.bank, AI_BANKS), AI_AREAS], outputs=[out],
                   detail=f"prepared {out.name}: {n} questions without an evidence prompt")
         print(f"[prepare_ai_bank] wrote {rel(out)}: {n} questions without an evidence prompt")
+        return
+    if args.what == "external":
+        out = prepare_external(inp, args.ids, args.missing, args.all)
+        n = len(json.loads(out.read_text())["items"])
+        ev.finish(inputs=[AI_BANK_EXTERNAL, CSF_CORE, AI_SAFEGUARDS], outputs=[out], detail=f"prepared {out.name}: {n}")
+        print(f"[prepare_ai_bank] wrote {rel(out)}: {n} CSF subcategories")
         return
     if args.what == "mapping":
         if not args.area:

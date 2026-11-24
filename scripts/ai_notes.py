@@ -76,7 +76,7 @@ def notes_from_sheet(lines: list[dict], doc: dict) -> tuple[dict, list[str], int
         sid = ln["subcategory"]
         if sid not in notes or sid in seen:
             problems.append(f"row {n}: {sid} is not a recorded subcategory, or is listed twice (notes come from "
-                            "/build-ai-bank, Step 6)")
+                            "/build-ai-bank, Step 7)")
             continue
         seen.add(sid)
         exposure = str(ln["exposure"] or "").strip()

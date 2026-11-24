@@ -32,6 +32,18 @@
     "refresh_threshold_days": 365,
     "notes": "Parsed from the PCI DSS references column in the NIST CPRT export. Not the official PCI SSC OLIR."
   },
+  "olir_cis_v81.json": {
+    "last_refreshed": "2026-07-27",
+    "source": "NIST CSF 2.0 Informative References (CPRT export)",
+    "download_url": "https://www.nist.gov/cyberframework/csf-20-informative-references",
+    "download_instructions": "Same file as csf2_core — run parse_csf_source.py after downloading data/csf/source/csf2.xlsx",
+    "version": "CIS Controls v8.1 → CSF 2.0",
+    "nist_reference_prefix": "CIS Controls v8.1:",
+    "record_count": 48,
+    "is_placeholder": false,
+    "refresh_threshold_days": 365,
+    "notes": "Parsed from the CIS Controls v8.1 references in the NIST CPRT export (NIST's own CSF -> CIS link). Read by the External AI bank: which CSF subcategories CIS safeguards reach. Safeguard ids only, no CIS text."
+  },
   "tier_definitions.json": {
     "last_refreshed": "2026-07-27",
     "source": "NIST CSF 2.0 publication (NIST.CSWP.29)",

@@ -4,7 +4,7 @@ writes gets into the banks: every file is checked first, and a file with any pro
 
 Why:       agents make mistakes. Checking everything they hand in at one place keeps a wrong or partial answer out of
            the banks, and the copy it keeps of who decided what lets you trace any bank line back to its decision.
-Called by: /ai-mapping (steps 2 and 3), /build-ai-bank (steps 1 to 6); never in a client run
+Called by: /ai-mapping (steps 2 and 3), /build-ai-bank (steps 1 to 7); never in a client run
 Input:     a file an agent wrote (with the evaluator's verdicts, where there is one), or your approval
 Output:    the bank file each mode names, plus a permanent record of what was saved (see below)
 
@@ -18,20 +18,24 @@ What every mode does
   3. Record  a write-once copy in judgement_log/ (data/ai/bank_build/): who decided, with
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
-AI RMF (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questions.py, ai_notes.py)
+AI RMF and External AI (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questions.py,
+ai_external.py, ai_notes.py)
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
-  ai-check                                  regression check, no agent, writes nothing: the stored mapping and both banks
-                                            re-checked against the current rules, plus every freshness stage
+  ai-check                                  regression check, no agent, writes nothing: the stored mapping and the AI
+                                            banks re-checked against the current rules, plus every freshness stage
   ai-revalidate                             after a rules change, re-checks the saved areas (no agent); lists the
                                             ones to redraft
   ai-accept-mapping [--note T] [--by-build] you approve the mapping as it is now (approved again if it changes);
                                             --by-build: /build-ai-bank, when every row passed and nothing is left for you
-  ai-assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F
+  ai-assemble --gen1 F --eval1 F [--gen2 F --eval2 F] --out F [--kind external]
                                             joins the question writer's and checker's files (up to two rounds) into
-                                            one file for ai-questions; what still fails is marked for your review
+                                            one file for ai-questions (or ai-external); what still fails is marked for
+                                            your review
   ai-questions <foundation|areas> <file>    questions for some subcategories -> that bank      check: validate_questions
                [--replace-human]            (--replace-human: only when you agreed to replace your own edits)
-  ai-confirm-current                        no agent: when the gate finds everything current, sets both banks'
+  ai-external <file> [--replace-human]      External AI questions for some CSF subcategories -> question_bank_external.json
+                                                                                               check: validate_external
+  ai-confirm-current                        no agent: when the gate finds everything current, sets the AI banks'
                                             built_on to today (the age a client run checks), like a CSF rebuild
   ai-accept-pilot [--note T]                you approve the pilot questions (a new pilot is needed if the question
                                             prompts change)
@@ -51,7 +55,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_BANKS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
+from config import (AI_AREAS, AI_BANK_EXTERNAL, AI_BANKS, AI_BUILD, AI_MAPPING, AI_MAPPING_ACCEPTED, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
                     AI_PROMPTS, AI_QUESTION_BANKS, REPO_ROOT, ai_bank_path)
 from ai_bank_common import load_inputs, load_json  # noqa: E402
 import audit  # noqa: E402
@@ -59,6 +63,8 @@ from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
                           store_questions, validate_evidence, validate_questions)
 from ai_notes import store_notes, store_notes_review, validate_notes, validate_notes_review  # noqa: E402
+from ai_external import (EXTERNAL_CHECKS, EXTERNAL_TURN_TWO_RECHECKS, store_external,  # noqa: E402
+                         validate_external)
 
 AI_LOG_DIR = AI_BUILD / "judgement_log"
 
@@ -77,9 +83,10 @@ def record_ai(mode: str, args) -> None:
         validate = {"questions": lambda d: (validate_questions(d, args.bank, inp, question_context(inp))
                                             + human_decided(d, args)),
                     "evidence": lambda d: validate_evidence(d, review, args.bank),
-                    "notes": validate_notes, "notes-review": validate_notes_review}[mode]
+                    "notes": validate_notes, "notes-review": validate_notes_review,
+                    "external": lambda d: validate_external(d, getattr(args, "replace_human", False))}[mode]
         store = {"questions": store_questions, "evidence": store_evidence,
-                 "notes": store_notes, "notes-review": store_notes_review}[mode]
+                 "notes": store_notes, "notes-review": store_notes_review, "external": store_external}[mode]
         store_fn, extra = (lambda d: store(d, args, inp)), ({"review": review} if mode == "evidence" else None)
         log_name = f"{mode}_{args.bank}" if mode in ("questions", "evidence") else mode
     audit.record_agent_output(
@@ -108,12 +115,12 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument("--session", help="session reference, e.g. evaluator=<model id>")
 
 
-    for m in ("mapping", "questions", "evidence", "notes", "notes-review"):
+    for m in ("mapping", "questions", "evidence", "notes", "notes-review", "external"):
         p = sub.add_parser(f"ai-{m}")
         if m in ("questions", "evidence"):
             p.add_argument("bank", choices=AI_QUESTION_BANKS)
         p.add_argument("file")
-        if m == "questions":
+        if m in ("questions", "external"):
             p.add_argument("--replace-human", action="store_true",
                            help="overwrite subcategories a person decided in the review sheet (only when they agreed)")
         if m == "mapping":
@@ -125,6 +132,8 @@ def parser() -> argparse.ArgumentParser:
     for name in ("gen1", "eval1", "gen2", "eval2"):
         p.add_argument(f"--{name}", required=name in ("gen1", "eval1"))
     p.add_argument("--out", required=True)
+    p.add_argument("--kind", choices=["questions", "external"], default="questions",
+                   help="which evaluator's checks the verdicts hold (default: the AI RMF questions)")
     sub.add_parser("ai-revalidate")
     sub.add_parser("ai-check")
     sub.add_parser("ai-confirm-current")
@@ -140,24 +149,28 @@ def main():
     mode = args.mode
     if mode == "ai-assemble":
         files = [Path(p) if p else None for p in (args.gen1, args.eval1, args.gen2, args.eval2)]
-        run_step("ai_assemble_questions", {"gen1": args.gen1, "gen2": args.gen2}, [f for f in files if f],
-                 [Path(args.out)], lambda: (assemble(*files, Path(args.out)), False))
+        checks = {} if args.kind == "questions" else {"checks": EXTERNAL_CHECKS, "rechecks": EXTERNAL_TURN_TWO_RECHECKS}
+        run_step(f"ai_assemble_{args.kind}", {"gen1": args.gen1, "gen2": args.gen2}, [f for f in files if f],
+                 [Path(args.out)], lambda: (assemble(*files, Path(args.out), **checks), False))
     elif mode == "ai-check":
         import check_freshness
         from ai_mapping import stored_mapping_problems
         from ai_questions import stored_bank_problems
+        import ai_external
 
         def check():
             inp = load_inputs()
             problems = stored_mapping_problems(inp, mapping_inputs(inp))
             problems += [p for b in AI_QUESTION_BANKS for p in stored_bank_problems(b, inp)]
+            problems += ai_external.stored_bank_problems()
             problems += [f"{stage}: {text}" for stage, ok, text in check_freshness.ai_stages() if not ok]
             for p in problems:
                 print(f"  - {p}")
             return (f"check: {len(problems)} problems" if problems else
-                    "check: the mapping and both banks pass every check against the current rules, and every stage is "
-                    "current"), bool(problems)
-        run_step("ai_check", {}, [AI_MAPPING, *[ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS]], [], check)
+                    "check: the mapping and the AI banks pass every check against the current rules, and every stage "
+                    "is current"), bool(problems)
+        run_step("ai_check", {}, [AI_MAPPING, *[ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS],
+                                  AI_BANK_EXTERNAL], [], check)
     elif mode == "ai-revalidate":
         def do():
             inp = load_inputs()
@@ -170,7 +183,7 @@ def main():
     elif mode == "ai-confirm-current":
         import check_freshness
         from ai_questions import restamp_banks
-        run_step("ai_confirm_current", {}, [], [ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS],
+        run_step("ai_confirm_current", {}, [], [ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS] + [AI_BANK_EXTERNAL],
                  lambda: restamp_banks(check_freshness.ai_stages()))
     elif mode == "ai-accept-mapping":
         note = args.note or ("accepted by /build-ai-bank: every row passed its evaluator" if args.by_build else None)

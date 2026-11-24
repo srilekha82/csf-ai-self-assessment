@@ -22,7 +22,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_BANKS, AI_FUNCTION_ORDER, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
+from config import (AI_AREAS, AI_BANK_EXTERNAL, AI_BANKS, AI_FUNCTION_ORDER, AI_MAPPING, AI_MAPPING_RULES, AI_PILOT,  # noqa: E402
                     AI_PROMPTS, AI_QUESTION_BANKS, AI_QUESTION_RULES, AI_SCOPE_RULES, REPO_ROOT, SHEET_SPECS,
                     ai_bank_path)
 from ai_bank_common import area_roles, foundation_subcategories, load_json, row_id  # noqa: E402
@@ -377,9 +377,10 @@ QUESTION_CHECKS = [str(n) for n in range(1, 10)]   # prompts/ai_rmf_question_eva
 TURN_TWO_RECHECKS = {"6", "7"}   # an unchanged question that passed turn 1 may newly fail only these (a rewrite clashes)
 
 
-def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], list[tuple[str, str]]]:
+def verdict_failures(gen: dict, verdicts, name: str,
+                     checks_wanted: list[str] = QUESTION_CHECKS) -> dict[tuple[str, int], list[tuple[str, str]]]:
     """{(subcategory, question number): [(check, reason), ...]} of the failures in an evaluator verdict file, which must
-    hold a verdict on every check for every question of `gen`, quoting the start of that question and of no other
+    hold a verdict on every check (checks_wanted) for every question of `gen`, quoting the start of that question and of no other
     (`starts_with`), and a
     `complete` verdict per subcategory (number 0)."""
     if not isinstance(verdicts, list):
@@ -391,7 +392,7 @@ def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], li
         if key not in want or key in got:
             problems.append(f"unexpected or repeated verdict {key}")
             continue
-        keys = ["complete"] if key[1] == 0 else QUESTION_CHECKS
+        keys = ["complete"] if key[1] == 0 else checks_wanted
         checks, reasons = v.get("checks"), v.get("reasons") or {}
         starts = [n for n, q in enumerate(gen[key[0]]["questions"], 1)
                   if words_match(v.get("starts_with"), q["question_text"])]
@@ -414,32 +415,34 @@ def verdict_failures(gen: dict, verdicts, name: str) -> dict[tuple[str, int], li
     return {k: f for k, f in got.items() if f}
 
 
-def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out: Path) -> str:
-    """The file `questions` records, from generator output and evaluator verdicts. No judgement: a subcategory
-    passes iff the last evaluation fails nothing in it.
+def assemble(gen1: Path, eval1: Path, gen2: Path | None, eval2: Path | None, out: Path,
+             checks: list[str] = QUESTION_CHECKS, rechecks: set[str] = TURN_TWO_RECHECKS) -> str:
+    """The file `questions` (or `external`) records, from generator output and evaluator verdicts. No judgement: a
+    subcategory passes iff the last evaluation fails nothing in it.
 
-    An evaluator file must hold a verdict on checks 1-9 for every question and a `complete` verdict per subcategory.
-    A second-round file may fail a question that is unchanged and passed round 1 only on checks 6 and 7. A revision
-    (gen2) replaces the subcategories it covers."""
+    An evaluator file must hold a verdict on every check (AI RMF: 1-9; External AI: ai_external.EXTERNAL_CHECKS) for
+    every question and a `complete` verdict per subcategory. A second-round file may fail a question that is unchanged
+    and passed round 1 only on the `rechecks` (AI RMF: 6 and 7). A revision (gen2) replaces the subcategories it
+    covers."""
     g1 = load_json(gen1, "generator output")
     if not isinstance(g1, dict):
         sys.exit("[record_bank] ERROR: generator output has the wrong JSON type")
     if bool(gen2) != bool(eval2):
         sys.exit("[record_bank] ERROR: --gen2 and --eval2 go together")
-    f1 = verdict_failures(g1, load_json(eval1, "evaluator verdicts"), "turn 1 verdicts")
+    f1 = verdict_failures(g1, load_json(eval1, "evaluator verdicts"), "turn 1 verdicts", checks)
     final, last_fail, turns = {sid: v["questions"] for sid, v in g1.items()}, f1, {sid: 1 for sid in g1}
     if gen2:
         g2 = load_json(gen2, "revision output")
         if not isinstance(g2, dict) or set(g2) - set(final):
             sys.exit("[record_bank] ERROR: revision output must be an object of turn 1 subcategories")
-        f2 = verdict_failures(g2, load_json(eval2, "second evaluation"), "turn 2 verdicts")
+        f2 = verdict_failures(g2, load_json(eval2, "second evaluation"), "turn 2 verdicts", checks)
         flipped = [f"{sid} Q{n} check {c}" for (sid, n), fails in f2.items() if n
                    and g2[sid]["questions"][n - 1] in g1[sid]["questions"]
                    and (sid, g1[sid]["questions"].index(g2[sid]["questions"][n - 1]) + 1) not in f1
-                   for c, _ in fails if c not in TURN_TWO_RECHECKS]
+                   for c, _ in fails if c not in rechecks]
         if flipped:
             sys.exit("[record_bank] ERROR: turn 2 verdicts fail questions that are unchanged and passed turn 1 (only "
-                     f"checks {sorted(TURN_TWO_RECHECKS)} may change): {', '.join(flipped)}")
+                     f"checks {sorted(rechecks)} may change): {', '.join(flipped)}")
         for sid, v in g2.items():
             final[sid], turns[sid] = v["questions"], 2
         last_fail = {k: f for k, f in f1.items() if k[0] not in g2} | f2
@@ -470,19 +473,19 @@ def stored_bank_problems(bank: str, inp: dict) -> list[str]:
 
 
 def restamp_banks(stages: list[tuple[str, bool, str]]) -> tuple[str, bool]:
-    """When the gate finds everything current, set both banks' built_on to today, as a CSF rebuild does: the bank age a
-    client run checks then counts from the last time the bank was confirmed current. Nothing else in the files changes.
-    `stages` is check_freshness.ai_stages(); returns (summary, failed)."""
+    """When the gate finds everything current, set the AI banks' built_on to today (the two AI RMF banks and the
+    External AI bank), as a CSF rebuild does: the bank age a client run checks then counts from the last time the bank
+    was confirmed current. Nothing else in the files changes. `stages` is check_freshness.ai_stages(); returns
+    (summary, failed)."""
     not_current = [f"{stage} ({text})" for stage, ok, text in stages if not ok]
     if not_current:
         return f"not re-stamped, not everything is current: {'; '.join(not_current)}", True
     today = date.today().isoformat()
-    for bank in AI_QUESTION_BANKS:
-        path = ai_bank_path(bank, AI_BANKS)
+    for path in [ai_bank_path(b, AI_BANKS) for b in AI_QUESTION_BANKS] + [AI_BANK_EXTERNAL]:
         doc = load_json(path, path.name)
         doc["built_on"] = today
         path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
-    return f"both AI banks current: built_on set to {today}", False
+    return f"all AI banks current: built_on set to {today}", False
 
 
 def store_questions(data: dict, args, inp: dict) -> tuple[Path, str]:

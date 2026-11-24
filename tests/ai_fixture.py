@@ -10,7 +10,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "scripts"))
-import ai_bank_common, ai_mapping, ai_notes, ai_priority, ai_questions, check_freshness, config  # noqa: E401,E402
+import ai_bank_common, ai_external, ai_mapping, ai_notes, ai_priority, ai_questions, check_freshness, config  # noqa: E401,E402
 import intake, pick_questions, prepare_ai_bank, record_bank, sheet_io, write_questionnaire  # noqa: E401,E402
 
 FIXTURE = HERE / "fixtures" / "ai"
@@ -22,7 +22,7 @@ FILES = {
     "AI_SEVERITY_RULES": "severity_rules.json", "AI_PILOT": "pilot_accepted.json",
     "QUESTIONNAIRE_TEMPLATE": "questionnaire_template.xlsx",
 }
-for module in (config, ai_bank_common, ai_mapping, ai_notes, ai_priority, ai_questions, check_freshness, intake,
+for module in (config, ai_bank_common, ai_external, ai_mapping, ai_notes, ai_priority, ai_questions, check_freshness, intake,
                pick_questions, prepare_ai_bank, record_bank, sheet_io, write_questionnaire):
     for name, file in FILES.items():
         if hasattr(module, name):
