@@ -1,6 +1,5 @@
 {
   "bank": "external",
-  "description": "External AI questions: per CSF 2.0 subcategory NIST links to CIS Controls v8.1, the threat AI outside the organisation brings there and the questions asked of every client. Threats are decided by a person (the first 29 were copied from the reviewed exposure notes of ai_impact_notes.json and need your review); questions are written by /build-ai-bank; cis_refs by ai_external.py from NIST's references. Review: sheet_io.py export external_questions.",
   "subcategories": {
     "GV.RR-02": {
       "threat": "Roles and authorities for handling cybersecurity risk should be clear enough to cover new kinds of outside automated activity, such as agents calling your services. Someone needs the authority to block or disable access quickly when it is abused.",

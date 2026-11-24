@@ -206,6 +206,10 @@ check.
   rows the questions were written for: a changed row makes them stale). Per question: `question_text`, `rows` (area
   bank), `roles`, `producer_flags`, `playbook_refs`, `cis_refs`, `evidence_prompt`. Each bank also records
   `built_on` and the hashes of the Playbook and guides it was built from.
+- **External AI bank file** (`question_bank_external.json`). Per CSF subcategory: `threat` (decided by a person in
+  `questions_external.xlsx`), `cis_refs` (worked out by `ai_external.py` from NIST's references), `status`,
+  `review_reasons`, and the `questions` written by `/build-ai-bank`. Plus `source_sha` (the review sheet it was
+  imported from).
 - **Area questions.** Each mapping row is asked by one question per role its area allows (the area's applies to, plus
   `none` for invisible AI usage, which every client gets), or by two when its why holds two different practices
   (`question_rules.json` `row_questions`). A question asks the core of the row's why: one practice, details only as
