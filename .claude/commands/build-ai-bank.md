@@ -13,6 +13,11 @@ Replace `<model id>` in the record commands with the model id of the agent that 
 Temporary files (prepared inputs, agent drafts and verdicts) all go in `data/ai/bank_build/work/` (gitignored).
 Delete that folder at the end of the build.
 
+**Review sheets** (`data/ai/authoring/*.xlsx`): the user edits the sheet in Excel, saves it and tells you. You run
+`.venv/bin/python ./scripts/sheet_io.py import <sheet>`: it checks every edit against `data/common/sheet_specs.json`,
+writes the JSON and stores the edits as decided by a person (no agent overwrites them). Show the user what it
+reports. Never edit a review sheet or the JSON behind it yourself.
+
 ---
 
 If the user asks only for a **regression check**: run `.venv/bin/python ./scripts/record_bank.py ai-check` (no agent,
@@ -86,13 +91,12 @@ The loop, per batch (`<b>` = `foundation` or `areas`, `<t>` = batch tag):
    ```
    A subcategory the user decided in the review sheet is refused: leave it out, or add `--replace-human` only if the
    user agreed.
-6. `.venv/bin/python ./scripts/sheet_io.py export area_questions` (or `foundation_questions`). If it refuses (sheet edits
-   not imported), ask the user to run `sheet_io.py import area_questions` / `foundation_questions` first.
+6. `.venv/bin/python ./scripts/sheet_io.py export area_questions` (or `foundation_questions`). If it refuses (the sheet has
+   edits not imported), ask the user whether the sheet is finished, then import it (review sheets, above) and export.
 
 **After a pilot: stop.** Report turn 1 and turn 2 passes and what needs human review; show 2 or 3 passing questions
 (one shared) as well as the failures. Point the user to `data/ai/authoring/questions_areas.xlsx` and
-`questions_foundation.xlsx`; take their decisions in chat, apply them to the sheet and import it. When the user says
-the pilot is good: `.venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"`.
+`questions_foundation.xlsx` (review sheets, above). When the user says the pilot is good: `.venv/bin/python ./scripts/record_bank.py ai-accept-pilot --note "<what the user said>"`.
 
 **After a full run:** show the user 5 random passing subcategories to spot-check.
 
@@ -133,8 +137,8 @@ write only the questions. If the gate says the CIS safeguards changed, or `stale
    ```
    A subcategory the user decided in the review sheet is refused: leave it out, or add `--replace-human` only if the
    user agreed.
-6. `.venv/bin/python ./scripts/sheet_io.py export external_questions`; the user decides flagged questions in chat, you
-   apply them to the sheet and run `sheet_io.py import external_questions`.
+6. `.venv/bin/python ./scripts/sheet_io.py export external_questions`, and point the user to
+   `data/ai/authoring/questions_external.xlsx` for the questions that need review (review sheets, above).
 
 ## Step 7 — Report
 
