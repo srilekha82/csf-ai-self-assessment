@@ -47,7 +47,7 @@ def rules() -> dict:
     """question_rules.json external_bank (questions per subcategory, guides) and the text limits."""
     q = load_json(AI_QUESTION_RULES, "question_rules.json")
     return {**q["external_bank"], "min_chars": q["text_limits"]["min_chars"],
-            "threat_min_chars": q["text_limits"]["note_min_chars"]}
+            "threat_min_chars": q["text_limits"]["threat_min_chars"]}
 
 
 def cis_links() -> dict[str, list[str]]:

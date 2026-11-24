@@ -89,9 +89,9 @@
     "cis_reference": "CIS Controls v8.1 {cis_id} (companion guides: {guides})"
   },
   "text_limits": {
-    "description": "Length limits record_bank.py applies to agent output in the AI RMF bank build: a question or an evidence line shorter than min_chars, an evidence line longer than evidence_max_chars, or an impact note shorter than note_min_chars is rejected.",
+    "description": "Length limits record_bank.py applies to agent output in the AI RMF bank build: a question or an evidence line shorter than min_chars, an evidence line longer than evidence_max_chars, or an External AI threat shorter than threat_min_chars is rejected.",
     "min_chars": 30,
     "evidence_max_chars": 400,
-    "note_min_chars": 30
+    "threat_min_chars": 30
   }
 }

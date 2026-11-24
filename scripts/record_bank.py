@@ -19,7 +19,7 @@ What every mode does
              which prompt and inputs, and exactly what they handed in. Plus one line in that folder's audit.jsonl.
 
 AI RMF and External AI (/ai-mapping, /build-ai-bank; the checks are in ai_mapping.py, ai_questions.py,
-ai_external.py, ai_notes.py)
+ai_external.py)
   ai-mapping <file> [--review F]            one AI area's mapping rows -> mapping.json         check: validate_mapping
   ai-check                                  regression check, no agent, writes nothing: the stored mapping and the AI
                                             banks re-checked against the current rules, plus every freshness stage
@@ -41,13 +41,9 @@ ai_external.py, ai_notes.py)
                                             prompts change)
   ai-evidence <foundation|areas> <file> --review F
                                             evidence lines the evaluator passed -> that bank   check: validate_evidence
-  ai-notes <file>                           AI impact notes for the CSF sheet -> ai_impact_notes.json
-                                                                                               check: validate_notes
-  ai-notes-review <file>                    the notes evaluator's findings -> the same file
-                                                                                        check: validate_notes_review
 
 Related: prepare_ai_bank.py writes the AI agents' input; check_freshness.py reads the two approvals.
-Terms (AI area, mapping row, foundation, impact notes): docs/guide.md, Glossary.
+Terms (AI area, mapping row, foundation): docs/guide.md, Glossary.
 """
 
 import argparse
@@ -62,7 +58,6 @@ import audit  # noqa: E402
 from ai_mapping import accept_mapping, mapping_inputs, revalidate, store_mapping, validate_mapping  # noqa: E402
 from ai_questions import (accept_pilot, assemble, human_decided, question_context, store_evidence,  # noqa: E402
                           store_questions, validate_evidence, validate_questions)
-from ai_notes import store_notes, store_notes_review, validate_notes, validate_notes_review  # noqa: E402
 from ai_external import (EXTERNAL_CHECKS, EXTERNAL_TURN_TWO_RECHECKS, store_external,  # noqa: E402
                          validate_external)
 
@@ -83,10 +78,9 @@ def record_ai(mode: str, args) -> None:
         validate = {"questions": lambda d: (validate_questions(d, args.bank, inp, question_context(inp))
                                             + human_decided(d, args)),
                     "evidence": lambda d: validate_evidence(d, review, args.bank),
-                    "notes": validate_notes, "notes-review": validate_notes_review,
                     "external": lambda d: validate_external(d, getattr(args, "replace_human", False))}[mode]
         store = {"questions": store_questions, "evidence": store_evidence,
-                 "notes": store_notes, "notes-review": store_notes_review, "external": store_external}[mode]
+                 "external": store_external}[mode]
         store_fn, extra = (lambda d: store(d, args, inp)), ({"review": review} if mode == "evidence" else None)
         log_name = f"{mode}_{args.bank}" if mode in ("questions", "evidence") else mode
     audit.record_agent_output(
@@ -115,7 +109,7 @@ def parser() -> argparse.ArgumentParser:
         p.add_argument("--session", help="session reference, e.g. evaluator=<model id>")
 
 
-    for m in ("mapping", "questions", "evidence", "notes", "notes-review", "external"):
+    for m in ("mapping", "questions", "evidence", "external"):
         p = sub.add_parser(f"ai-{m}")
         if m in ("questions", "evidence"):
             p.add_argument("bank", choices=AI_QUESTION_BANKS)

@@ -13,13 +13,13 @@ Output:    a report on screen; exit 1 when something needs work
 Usage: .venv/bin/python ./scripts/check_freshness.py --ai-bank
        .venv/bin/python ./scripts/check_freshness.py --csf [--cset-path PATH]
 
-  --ai-bank    for the maintainer (/build-ai-bank): one line per part of the AI RMF build (parsed sources, each bank,
-               the External AI bank, impact notes, pilot, AI areas, mapping): current, stale, missing or incomplete. Current means built from
-               the source files as they are now (compared by fingerprint), complete, and approved where an approval is
-               needed. Needs the source PDFs.
+  --ai-bank    for the maintainer (/build-ai-bank): one line per part of the AI build (parsed sources, each AI RMF
+               bank, the External AI bank, pilot, AI areas, mapping): current, stale, missing or incomplete. Current
+               means built from the source files as they are now (compared by fingerprint), complete, and approved
+               where an approval is needed. Needs the source PDFs.
   --csf        for the maintainer (/build-csf-bank): the age of NIST's CSF reference data (csf2_core.json, the ISO
-               27001 and PCI DSS crosswalks and the CIS v8.1 references, from data/metadata.json), and the CSF banks against CSET (it runs git fetch
-               on your CSET copy, default ~/workstuff/cset, and says so if that fails). The six banks are built
+               27001 and PCI DSS crosswalks and the CIS v8.1 references, from data/metadata.json), and the CSF banks
+               against CSET (it runs git fetch on your CSET copy, default ~/workstuff/cset, and says so if that fails). The six banks are built
                together, so they share one record of what they were built from, and one line reports them.
 
 Exit 0: everything checked is current. Exit 1: something needs work (listed).
@@ -29,10 +29,10 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANK_EXTERNAL, AI_BANKS, AI_EXTERNAL_XLSX, CSF_CIS_CROSSWALK, AI_CIS_CSF_XLSX, AI_CORE, AI_IMPACT_NOTES_XLSX,  # noqa: E402
-                     AI_PARSE_CONFIG, AI_PILOT, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX,
-                     AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, CERT_FILES, ai_bank_path,
-                     CSF_IMPACT_NOTES, DATA_AUDIT, SECTORS, METADATA, bank_path)
+from config import (AI_AREAS, AI_AREAS_XLSX, AI_BANK_EXTERNAL, AI_BANKS, AI_CORE, AI_EXTERNAL_XLSX,  # noqa: E402
+                    AI_PARSE_CONFIG, AI_PILOT, AI_QUESTIONS_AREAS_XLSX, AI_QUESTIONS_FOUNDATION_XLSX,
+                    AI_QUESTION_BANKS, AI_SAFEGUARDS, AI_SAFEGUARD_IDS, AI_SOURCE, CERT_FILES, CSF_CIS_CROSSWALK,
+                    DATA_AUDIT, SECTORS, METADATA, ai_bank_path, bank_path)
 import audit  # noqa: E402
 from sheet_io import sheet_status  # noqa: E402
 from extract_cset_candidates import DEFAULT_CSET_PATH, git, sql_changed  # noqa: E402
@@ -64,7 +64,7 @@ def ai_stages() -> list[tuple[str, bool, str]]:
     """(stage, current?, text) per stage of the AI RMF build; see the module docstring."""
     cfg = json.loads(AI_PARSE_CONFIG.read_text())
     guides = {g: audit.sha(AI_SOURCE / c["file"]) for g, c in cfg["guides"].items()}
-    playbook, cis_csf = audit.sha(AI_SOURCE / cfg["playbook"]["file"]), audit.sha(AI_CIS_CSF_XLSX)
+    playbook = audit.sha(AI_SOURCE / cfg["playbook"]["file"])
     missing = [name for name, v in [("Playbook", playbook), *guides.items()] if v is None]
     if missing:
         return [("sources", False, f"missing: {', '.join(missing)} (see data/ai/source/README.md)")]
@@ -75,7 +75,6 @@ def ai_stages() -> list[tuple[str, bool, str]]:
         return (stage, True, "current") if same else (stage, False, f"stale ({what})")
 
     core, sg = load(AI_CORE), load(AI_SAFEGUARDS)   # the CIS text file is local only: a fresh clone has only the ids
-    notes = load(CSF_IMPACT_NOTES)
     recorded = lambda sources: {g: v["sha256_16"] for g, v in sources.items()}  # noqa: E731
     stages = [
         verdict("parse", core and sg, core and sg and core["source_sha256_16"] == playbook
@@ -101,13 +100,6 @@ def ai_stages() -> list[tuple[str, bool, str]]:
         ok, text = external_completeness(doc)
         if ok and AI_EXTERNAL_XLSX.is_file() and audit.sha(AI_EXTERNAL_XLSX) != doc.get("source_sha"):
             ok, text = False, "review sheet edited but not imported (sheet_io.py import external_questions)"
-    stages.append((stage, ok, text))
-    stage, ok, text = verdict("notes", notes, notes and notes.get("sources_sha256_16") == {
-        "cis_csf": cis_csf, "MCP": guides["MCP"], "AGENT": guides["AGENT"]})
-    if cis_csf is None:
-        ok, text = False, "cannot check (the CIS -> CSF xlsx is not on this machine)"
-    if ok and AI_IMPACT_NOTES_XLSX.is_file() and audit.sha(AI_IMPACT_NOTES_XLSX) != notes.get("source_sha"):
-        ok, text = False, "review sheet edited but not imported (sheet_io.py import impact_notes)"
     stages.append((stage, ok, text))
     stages.append(("pilot", *pilot_status(AI_PILOT)))
     stages.append(("ai areas", *sheet_status("ai_areas", AI_AREAS_XLSX, AI_AREAS)))

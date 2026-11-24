@@ -108,6 +108,15 @@ class ExternalBank(unittest.TestCase):
         X.AI_BANK_EXTERNAL.write_text(json.dumps(new))
         self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}), 0)          # accepted: questions may be written
 
+    def test_the_review_sheet_round_trips_through_sheet_io(self):
+        import sheet_io as S
+        spec = S.load_spec("external_questions")
+        xlsx = self.tmp / "external.xlsx"
+        S.export_sheet(spec, xlsx, X.AI_BANK_EXTERNAL, self.tmp / "audit.jsonl")   # export, then import: 0 changed
+        doc = json.loads(X.AI_BANK_EXTERNAL.read_text())
+        self.assertEqual(doc["source_sha"], S.audit.sha(xlsx))
+        self.assertEqual(list(doc["subcategories"]), ["PR.AA-05", "DE.AE-02"])
+
     def test_completeness(self):
         doc = json.loads(X.AI_BANK_EXTERNAL.read_text())
         ok, text = X.bank_freshness(doc)

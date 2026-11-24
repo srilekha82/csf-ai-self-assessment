@@ -58,11 +58,10 @@ class ParsedSources(unittest.TestCase):
 class Recording(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        R.CSF_IMPACT_NOTES = self.tmp / "ai_impact_notes.json"
         R.AI_BANKS, R.AI_BUILD, R.AI_LOG_DIR = self.tmp / "banks", self.tmp / "build", self.tmp / "build" / "log"
         R.AI_MAPPING = AI_MAPPING                   # the accepted mapping, read only (other classes redirect it)
         P.AI_BANKS, P.AI_BUILD, PL.AI_BANKS = R.AI_BANKS, R.AI_BUILD, R.AI_BANKS
-        R.AI_WORK = P.AI_WORK = R.AI_BUILD / "work"
+        P.AI_WORK = R.AI_BUILD / "work"
         self.addCleanup(setattr, P, "mapping_status", P.mapping_status)   # tests stub the accept gate
         R.AI_BUILD.mkdir(parents=True, exist_ok=True)
         self.inp = R.load_inputs()
@@ -237,58 +236,6 @@ class Recording(unittest.TestCase):
         doc = json.loads(P.prepare_evidence(self.inp, "areas").read_text())
         self.assertEqual([q["number"] for q in doc["items"].get(sid, {}).get("questions", [])],
                          [n])                                             # only questions still without one
-
-    def test_notes(self):
-        long = "x" * 40
-        self.assertEqual(self.run_mode("notes", {"NOT.AA-99": {"exposure": long}}), 1)
-        self.assertEqual(self.run_mode("notes", {"DE.CM-01": {"use": {"base_rag": long, "mcp_agentic": long}}}), 0)
-        self.assertNotIn("exposure", json.loads(R.CSF_IMPACT_NOTES.read_text())["notes"]["DE.CM-01"])  # exposure optional
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"exposure": long}}), 0)
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"use": {"base_rag": long, "mcp_agentic": long}}}), 0)
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"use": {"base_rag": long}}}), 1)
-        n = json.loads(R.CSF_IMPACT_NOTES.read_text())["notes"]["PR.AA-05"]
-        self.assertEqual(set(n), {"exposure", "use"})
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"exposure": None}}), 0)      # exposure: null removes it
-        self.assertEqual(set(json.loads(R.CSF_IMPACT_NOTES.read_text())["notes"]["PR.AA-05"]), {"use"})
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"use": None}}), 0)          # no note left: dropped
-        self.assertNotIn("PR.AA-05", json.loads(R.CSF_IMPACT_NOTES.read_text())["notes"])
-        self.assertEqual(self.run_mode("notes-review", [{"subcategory_id": "DE.CM-01", "note": "exposure",
-                                                         "reason": "x"}]), 1)   # it has no exposure note
-
-    def test_notes_review(self):
-        long = "x" * 40
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"exposure": long},
-                                                 "DE.CM-01": {"exposure": long}}), 0)
-        notes = lambda: json.loads(R.CSF_IMPACT_NOTES.read_text())["notes"]   # noqa: E731
-        bad = {
-            "unknown subcategory": [{"subcategory_id": "PR.AA-01", "note": "exposure", "reason": "x"}],
-            "use note without a use layer": [{"subcategory_id": "PR.AA-05", "note": "base_rag", "reason": "x"}],
-            "unknown note": [{"subcategory_id": "PR.AA-05", "note": "title", "reason": "x"}],
-            "no reason": [{"subcategory_id": "PR.AA-05", "note": "exposure", "reason": " "}],
-            "not a list": {"PR.AA-05": "x"},
-        }
-        for name, data in bad.items():
-            self.assertEqual(self.run_mode("notes-review", data), 1, name)
-        self.assertEqual(self.run_mode("notes-review", [{"subcategory_id": "PR.AA-05", "note": "use",
-                                                         "reason": "Check 5: use layer missing."}]), 0)
-        self.assertEqual((notes()["PR.AA-05"]["status"], notes()["DE.CM-01"]["status"]), ("needs_human_review", "pass"))
-        self.assertEqual(notes()["PR.AA-05"]["review_reason"], "use: Check 5: use layer missing.")
-        self.assertEqual(self.run_mode("notes-review", [{"subcategory_id": "DE.CM-01", "note": "exposure",
-                                                         "reason": "x"}]), 1)   # reviewed and unchanged: keeps its pass
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"exposure": long + " rewritten",
-                                                              "use": {"base_rag": long, "mcp_agentic": long}}}), 0)
-        self.assertNotIn("status", notes()["PR.AA-05"])                 # rewritten: to be reviewed again
-        self.assertEqual(self.run_mode("notes-review", []), 0)          # round 2 judges only the rewritten note
-        self.assertEqual((notes()["PR.AA-05"]["status"], notes()["DE.CM-01"]["status"]), ("pass", "pass"))
-        self.assertEqual(self.run_mode("notes", {"PR.AA-05": {"exposure": long, "use": None}}), 0)
-        self.assertNotIn("use", notes()["PR.AA-05"])                    # use: null removes the use layer
-        doc = json.loads(R.CSF_IMPACT_NOTES.read_text())
-        doc["notes"]["DE.CM-01"]["decided_by"] = "human"
-        R.CSF_IMPACT_NOTES.write_text(json.dumps(doc))
-        self.assertEqual(self.run_mode("notes", {"DE.CM-01": {"exposure": long + " overwritten"}}), 1)
-        self.assertEqual(self.run_mode("notes-review", [{"subcategory_id": "DE.CM-01", "note": "exposure",
-                                                         "reason": "x"}]), 1)
-
 
     def test_prepare_batch_areas(self):
         P.mapping_status = lambda: (True, "accepted")
@@ -837,16 +784,16 @@ class FreshnessGate(unittest.TestCase):
         self.src = self.tmp / "source"
         self.src.mkdir()
         self.files = {"playbook": cfg["playbook"]["file"], **{g: c["file"] for g, c in cfg["guides"].items()}}
-        for name in list(self.files.values()) + ["mapping.xlsx"]:
+        for name in self.files.values():
             (self.src / name).write_text(f"content of {name}")
-        CF.AI_SOURCE, CF.AI_CIS_CSF_XLSX = self.src, self.src / "mapping.xlsx"
+        CF.AI_SOURCE = self.src
         CF.AI_CORE, CF.AI_SAFEGUARDS = self.tmp / "core.json", self.tmp / "sg.json"
         self.want = 2                             # subcategories a complete bank must hold (stubbed)
         real_completeness = CF.bank_completeness
         CF.bank_completeness = lambda bank, doc: ((len(doc["subcategories"]) >= self.want),
                                                   f"{len(doc['subcategories'])} of {self.want}")
         self.addCleanup(setattr, CF, "bank_completeness", real_completeness)
-        CF.AI_BANKS, CF.CSF_IMPACT_NOTES = self.tmp / "banks", self.tmp / "notes.json"
+        CF.AI_BANKS = self.tmp / "banks"
         CF.AI_PILOT = self.tmp / "pilot.json"
         real_mapping_status = CF.mapping_status   # the mapping gate has its own test (test_sheet_io.py)
         self.mapping_ok = False                   # build_everything() accepts it
@@ -856,8 +803,6 @@ class FreshnessGate(unittest.TestCase):
         real_sheets = CF.AI_QUESTIONS_XLSX
         CF.AI_QUESTIONS_XLSX = {b: (self.tmp / f"questions_{b}.xlsx", n) for b, (_, n) in real_sheets.items()}
         self.addCleanup(setattr, CF, "AI_QUESTIONS_XLSX", real_sheets)
-        self.addCleanup(setattr, CF, "AI_IMPACT_NOTES_XLSX", CF.AI_IMPACT_NOTES_XLSX)
-        CF.AI_IMPACT_NOTES_XLSX = self.tmp / "impact_notes.xlsx"
         for name in ("AI_BANK_EXTERNAL", "AI_EXTERNAL_XLSX", "external_completeness"):
             self.addCleanup(setattr, CF, name, getattr(CF, name))
         CF.AI_BANK_EXTERNAL, CF.AI_EXTERNAL_XLSX = self.tmp / "external.json", self.tmp / "external.xlsx"
@@ -886,21 +831,12 @@ class FreshnessGate(unittest.TestCase):
         CF.AI_BANK_EXTERNAL.write_text(json.dumps({
             "guide_sha256_16": g, "cis_links_sha256_16": self.audit.sha(CF.CSF_CIS_CROSSWALK),
             "subcategories": {f"S{i}": {} for i in range(recorded)}}))
-        CF.CSF_IMPACT_NOTES.write_text(json.dumps({"sources_sha256_16": {"cis_csf": self.sha("mapping.xlsx"),
-                                                                         "MCP": g["MCP"], "AGENT": g["AGENT"]}}))
         self.accept_pilot()
         CF.AI_AREAS_XLSX.write_text("a spreadsheet")
         CF.AI_AREAS.write_text(json.dumps({"source_sha": self.audit.sha(CF.AI_AREAS_XLSX)}))
 
     def states(self):
         return {stage: ok for stage, ok, _ in CF.ai_stages()}
-
-    def test_without_the_cis_csf_xlsx_only_the_notes_cannot_be_checked(self):
-        self.build_everything()
-        CF.AI_CIS_CSF_XLSX.unlink()
-        stages = {stage: (ok, text) for stage, ok, text in CF.ai_stages()}
-        self.assertEqual(stages["notes"], (False, "cannot check (the CIS -> CSF xlsx is not on this machine)"))
-        self.assertTrue(stages["parse"][0] and stages["bank foundation"][0] and stages["bank areas"][0])
 
     def test_a_parse_without_the_local_cis_text_is_not_current(self):
         self.build_everything()
@@ -928,7 +864,7 @@ class FreshnessGate(unittest.TestCase):
         (self.src / self.files["LLM"]).write_text("changed")
         s = self.states()
         self.assertFalse(s["parse"] or s["bank foundation"] or s["bank areas"] or s["bank external"])
-        self.assertTrue(s["notes"])   # notes use only the MCP and agents guides
+        self.assertTrue(s["pilot"] and s["ai areas"] and s["mapping"])   # they do not read the guides
 
     def test_external_bank_stage(self):
         self.build_everything()
@@ -1073,16 +1009,17 @@ class ConfirmCurrent(unittest.TestCase):
         from datetime import date
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(setattr, PL, "AI_BANKS", PL.AI_BANKS)
-        PL.AI_BANKS = tmp
-        for b in ("foundation", "areas"):
-            (tmp / f"question_bank_ai_rmf_{b}.json").write_text(json.dumps({"built_on": "2026-01-01", "subcategories": {"S": 1}}))
+        self.addCleanup(setattr, PL, "AI_BANK_EXTERNAL", PL.AI_BANK_EXTERNAL)
+        PL.AI_BANKS, PL.AI_BANK_EXTERNAL = tmp, tmp / "question_bank_external.json"
+        for name in ("question_bank_ai_rmf_foundation", "question_bank_ai_rmf_areas", "question_bank_external"):
+            (tmp / f"{name}.json").write_text(json.dumps({"built_on": "2026-01-01", "subcategories": {"S": 1}}))
         line, failed = PL.restamp_banks([("parse", True, "current"), ("mapping", False, "not accepted")])
         self.assertTrue(failed and "mapping (not accepted)" in line)
         self.assertEqual(json.loads((tmp / "question_bank_ai_rmf_areas.json").read_text())["built_on"], "2026-01-01")
         line, failed = PL.restamp_banks([("parse", True, "current"), ("mapping", True, "accepted")])
         self.assertFalse(failed)
-        for b in ("foundation", "areas"):
-            doc = json.loads((tmp / f"question_bank_ai_rmf_{b}.json").read_text())
+        for name in ("question_bank_ai_rmf_foundation", "question_bank_ai_rmf_areas", "question_bank_external"):
+            doc = json.loads((tmp / f"{name}.json").read_text())
             self.assertEqual(doc, {"built_on": date.today().isoformat(), "subcategories": {"S": 1}})
 
 

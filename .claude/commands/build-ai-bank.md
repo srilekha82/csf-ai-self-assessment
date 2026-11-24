@@ -1,7 +1,6 @@
 # /build-ai-bank
 
-Builds or refreshes the two AI RMF question banks, the External AI bank and the CSF AI impact notes, from an accepted
-mapping (`/ai-mapping`).
+Builds or refreshes the two AI RMF question banks and the External AI bank, from an accepted mapping (`/ai-mapping`).
 
 Scripts parse, prepare, validate, record and decide nothing; agents judge, and hand every result in through
 `scripts/record_bank.py` (its `ai-…` modes), which rejects a whole file if anything is wrong. The judging rules are in the prompts
@@ -25,8 +24,8 @@ writes nothing: the stored mapping and banks re-checked against the current rule
 .venv/bin/python ./scripts/check_freshness.py --ai-bank
 ```
 
-One line per stage (parse, bank foundation, bank areas, bank external, notes, pilot, ai areas, mapping; the last two
-are done in Step 2): `current`, `missing`, `stale`
+One line per stage (parse, bank foundation, bank areas, bank external, pilot, ai areas, mapping; the last two are done
+in Step 2): `current`, `missing`, `stale`
 or `incomplete`. A
 stage is current only if it was built from the exact source files on disk (each output records the SHA-256 of its inputs).
 
@@ -135,24 +134,7 @@ write only the questions. If the gate says the CIS safeguards changed, or `stale
 6. `.venv/bin/python ./scripts/sheet_io.py export external_questions`; the user decides flagged questions in chat, you
    apply them to the sheet and run `sheet_io.py import external_questions`.
 
-## Step 7 — AI impact notes (only when the gate's `notes` line is not current)
-
-`.venv/bin/python ./scripts/prepare_ai_notes.py` → `work/impact_pending.json` (the CSF subcategories CIS maps to the
-MCP and agents guides). Follow `prompts/ai_impact_notes_writer.md`; record each patch with
-`.venv/bin/python ./scripts/record_bank.py ai-notes <file> --model <model id>` and send back what it lists:
-1. Layer 1, exposure → `work/notes_layer1.json`.
-2. Layer 2, use → `work/notes_layer2.json`.
-3. **Evaluator** (fresh subagent, never sees the writer's prompt): `prompts/ai_impact_notes_evaluator.md` with
-   `impact_pending.json` and `data/csf/ai_impact_notes.json` → `work/notes_review1.json`, recorded with
-   `record_bank.py ai-notes-review data/ai/bank_build/work/notes_review1.json --model <model id>`.
-4. Only if notes were flagged: a fresh writer revises them (the prompt's "Revision turn") → `work/notes_revision.json`,
-   recorded with `ai-notes`; a fresh evaluator reviews the rewritten ones → `notes_review2.json`. Two turns at most.
-5. `.venv/bin/python ./scripts/sheet_io.py export impact_notes`; the user decides flagged notes in chat, you apply them
-   and run `sheet_io.py import impact_notes`.
-
-A note a person decided in the review sheet is refused: leave it out of the patch.
-
-## Step 8 — Report
+## Step 7 — Report
 
 Tell the user what was rebuilt or skipped, the counts (passed, needs human review), and what is left to do. List each
 subcategory that needs human review with its reason (read it from the bank file only for those).
