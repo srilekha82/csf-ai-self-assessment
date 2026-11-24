@@ -1,7 +1,7 @@
 {
   "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
   "source": "data/ai/authoring/ai_areas.xlsx",
-  "source_sha": "c7e0a52359dc576e",
+  "source_sha": "480bbeef3a9256cd",
   "generated_by": "scripts/sheet_io.py import ai_areas",
   "ai_areas": [
     {
@@ -60,14 +60,14 @@
     },
     {
       "id": "invisible_usage",
-      "name": "Invisible AI usage (unapproved or external)",
+      "name": "Invisible AI usage (shadow AI)",
       "kind": "usage",
       "applies_to": "both",
       "impact": [
         "data",
         "access"
       ],
-      "covers": "AI use the org did not choose and may not see. Inside out: staff using AI tools or features nobody approved (including PoCs and experiments), so data leaves through them. Outside in: other people's agents, MCP clients and scrapers reaching the org's systems (signing in on behalf of users, calling APIs, at machine speed). Applies even when no AI is in use."
+      "covers": "AI use inside the org that nobody approved and the org may not see: staff using AI tools, features, browser extensions or local models nobody approved (including PoCs and experiments), so data leaves through them and the tools may hold access staff granted them. Applies even when no AI is in use. Not here: AI outside the org (other people's agents, MCP clients and scrapers reaching the org's systems), which the External AI sheet asks about."
     },
     {
       "id": "input",

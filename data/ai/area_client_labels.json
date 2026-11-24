@@ -6,7 +6,7 @@
     "customer_facing": "AI your customers or the public talk to or get answers from",
     "vendor_ai": "AI features inside the products and services you buy (e.g. Jira, Slack, ServiceNow)",
     "model_building": "Building or tuning your own AI model",
-    "invisible_usage": "AI used without your approval: staff tools nobody approved, and outside AI agents reaching your systems",
+    "invisible_usage": "AI your staff use without your approval (tools, features and experiments nobody approved)",
     "input": "What people and systems send to the AI (prompts, pasted text, files)",
     "output": "The AI's answers and how people and systems rely on them",
     "test_tuning_data": "The data you train, tune and test your model with",
