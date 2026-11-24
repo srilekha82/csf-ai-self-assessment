@@ -1,0 +1,43 @@
+{
+  "step": "external_seed_from_exposure_notes",
+  "actor": "script (run by the agent in the session, on the user's request)",
+  "what": "Seeded question_bank_external.json: one entry per CSF subcategory with an exposure note in ai_impact_notes.json; threat = that note, word for word; cis_refs from NIST's CSF -> CIS v8.1 references. Every entry marked needs_human_review until a person accepts its threat in questions_external.xlsx.",
+  "inputs": {
+    "data/csf/ai_impact_notes.json": "adb7bd6816d70c10",
+    "data/csf/crosswalks/olir_cis_v81.json": "477baf92a15a8118"
+  },
+  "output": {
+    "data/ai/banks/question_bank_external.json": "cf62ead27ffb916a"
+  },
+  "seeded": {
+    "GV.RR-02": "Roles and authorities for handling cybersecurity risk should be clear enough to cover new kinds of outside automated activity, such as agents calling your services. Someone needs the authority to block or disable access quickly when it is abused.",
+    "GV.RR-04": "People who join, move or leave may have connected agents or tools to company systems, with delegated access that outlives them. Joiner, mover and leaver steps need to cover agent identities and their credentials, so access is revoked and entitlements removed.",
+    "GV.SC-01": "Suppliers can adopt agents and AI services that handle your data, so supply chain policy should set requirements even if you use no AI. These include limiting provider access to the data needed and preventing sensitive data from reaching providers without safeguards.",
+    "GV.SC-02": "Suppliers may use AI models, agents or MCP servers to serve you, and roles and expectations should state who is responsible for what. This includes data isolation, retention limits and how incidents are reported.",
+    "GV.SC-04": "Your suppliers may now include model providers, embedding services, tool backends and hosted MCP servers, even when you did not choose them directly. Knowing which suppliers touch your data and how sensitive that access is has become harder.",
+    "GV.SC-05": "Suppliers may begin using AI agents or tools on your data. Contracts should set data handling and retention terms, breach notification and rapid revocation of access, so a supplier's change in technology does not weaken your protections.",
+    "GV.SC-06": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. Standard questionnaires may not cover this.",
+    "GV.SC-07": "A supplier's risk can change quickly when they add AI features, change capabilities or alter authorization behavior, even without a new contract. Ongoing monitoring should look for such changes and for relevant advisories.",
+    "GV.SC-08": "Suppliers that use AI agents or models need to be part of incident planning, because an agent incident at a supplier can move at machine speed. Agree on incident response SLAs and contacts in advance.",
+    "GV.SC-09": "Suppliers can add AI features to products you already use. Supply chain monitoring over the life cycle should notice version changes, new capabilities and changed authorization behavior in what they provide.",
+    "GV.SC-10": "When a relationship ends, AI-related leftovers can remain: authorizations, tokens, federated identities and data flows. Derived items such as embeddings, tuned model weights and session logs may also persist, so exit steps should cover them.",
+    "ID.AM-01": "Unapproved software that acts on its own can show up on endpoints or in cloud environments without a formal rollout. A hardware and asset inventory that cannot find unmanaged systems will miss assets that bypass normal controls.",
+    "ID.AM-02": "Agent frameworks, MCP clients and servers, and tool libraries can be installed by individuals without any central decision. Software inventory should be able to record such components and their versions, so unknown ones stand out.",
+    "ID.AM-04": "Your services may rely on providers that use AI components, such as model or hosted tool services, behind the scenes. The inventory of supplier services should record what they provide and what capabilities they declare.",
+    "ID.AM-08": "Life cycle management should make sure decommissioned systems leave no usable credentials, tokens or data behind, since automated attackers look for leftover access.",
+    "ID.RA-08": "Disclosures about MCP and agent components can affect you even if you do not run AI yourself, for example via suppliers or software you depend on. Handling should prioritize by exploitability, privileges and exposure, with remediation timelines.",
+    "PR.AA-01": "Agents and tools can authenticate with service accounts, API keys or delegated credentials that sit outside normal user lifecycles. The identity inventory and central management need to cover them, preferably through the enterprise identity provider.",
+    "PR.AA-05": "Agents can call APIs or sign in on behalf of users at machine speed, so permissions sized for humans may be too broad. Roles, scopes and actual tool usage need regular review, with unused or excessive permissions revoked.",
+    "PR.AT-01": "All staff can be targeted by AI-enabled attackers, for example with convincing, automated messages. General awareness training should reflect that.",
+    "PR.DS-01": "Automated attackers and outside agents look for stored data they can reach, including credentials and tokens left in configuration files or logs. Data at rest needs encryption, and secrets belong in a secrets manager.",
+    "PR.DS-11": "Backups should include configurations, authorization policies, tool definitions, memory stores and retrieval corpora where these exist. Backups must also be protected so that agents themselves cannot write to or modify them, and restores tested.",
+    "PR.PS-04": "Logs need to record MCP and agent activity such as tool calls, data accesses, authorization decisions, token events and attempted policy violations. Without them, activity by an external agent acting on a user's behalf cannot be reconstructed.",
+    "PR.PS-05": "Unauthorized MCP servers, tool wrappers and agent components can be installed by individuals and run with their privileges. Use deny-by-default allowlists with integrity checks and install only from approved registries or repositories.",
+    "DE.CM-01": "Automated agents and AI-enabled attackers leave footprints spread across application logs and network traffic. Isolated alerts are often not enough, so network telemetry and audit logs need to be correlated to spot anomalous behavior.",
+    "DE.CM-03": "Signature-based tools can miss threats from AI agents, which can generate code dynamically or use legitimate system tools. Monitoring user and technology activity needs to include behavior, such as unexpected shell commands, even if the org runs no AI itself.",
+    "DE.CM-06": "Providers you rely on may start using AI agents, MCP servers or models that touch your data without a change to your contract. Monitor supplier behavior for changes in capabilities or authorization behavior and for relevant advisories.",
+    "DE.AE-02": "Automated activity from outside, including AI-enabled attackers, can arrive at machine speed and look like routine successful requests. Analysis of adverse events should look at how identities are used and at unusual sequences of actions, not only at errors.",
+    "RS.MA-01": "Traditional playbooks may not match the speed of AI-enabled attackers and automated agents. Plans should allow containment steps that can run quickly, such as token revocation and blocking access at the gateway.",
+    "RS.AN-03": "Root cause analysis for incidents involving agents needs a chain of events that includes tool calls and parameters, resource access, capability changes, authorization decisions and, where available, tool outputs and memory state. Without such records, it is hard to tell what happened."
+  }
+}

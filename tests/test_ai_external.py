@@ -82,12 +82,30 @@ class ExternalBank(unittest.TestCase):
         self.assertEqual(X.stored_bank_problems(), [])
 
     def test_a_persons_decision_is_kept(self):
+        self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}), 0)
         doc = json.loads(X.AI_BANK_EXTERNAL.read_text())
         doc["subcategories"]["PR.AA-05"]["decided_by"] = "human"
         X.AI_BANK_EXTERNAL.write_text(json.dumps(doc))
         self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}), 1)
         self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}, replace_human=True), 0)
         self.assertNotIn("decided_by", self.bank()["PR.AA-05"])
+
+    def test_a_threat_needing_review_gets_questions_only_once_a_person_accepts_it(self):
+        doc = json.loads(X.AI_BANK_EXTERNAL.read_text())
+        doc["subcategories"]["PR.AA-05"].update({"status": "needs_human_review", "review_reasons": {"0": "check it"}})
+        X.AI_BANK_EXTERNAL.write_text(json.dumps(doc))
+        self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}), 1)          # not accepted yet
+        lines = X.sheet_rows(doc)
+        line = next(ln for ln in lines if ln["subcategory"] == "PR.AA-05")
+        self.assertEqual((line["status"], line["review_reason"]), ("needs_human_review", "Whole subcategory: check it"))
+        self.assertEqual(X.from_sheet(lines, doc)[1:], ([], 0))                # unchanged: still to review
+        accepted = [dict(ln, status="pass") if ln is line else ln for ln in lines]
+        new, problems, changed = X.from_sheet(accepted, doc)
+        self.assertEqual((problems, changed), ([], 1))
+        self.assertEqual(new["subcategories"]["PR.AA-05"]["status"], "pass")
+        self.assertNotIn("review_reasons", new["subcategories"]["PR.AA-05"])
+        X.AI_BANK_EXTERNAL.write_text(json.dumps(new))
+        self.assertEqual(self.record({"PR.AA-05": self.entry(Q)}), 0)          # accepted: questions may be written
 
     def test_completeness(self):
         doc = json.loads(X.AI_BANK_EXTERNAL.read_text())

@@ -97,9 +97,9 @@ def check_questions(sid: str, qs, r: dict) -> list[str]:
 def validate_external(data, replace_human: bool = False) -> list[str]:
     """The assembled file (record_bank.py ai-assemble --kind external): {subcategory: {status, turns, questions,
     reasons}}. A subcategory must be in the bank with a threat; it gets questions_per_subcategory min to max distinct
-    questions; needs_human_review carries the evaluator's reasons by question number. A subcategory a person decided
-    in the review sheet is refused unless replace_human. Whether a question asks about the threat is the evaluator's
-    job."""
+    questions; needs_human_review carries the evaluator's reasons by question number. Refused: a subcategory with no
+    questions yet that still needs human review (its threat is not accepted), and one whose questions a person decided
+    in the review sheet, unless replace_human. Whether a question asks about the threat is the evaluator's job."""
     if not isinstance(data, dict) or not data:
         return ["the file must be a non-empty JSON object keyed by CSF subcategory id"]
     bank, r, errors = load_bank()["subcategories"], rules(), []
@@ -107,7 +107,11 @@ def validate_external(data, replace_human: bool = False) -> list[str]:
         if sid not in bank:
             errors.append(f"{sid}: not in the External AI bank (a subcategory starts with a threat a person decided)")
             continue
-        if bank[sid].get("decided_by") == "human" and not replace_human:
+        if not bank[sid].get("questions") and bank[sid].get("status") == "needs_human_review":
+            errors.append(f"{sid}: its threat needs human review; questions are written once a person sets it pass in "
+                          "the review sheet")
+            continue
+        if bank[sid].get("questions") and bank[sid].get("decided_by") == "human" and not replace_human:
             errors.append(f"{sid}: decided by a person in the review sheet; leave it out of the batch, or pass "
                           "--replace-human if the person agreed to regenerate it")
             continue
@@ -225,7 +229,7 @@ def from_sheet(lines: list[dict], doc: dict) -> tuple[dict, list[str], int]:
     or delete question lines, set Status, add a subcategory (one NIST links to CIS v8.1, with its threat; its questions
     may be left blank for /build-ai-bank to write) or drop one (delete all its lines). Every line of a subcategory carries
     the same threat. A changed subcategory is stored as decided_by human; clearing its questions leaves it for the
-    next build."""
+    next build. A subcategory with no questions yet carries a status too (its threat reviewed or not)."""
     from ai_questions import reason_from_lines
     links, active, r = cis_links(), outcomes(), rules()
     by_sub: dict[str, list[dict]] = {}
@@ -243,17 +247,16 @@ def from_sheet(lines: list[dict], doc: dict) -> tuple[dict, list[str], int]:
         qs = [{"question_text": str(ln["question_text"]).strip()} for ln in asked]
         if qs:
             problems += check_questions(sid, qs, r)
-        parts = reason_from_lines(asked)
+        parts = reason_from_lines(asked or sub_lines[:1])
         old = doc["subcategories"].get(sid)
         status = "needs_human_review" if parts else "pass"
         old_parts = old.get("review_reasons", {}) if old and old.get("status") == "needs_human_review" else {}
-        if old and old["threat"] == threat and (old.get("questions") or []) == qs and (
-                not qs or (old.get("status") == status and parts == old_parts)):
+        if old and old["threat"] == threat and (old.get("questions") or []) == qs and \
+                old.get("status", "pass") == status and parts == old_parts:
             continue
-        e = {"threat": threat, "decided_by": "human"}
+        e = {"threat": threat, "decided_by": "human", "status": status, **({"review_reasons": parts} if parts else {})}
         if qs:
-            e.update({"status": status, "turns": (old or {}).get("turns", 1), "questions": qs,
-                      **({"review_reasons": parts} if parts else {})})
+            e.update({"turns": (old or {}).get("turns", 1), "questions": qs})
         new["subcategories"][sid] = e
         changed.append(sid)
     for sid in set(doc["subcategories"]) - set(by_sub):   # all its lines deleted: dropped
