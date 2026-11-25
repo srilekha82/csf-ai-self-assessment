@@ -108,7 +108,7 @@
       ]
     },
     "GV.SC-09": {
-      "threat": "AI often arrives through a product update, sometimes switched on by default, in software and services you already run. Your change and update processes should spot an update that adds AI or lets it act on your data or systems, and decide whether to turn it on before it is used, rather than treating it as a routine version change.",
+      "threat": "AI can arrive through a product or service update, sometimes switched on by default, in what you already run. Supply chain security practices in your cybersecurity and enterprise risk programmes should treat such an update as a change to assess, and monitoring over the product and service life cycle should notice when AI is added or starts acting on your data or systems.",
       "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
@@ -372,5 +372,5 @@
       }
     }
   },
-  "source_sha": "9efdf0633c728428"
+  "source_sha": "ab62c749ad748b01"
 }
