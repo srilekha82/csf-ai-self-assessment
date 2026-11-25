@@ -69,7 +69,7 @@
       ]
     },
     "GV.SC-06": {
-      "threat": "Due diligence usually relies on general security questionnaires and reports (for example SIG, CSA's CAIQ, a SOC 2 report or an ISO 27001 certificate). They ask how a supplier protects data and access, and may not ask whether AI acts with that access. For a supplier that will reach your systems or data, ask whether a model, agents or MCP tools decide what is done with them, which model providers and tool services that AI relies on, and how it is limited and watched. AI-specific sources exist: CSA's AI-CAIQ questionnaire, and ISO/IEC 42001 certification of an AI management system.",
+      "threat": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. For a supplier that will reach your systems or data, ask whether a model, agents or MCP tools decide what is done with them, which model providers and tool services that AI relies on, and how it is limited and watched.",
       "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
@@ -369,5 +369,5 @@
       }
     }
   },
-  "source_sha": "d928b4261c835add"
+  "source_sha": "8032ef64ebfda789"
 }
