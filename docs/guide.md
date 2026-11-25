@@ -292,7 +292,7 @@ One folder per engagement. It holds client data, so keep it out of any shared re
 - **Stage 1 code is built.** The CSF banks are to be rebuilt from CISA's CSET (`/build-csf-bank`; every subcategory
   starts with CSET's own CSF 2.0 question). AI RMF: the sources are parsed (72 subcategories, 459 safeguards), the AI
   areas, intake and mapping are built, and both question banks (foundation, areas) are built and reviewed; the
-  invisible usage area is to be re-mapped (outside AI moved to External AI). External AI: 25 threats wait for review
+  invisible usage area is to be re-mapped (outside AI moved to External AI). External AI: 24 threats wait for review
   in `questions_external.xlsx`; their questions are built by `/build-ai-bank` once accepted.
 - The client run has been tested end to end with the scripts (tests and scratch runs); a run with a real organisation
   has not been done yet.
