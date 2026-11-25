@@ -56,16 +56,17 @@
       ]
     },
     "GV.SC-05": {
-      "threat": "Suppliers may begin using AI agents or tools on your data. Contracts should set data handling and retention terms, breach notification and rapid revocation of access, so a supplier's change in technology does not weaken your protections.",
+      "threat": "Contracts were written for a supplier's people and fixed software acting with the access you gave them. When the supplier adds AI that decides what to do with that access, the contract may not cover it: no notice that AI now acts on your systems or data, no limit on what it may do, no record of its actions you can see, and no responsibility for what it does when it is steered or compromised. Contracts should cover these, and name the model providers and tool services the supplier's AI relies on.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.4",
         "MCP-15.4",
         "AGENT-15.4"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-06": {
       "threat": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. Standard questionnaires may not cover this.",
@@ -367,5 +368,5 @@
       }
     }
   },
-  "source_sha": "9a0b521709691814"
+  "source_sha": "19aeb2aec089bce1"
 }
