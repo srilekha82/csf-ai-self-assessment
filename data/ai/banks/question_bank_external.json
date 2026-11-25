@@ -108,16 +108,17 @@
       ]
     },
     "GV.SC-09": {
-      "threat": "Suppliers can add AI features to products you already use. Supply chain monitoring over the life cycle should notice version changes, new capabilities and changed authorization behavior in what they provide.",
+      "threat": "AI often arrives through a product update, sometimes switched on by default, in software and services you already run. Your change and update processes should spot an update that adds AI or lets it act on your data or systems, and decide whether to turn it on before it is used, rather than treating it as a routine version change.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.6",
         "MCP-15.6",
         "AGENT-15.6"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-10": {
       "threat": "When a relationship ends, AI-related leftovers can remain: authorizations, tokens, federated identities and data flows. Derived items such as embeddings, tuned model weights and session logs may also persist, so exit steps should cover them.",
@@ -371,5 +372,5 @@
       }
     }
   },
-  "source_sha": "186f8e5f02a25416"
+  "source_sha": "9efdf0633c728428"
 }
