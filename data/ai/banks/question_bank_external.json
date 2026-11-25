@@ -14,7 +14,7 @@
       }
     },
     "GV.SC-01": {
-      "threat": "Suppliers and the third-party systems you use may put your data through AI without telling you: sending it to their own model provider, using it to train or tune models, or keeping it in AI logs and memory. Your data can be exposed this way even if you use no AI yourself, so supply chain policy should say how suppliers may use AI with your data and require them to tell you before they start.",
+      "threat": "A supplier's system that already has legitimate access to your data and systems (for example an RPA tool connected to your ERP) may add AI to how it works: a model deciding the next step, or agents and MCP tools acting with that access. If that AI layer is compromised, for example by instructions hidden in the data it reads, the supplier's legitimate access is used against you, at machine speed. Supply chain policy should require suppliers to tell you where AI acts with their access to your systems, and how that access is limited.",
       "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
@@ -365,5 +365,5 @@
       }
     }
   },
-  "source_sha": "a064c8805113c4c9"
+  "source_sha": "80488b51d246c857"
 }
