@@ -13,21 +13,6 @@
         "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
       }
     },
-    "GV.RR-04": {
-      "threat": "People who join, move or leave may have connected agents or tools to company systems, with delegated access that outlives them. Joiner, mover and leaver steps need to cover agent identities and their credentials, so access is revoked and entitlements removed.",
-      "cis_refs": [
-        "LLM-6.1",
-        "LLM-6.2",
-        "MCP-6.1",
-        "MCP-6.2",
-        "AGENT-6.1",
-        "AGENT-6.2"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
     "GV.SC-01": {
       "threat": "Suppliers can adopt agents and AI services that handle your data, so supply chain policy should set requirements even if you use no AI. These include limiting provider access to the data needed and preventing sensitive data from reaching providers without safeguards.",
       "cis_refs": [
@@ -379,5 +364,5 @@
       }
     }
   },
-  "source_sha": "0490cbd4d091f8ca"
+  "source_sha": "2b1949ede6b2baca"
 }
