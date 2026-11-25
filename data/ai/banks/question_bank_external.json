@@ -205,7 +205,12 @@
       ]
     },
     "DE.CM-06": {
-      "threat": "Providers you rely on may start using AI agents, MCP servers or models that touch your data without a change to your contract. Monitor supplier behavior for changes in capabilities or authorization behavior and for relevant advisories.",
+      "threat": "A supplier's AI acting with access to your systems can be steered and still use that access legitimately, so nothing looks unauthorised. Monitoring of the supplier's activity should watch what its access actually does on your systems, such as unusual volumes, new kinds of action or reaching data outside its normal pattern, so a compromised supplier AI is noticed while it acts.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.2",
         "LLM-15.6",
@@ -213,11 +218,7 @@
         "MCP-15.6",
         "AGENT-15.2",
         "AGENT-15.6"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "DE.AE-02": {
       "threat": "Automated activity from outside, including AI-enabled attackers, can arrive at machine speed and look like routine successful requests. Analysis of adverse events should look at how identities are used and at unusual sequences of actions, not only at errors.",
@@ -256,5 +257,5 @@
       }
     }
   },
-  "source_sha": "5c21e2d22979f5a5"
+  "source_sha": "c267b823f6aad539"
 }
