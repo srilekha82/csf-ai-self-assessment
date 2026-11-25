@@ -26,6 +26,19 @@
         "AGENT-15.2"
       ]
     },
+    "GV.SC-02": {
+      "threat": "When a supplier's AI acts with access to your systems or data, who does what must be clear on both sides: who approves that AI acting, who limits and reviews its access, who watches what it does, and who switches it off and tells you when it is compromised. Roles with suppliers should name an owner for each.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
+      "cis_refs": [
+        "LLM-15.4",
+        "MCP-15.4",
+        "AGENT-15.4"
+      ]
+    },
     "GV.SC-04": {
       "threat": "A supplier that uses AI on your data adds new points where it can be compromised: the model provider it calls, the agents and MCP tools acting with its access, and the prompts, logs and memory that hold your data along the way. The data's sensitivity and the impact of a leak do not change; the number of places it can leak from does. Knowing your suppliers now includes knowing where AI sits in how they handle your data.",
       "decided_by": "human",
@@ -354,5 +367,5 @@
       }
     }
   },
-  "source_sha": "97693360923c1727"
+  "source_sha": "9a0b521709691814"
 }
