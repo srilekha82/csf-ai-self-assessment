@@ -69,16 +69,17 @@
       ]
     },
     "GV.SC-06": {
-      "threat": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. Standard questionnaires may not cover this.",
+      "threat": "Due diligence usually relies on general security questionnaires and reports (for example SIG, CSA's CAIQ, a SOC 2 report or an ISO 27001 certificate). They ask how a supplier protects data and access, and may not ask whether AI acts with that access. For a supplier that will reach your systems or data, ask whether a model, agents or MCP tools decide what is done with them, which model providers and tool services that AI relies on, and how it is limited and watched. AI-specific sources exist: CSA's AI-CAIQ questionnaire, and ISO/IEC 42001 certification of an AI management system.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.5",
         "MCP-15.5",
         "AGENT-15.5"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-07": {
       "threat": "A supplier's risk can change quickly when they add AI features, change capabilities or alter authorization behavior, even without a new contract. Ongoing monitoring should look for such changes and for relevant advisories.",
@@ -368,5 +369,5 @@
       }
     }
   },
-  "source_sha": "19aeb2aec089bce1"
+  "source_sha": "d928b4261c835add"
 }
