@@ -95,16 +95,17 @@
       ]
     },
     "GV.SC-08": {
-      "threat": "Suppliers that use AI agents or models need to be part of incident planning, because an agent incident at a supplier can move at machine speed. Agree on incident response SLAs and contacts in advance.",
+      "threat": "Where a supplier's AI (a model, agents or MCP tools) acts with access to your systems or data, an incident in that AI is an incident on your systems. Ask for the supplier's incident response plan and check it covers that AI: how they detect it was steered or compromised, how quickly they stop it and revoke its access to your systems, and when they tell you. Where a supplier's incident plan is already part of your assessment, ask for its AI part too.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.4",
         "MCP-15.4",
         "AGENT-15.4"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-09": {
       "threat": "Suppliers can add AI features to products you already use. Supply chain monitoring over the life cycle should notice version changes, new capabilities and changed authorization behavior in what they provide.",
@@ -370,5 +371,5 @@
       }
     }
   },
-  "source_sha": "228599a9d84f664a"
+  "source_sha": "186f8e5f02a25416"
 }
