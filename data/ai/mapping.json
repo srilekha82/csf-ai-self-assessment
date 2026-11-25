@@ -4,7 +4,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "71032c8a05d1332f",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -59,10 +59,10 @@
           ],
           "why": "The likelihood and size of both the costs and the benefits of AI output in internal decisions (HR, finance, approvals, operations) are examined, using past use and feedback, so high-impact decisions are identified.",
           "status": "pass",
+          "decided_by": "human",
           "folded": [
             "MAP 5.1"
-          ],
-          "decided_by": "human"
+          ]
         },
         {
           "function": "MAP",
@@ -207,7 +207,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "2502866267e1de21",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -241,11 +241,11 @@
             "assets"
           ],
           "why": "The human review that AI-generated code must pass before it is merged or reaches production is defined, assigned and shown to be followed, with reviewers told that such code can be wrong or insecure.",
+          "status": "pass",
+          "decided_by": "agent",
           "folded": [
             "MAP 2.2"
-          ],
-          "status": "pass",
-          "decided_by": "agent"
+          ]
         },
         {
           "function": "MAP",
@@ -371,7 +371,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "d3c029e3b186c889",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -666,7 +666,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "fcd878f59fe510e5",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -739,10 +739,10 @@
           ],
           "why": "The risks of each vendor's AI are assessed and documented before and during use: its model provider, data retention and training use, terms of service, the vendor's security and tenant isolation, and what happens when the AI feature fails or is unavailable.",
           "status": "pass",
+          "decided_by": "human",
           "folded": [
             "MEASURE 2.7"
-          ],
-          "decided_by": "human"
+          ]
         },
         {
           "function": "MAP",
@@ -875,7 +875,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "5edaa08d05776bef",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1114,10 +1114,10 @@
       ]
     },
     "invisible_usage": {
-      "recorded_on": "2026-10-27",
+      "recorded_on": "2026-11-25",
       "inputs": {
-        "area": "edc67dc4d018b581",
-        "ai_areas": "60f81170c8ff6fbd",
+        "area": "bd68e429a57b3433",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1127,6 +1127,17 @@
         }
       },
       "rows": [
+        {
+          "function": "MAP",
+          "subcategory": "MAP 1.4",
+          "cis_refs": [],
+          "impact": [
+            "data"
+          ],
+          "why": "When unapproved AI use is found, the business need or use that drove staff to it is recorded and re-evaluated against the organisation's purpose for AI.",
+          "status": "pass",
+          "decided_by": "agent"
+        },
         {
           "function": "MAP",
           "subcategory": "MAP 3.1",
@@ -1162,14 +1173,17 @@
           "subcategory": "MAP 4.2",
           "cis_refs": [
             "LLM-2.5",
+            "MCP-2.5",
+            "AGENT-2.5",
             "LLM-9.2",
-            "LLM-9.4"
+            "LLM-9.4",
+            "MCP-9.4"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "The org has controls that decide which AI services, browser extensions and software are allowed (safelists, DNS and extension limits) and applies them to third-party AI.",
+          "why": "Controls that keep staff to vetted AI services and components are identified and applied, such as allowlists of approved AI software and sources, extension control and blocking of unapproved AI services.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1185,19 +1199,34 @@
           "decided_by": "human"
         },
         {
-          "function": "MEASURE",
-          "subcategory": "MEASURE 2.4",
+          "function": "MAP",
+          "subcategory": "MAP 5.2",
           "cis_refs": [
-            "LLM-8.6",
-            "LLM-8.12",
-            "LLM-13.1",
-            "LLM-1.5"
+            "LLM-1.2"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "The org watches in practice for new unapproved AI use and for outside agents or MCP clients reaching its systems, using network, DNS and provider telemetry with alerts.",
+          "why": "Staff are engaged regularly, for example through surveys, an amnesty or a request channel, to learn which AI tools they use and the needs behind them, and that feedback is recorded, surfacing shadow use that technical discovery misses.",
+          "status": "pass",
+          "decided_by": "agent"
+        },
+        {
+          "function": "MEASURE",
+          "subcategory": "MEASURE 2.4",
+          "cis_refs": [
+            "LLM-1.5",
+            "LLM-8.6",
+            "LLM-3.13",
+            "MCP-13.7",
+            "LLM-13.1"
+          ],
+          "impact": [
+            "data",
+            "access"
+          ],
+          "why": "Use of unapproved AI services and newly installed AI software is monitored continuously, for example through DNS, traffic, endpoint and DLP signals, so new shadow use is detected.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1205,14 +1234,16 @@
           "function": "MEASURE",
           "subcategory": "MEASURE 2.7",
           "cis_refs": [
-            "LLM-13.3",
-            "MCP-13.10",
-            "AGENT-13.10"
+            "LLM-9.2",
+            "LLM-2.5",
+            "MCP-2.5",
+            "MCP-13.7"
           ],
           "impact": [
+            "data",
             "access"
           ],
-          "why": "The org tests and measures how its systems hold up to outside agents, scrapers and MCP clients acting on behalf of users at machine speed (authentication, throttling, filtering).",
+          "why": "The controls that block unapproved AI services, extensions and self-installed AI software are tested to confirm they work and cannot simply be bypassed.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1223,13 +1254,14 @@
             "LLM-8.1",
             "LLM-8.2",
             "LLM-8.6",
-            "MCP-8.2"
+            "LLM-8.11",
+            "MCP-8.8"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "Logs record which AI services staff reach and which outside agents or MCP clients call org systems and under whose identity, so activity can be traced and accounted for.",
+          "why": "Logs attribute use of AI services and execution of self-installed AI software to a person, and are reviewed, so unapproved use can be traced and accounted for.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1237,31 +1269,27 @@
           "function": "MEASURE",
           "subcategory": "MEASURE 2.10",
           "cis_refs": [
-            "LLM-3.13",
-            "LLM-3.14",
-            "LLM-3.7"
+            "LLM-3.2",
+            "LLM-3.13"
           ],
           "impact": [
             "data"
           ],
-          "why": "The org checks whether personal, regulated or confidential data is being sent to unapproved AI tools, for example through data loss prevention on AI traffic.",
+          "why": "Personal and sensitive data sent to unapproved AI tools is detected and examined, so the privacy exposure from shadow use is known.",
           "status": "pass",
           "decided_by": "agent"
         },
         {
           "function": "MANAGE",
-          "subcategory": "MANAGE 2.3",
+          "subcategory": "MANAGE 1.1",
           "cis_refs": [
-            "LLM-17.3",
-            "LLM-17.4",
-            "LLM-17.1",
-            "LLM-14.6"
+            "LLM-1.2"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "The org has a followed procedure for responding to and recovering from data leaving through unapproved AI or an outside agent misusing access, including how staff report it.",
+          "why": "For each unapproved AI tool or experiment found, a decision is made and recorded whether it is brought into approval or must stop.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1270,15 +1298,18 @@
           "subcategory": "MANAGE 2.4",
           "cis_refs": [
             "LLM-2.3",
-            "LLM-6.2",
             "MCP-1.2",
-            "AGENT-1.2"
+            "MCP-2.3",
+            "AGENT-1.2",
+            "AGENT-2.3",
+            "LLM-9.2",
+            "MCP-13.7"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "The org can switch off or block an unapproved AI tool or an outside agent or MCP client, and revoke the access it holds, once found.",
+          "why": "Unapproved AI tools, extensions, local models and MCP servers can be blocked, removed or quarantined, with someone responsible for doing it.",
           "status": "pass",
           "decided_by": "agent"
         },
@@ -1287,14 +1318,16 @@
           "subcategory": "MANAGE 4.3",
           "cis_refs": [
             "LLM-17.3",
-            "LLM-17.8",
-            "LLM-17.2"
+            "LLM-14.6",
+            "LLM-17.4",
+            "MCP-17.4",
+            "LLM-17.8"
           ],
           "impact": [
             "data",
             "access"
           ],
-          "why": "Incidents and near-misses from unapproved AI use or outside agents are recorded, communicated to those affected and reviewed afterwards.",
+          "why": "Incidents from unapproved AI use, such as sensitive data entered into a public tool or a malicious plugin or MCP server, are reported, tracked, contained and reviewed.",
           "status": "pass",
           "decided_by": "agent"
         }
@@ -1308,7 +1341,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "9f3c72762ddcb271",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1377,10 +1410,10 @@
           ],
           "why": "Personal and sensitive data in prompts and files, and what staff and systems send in production (volumes, file types, unexpected input), are monitored, with alerts when sensitive data appears or leaves the org.",
           "status": "pass",
+          "decided_by": "human",
           "folded": [
             "MEASURE 2.4"
-          ],
-          "decided_by": "human"
+          ]
         },
         {
           "function": "MANAGE",
@@ -1447,7 +1480,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "af79eeb1efae925f",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1539,10 +1572,10 @@
           ],
           "why": "The test sets, metrics and tools used to test answers for accuracy, consistency and bias are documented, with how the test data was chosen and why the tests measure what they claim.",
           "status": "pass",
+          "decided_by": "human",
           "folded": [
             "MAP 2.3"
-          ],
-          "decided_by": "human"
+          ]
         },
         {
           "function": "MEASURE",
@@ -1797,7 +1830,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "31331fee76d0bdf4",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1970,7 +2003,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "4b50a4644e0128d4",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2087,7 +2120,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "bfada52e60156651",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2312,7 +2345,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "5c4e0bb1cd790114",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2583,7 +2616,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "189474f38c7c8d3e",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2676,10 +2709,10 @@
           ],
           "why": "The components an agent is built on (models, orchestration frameworks, libraries, executors) are inventoried and held to approved versions, with their legal, IP and supply-chain risks documented.",
           "status": "pass",
+          "decided_by": "human",
           "folded": [
             "MAP 4.1"
-          ],
-          "decided_by": "human"
+          ]
         },
         {
           "function": "MAP",
@@ -2933,7 +2966,7 @@
       "recorded_on": "2026-10-27",
       "inputs": {
         "area": "68333f7b40f68baf",
-        "ai_areas": "60f81170c8ff6fbd",
+        "ai_areas": "aaffd3a05ca74315",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -3168,5 +3201,5 @@
       ]
     }
   },
-  "source_sha": "9dbce1f3a4015bfa"
+  "source_sha": "19519fb4c9115938"
 }
