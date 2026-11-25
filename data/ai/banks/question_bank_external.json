@@ -220,42 +220,32 @@
         "AGENT-15.6"
       ]
     },
-    "DE.AE-02": {
-      "threat": "Automated activity from outside, including AI-enabled attackers, can arrive at machine speed and look like routine successful requests. Analysis of adverse events should look at how identities are used and at unusual sequences of actions, not only at errors.",
-      "cis_refs": [
-        "LLM-8.11",
-        "MCP-8.11",
-        "AGENT-8.11"
-      ],
+    "RS.MA-01": {
+      "threat": "An incident caused by AI from outside (a customer's, partner's or supplier's agent steered by content it read, or an AI-enabled attack) needs its own steps in the response plan: revoke the agent's access without locking out the person it acts for, stop a supplier's AI through the supplier's agreed contacts, and quarantine the content that steered it so it cannot steer the next agent. These attacks keep changing, so the plan should be updated from each new case, your own and those reported publicly.",
+      "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
         "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
-    "RS.MA-01": {
-      "threat": "Traditional playbooks may not match the speed of AI-enabled attackers and automated agents. Plans should allow containment steps that can run quickly, such as token revocation and blocking access at the gateway.",
+      },
       "cis_refs": [
         "LLM-17.4",
         "MCP-17.4",
         "AGENT-17.4"
-      ],
+      ]
+    },
+    "RS.AN-03": {
+      "threat": "When an outside or supplier AI agent causes harm with valid access, the root cause is often content it read (an email, document or web page with hidden instructions), not a stolen credential. Analysis should trace the agent's actions back to that content, using logs that record which agent acted, for whom, what it read and what it did. New ways of steering AI keep appearing, so what each incident shows should be recorded and fed back into detection and the response plan.",
+      "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
         "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
-    "RS.AN-03": {
-      "threat": "Root cause analysis for incidents involving agents needs a chain of events that includes tool calls and parameters, resource access, capability changes, authorization decisions and, where available, tool outputs and memory state. Without such records, it is hard to tell what happened.",
+      },
       "cis_refs": [
         "LLM-17.8",
         "MCP-17.8",
         "AGENT-17.8"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     }
   },
-  "source_sha": "c267b823f6aad539"
+  "source_sha": "402d18a464326404"
 }
