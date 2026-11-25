@@ -3,23 +3,18 @@
   "subcategories": {
     "GV.RR-02": {
       "threat": "Roles and authorities for handling cybersecurity risk should be clear enough to cover new kinds of outside automated activity, such as agents calling your services. Someone needs the authority to block or disable access quickly when it is abused.",
+      "decided_by": "human",
+      "status": "pass",
       "cis_refs": [
         "LLM-14.9",
         "MCP-14.9",
         "AGENT-14.9"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-01": {
       "threat": "A supplier's system that already has legitimate access to your data and systems (for example one connected to your ERP to run business processes) may add AI to how it works: a model deciding the next step, or agents and MCP tools acting with that access. If that AI layer is compromised, for example by instructions hidden in the data it reads, the supplier's legitimate access is used against you, at machine speed. Supply chain policy should require suppliers to tell you where AI acts with their access to your systems, and how that access is limited.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.2",
         "MCP-15.2",
@@ -29,10 +24,7 @@
     "GV.SC-02": {
       "threat": "When a supplier's AI acts with access to your systems or data, who does what must be clear on both sides: who approves that AI acting, who limits and reviews its access, who watches what it does, and who switches it off and tells you when it is compromised. Roles with suppliers should name an owner for each.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.4",
         "MCP-15.4",
@@ -42,10 +34,7 @@
     "GV.SC-04": {
       "threat": "A supplier that uses AI on your data adds new points where it can be compromised: the model provider it calls, the agents and MCP tools acting with its access, and the prompts, logs and memory that hold your data along the way. The data's sensitivity and the impact of a leak do not change; the number of places it can leak from does. Knowing your suppliers now includes knowing where AI sits in how they handle your data.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.1",
         "LLM-15.3",
@@ -58,10 +47,7 @@
     "GV.SC-05": {
       "threat": "Contracts were written for a supplier's people and fixed software acting with the access you gave them. When the supplier adds AI that decides what to do with that access, the contract may not cover it: no notice that AI now acts on your systems or data, no limit on what it may do, no record of its actions you can see, and no responsibility for what it does when it is steered or compromised. Contracts should cover these, and name the model providers and tool services the supplier's AI relies on.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.4",
         "MCP-15.4",
@@ -71,10 +57,7 @@
     "GV.SC-06": {
       "threat": "Due diligence on a new supplier should ask whether and how they use AI agents or tools on customer data. For a supplier that will reach your systems or data, ask whether a model, agents or MCP tools decide what is done with them, which model providers and tool services that AI relies on, and how it is limited and watched.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.5",
         "MCP-15.5",
@@ -84,10 +67,7 @@
     "GV.SC-07": {
       "threat": "A supplier's risk can change quickly when they add AI features, change capabilities or alter authorization behavior, even without a new contract. Ongoing monitoring should look for such changes and for relevant advisories, and treat such a change as a reason to reassess the supplier.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.6",
         "MCP-15.6",
@@ -97,10 +77,7 @@
     "GV.SC-08": {
       "threat": "Where a supplier's AI (a model, agents or MCP tools) acts with access to your systems or data, an incident in that AI is an incident on your systems. Ask for the supplier's incident response plan and check it covers that AI: how they detect it was steered or compromised, how quickly they stop it and revoke its access to your systems, and when they tell you. Where a supplier's incident plan is already part of your assessment, ask for its AI part too.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.4",
         "MCP-15.4",
@@ -110,10 +87,7 @@
     "GV.SC-09": {
       "threat": "AI often arrives through a product update, sometimes switched on by default, in software and services you already run. Your change and update processes should spot an update that adds AI or lets it act on your data or systems, and decide whether to turn it on before it is used, rather than treating it as a routine version change.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.6",
         "MCP-15.6",
@@ -123,10 +97,7 @@
     "GV.SC-10": {
       "threat": "When a relationship ends, the access given to the supplier's AI can remain: agent and MCP tool tokens, authorizations and data flows. Derived items such as embeddings, tuned model weights and session logs may also persist, so plans for the end of a supplier relationship should cover them.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.7",
         "MCP-15.7",
@@ -136,10 +107,7 @@
     "ID.AM-02": {
       "threat": "Calls from outside to your systems can now come from bots and AI agents as well as people. Applications were always reachable through their APIs; an MCP server or API in front of your infrastructure makes cloud resources and devices reachable too. Your inventory of software, services and systems should record which of them outside callers can reach, and through what interface, so every entry point is known.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-2.1",
         "MCP-2.1",
@@ -149,10 +117,7 @@
     "ID.AM-04": {
       "threat": "A supplier's service may rely on AI you cannot see: models from other providers, hosted tool services and MCP servers. Your inventory of supplier services should record, for each service, the AI it relies on, who provides it, and whether that AI acts with your access or only processes your data, and keep this current, for example from an AI bill of materials the supplier provides.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.1",
         "MCP-15.1",
@@ -162,10 +127,7 @@
     "ID.RA-08": {
       "threat": "Disclosures about MCP and agent components can affect you even if you do not run AI yourself, for example via suppliers or software you depend on. Handling should prioritize by exploitability, privileges and exposure, and by the criticality of the systems and data the affected component can reach, with remediation timelines.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-7.2",
         "MCP-7.2",
@@ -175,10 +137,7 @@
     "PR.AA-05": {
       "threat": "Outside AI agents can act on your systems with access your users, customers or partners delegated to them. Unlike a fixed integration, an agent decides what to do itself and can be steered by content it reads, so it may use everything that access allows, at machine speed. Least privilege should apply to delegated access: what can be delegated to an outside agent should be narrower than the person's own access, for example read-only or limited actions, with high-impact actions needing the person's confirmation.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-3.3",
         "LLM-5.1",
@@ -194,10 +153,7 @@
     "PR.AT-01": {
       "threat": "AI lets attackers write fluent, personal messages at scale and fake the voice or video of a manager or supplier, so the usual warning signs (poor wording, an unknown voice) are gone. Awareness training should teach staff to check any request for money, access or data through a second, known channel, however genuine it looks or sounds.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-14.1",
         "MCP-14.1",
@@ -207,10 +163,7 @@
     "DE.CM-06": {
       "threat": "A supplier's AI acting with access to your systems can be steered and still use that access legitimately, so nothing looks unauthorised. Monitoring of the supplier's activity should watch what its access actually does on your systems, such as unusual volumes, new kinds of action or reaching data outside its normal pattern, so a compromised supplier AI is noticed while it acts.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-15.2",
         "LLM-15.6",
@@ -223,10 +176,7 @@
     "RS.MA-01": {
       "threat": "An incident caused by AI from outside (a customer's, partner's or supplier's agent steered by content it read, or an AI-enabled attack) needs its own steps in the response plan: revoke the agent's access without locking out the person it acts for, stop a supplier's AI through the supplier's agreed contacts, and quarantine the content that steered it so it cannot steer the next agent. These attacks keep changing, so the plan should be updated from each new case, your own and those reported publicly.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-17.4",
         "MCP-17.4",
@@ -236,10 +186,7 @@
     "RS.AN-03": {
       "threat": "When an outside or supplier AI agent causes harm with valid access, the root cause is often content it read (an email, document or web page with hidden instructions), not a stolen credential. Analysis should trace the agent's actions back to that content, using logs that record which agent acted, for whom, what it read and what it did. New ways of steering AI keep appearing, so what each incident shows should be recorded and fed back into detection and the response plan.",
       "decided_by": "human",
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      },
+      "status": "pass",
       "cis_refs": [
         "LLM-17.8",
         "MCP-17.8",
@@ -247,5 +194,5 @@
       ]
     }
   },
-  "source_sha": "402d18a464326404"
+  "source_sha": "359aa1dda3bdd68a"
 }
