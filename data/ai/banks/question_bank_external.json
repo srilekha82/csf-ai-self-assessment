@@ -204,18 +204,6 @@
         "AGENT-14.1"
       ]
     },
-    "PR.PS-04": {
-      "threat": "Logs need to record MCP and agent activity such as tool calls, data accesses, authorization decisions, token events and attempted policy violations. Without them, activity by an external agent acting on a user's behalf cannot be reconstructed.",
-      "cis_refs": [
-        "LLM-8.2",
-        "MCP-8.2",
-        "AGENT-8.2"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
     "PR.PS-05": {
       "threat": "Unauthorized MCP servers, tool wrappers and agent components can be installed by individuals and run with their privileges. Use deny-by-default allowlists with integrity checks and install only from approved registries or repositories.",
       "cis_refs": [
@@ -303,5 +291,5 @@
       }
     }
   },
-  "source_sha": "6a68d5b349de99d3"
+  "source_sha": "6df8c3fd4bba866a"
 }
