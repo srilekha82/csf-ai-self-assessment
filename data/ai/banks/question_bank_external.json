@@ -172,24 +172,6 @@
         "AGENT-7.2"
       ]
     },
-    "PR.AA-01": {
-      "threat": "Agents and tools can authenticate with service accounts, API keys or delegated credentials that sit outside normal user lifecycles. The identity inventory and central management need to cover them, preferably through the enterprise identity provider.",
-      "cis_refs": [
-        "LLM-5.1",
-        "LLM-5.6",
-        "LLM-6.7",
-        "MCP-5.1",
-        "MCP-5.6",
-        "MCP-6.7",
-        "AGENT-5.1",
-        "AGENT-5.6",
-        "AGENT-6.7"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
     "PR.AA-05": {
       "threat": "Agents can call APIs or sign in on behalf of users at machine speed, so permissions sized for humans may be too broad. Roles, scopes and actual tool usage need regular review, with unused or excessive permissions revoked.",
       "cis_refs": [
@@ -349,5 +331,5 @@
       }
     }
   },
-  "source_sha": "d9db0bf82cf2a438"
+  "source_sha": "2a134ddd94b62c25"
 }
