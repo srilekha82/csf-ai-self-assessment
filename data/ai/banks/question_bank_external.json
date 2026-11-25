@@ -173,7 +173,12 @@
       ]
     },
     "PR.AA-05": {
-      "threat": "Agents can call APIs or sign in on behalf of users at machine speed, so permissions sized for humans may be too broad. Roles, scopes and actual tool usage need regular review, with unused or excessive permissions revoked.",
+      "threat": "Outside AI agents can act on your systems with access your users, customers or partners delegated to them. Unlike a fixed integration, an agent decides what to do itself and can be steered by content it reads, so it may use everything that access allows, at machine speed. Least privilege should apply to delegated access: what can be delegated to an outside agent should be narrower than the person's own access, for example read-only or limited actions, with high-impact actions needing the person's confirmation.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-3.3",
         "LLM-5.1",
@@ -184,11 +189,7 @@
         "AGENT-3.3",
         "AGENT-5.1",
         "AGENT-6.8"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "PR.AT-01": {
       "threat": "All staff can be targeted by AI-enabled attackers, for example with convincing, automated messages. General awareness training should reflect that.",
@@ -331,5 +332,5 @@
       }
     }
   },
-  "source_sha": "2a134ddd94b62c25"
+  "source_sha": "3f0728ec7271082a"
 }
