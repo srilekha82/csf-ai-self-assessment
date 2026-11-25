@@ -147,16 +147,17 @@
       ]
     },
     "ID.AM-04": {
-      "threat": "Your services may rely on providers that use AI components, such as model or hosted tool services, behind the scenes. The inventory of supplier services should record what they provide and what capabilities they declare.",
+      "threat": "A supplier's service may rely on AI you cannot see: models from other providers, hosted tool services and MCP servers. Your inventory of supplier services should record, for each service, the AI it relies on, who provides it, and whether that AI acts with your access or only processes your data, and keep this current, for example from an AI bill of materials the supplier provides.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-15.1",
         "MCP-15.1",
         "AGENT-15.1"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "ID.AM-08": {
       "threat": "Life cycle management should make sure decommissioned systems leave no usable credentials, tokens or data behind, since automated attackers look for leftover access.",
@@ -362,5 +363,5 @@
       }
     }
   },
-  "source_sha": "1b3fe3cd48ecf716"
+  "source_sha": "47b91b8287445b93"
 }
