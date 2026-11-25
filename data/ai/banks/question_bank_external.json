@@ -192,16 +192,17 @@
       ]
     },
     "PR.AT-01": {
-      "threat": "All staff can be targeted by AI-enabled attackers, for example with convincing, automated messages. General awareness training should reflect that.",
+      "threat": "AI lets attackers write fluent, personal messages at scale and fake the voice or video of a manager or supplier, so the usual warning signs (poor wording, an unknown voice) are gone. Awareness training should teach staff to check any request for money, access or data through a second, known channel, however genuine it looks or sounds.",
+      "decided_by": "human",
+      "status": "needs_human_review",
+      "review_reasons": {
+        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
+      },
       "cis_refs": [
         "LLM-14.1",
         "MCP-14.1",
         "AGENT-14.1"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "PR.DS-01": {
       "threat": "Automated attackers and outside agents look for stored data they can reach, including credentials and tokens left in configuration files or logs. Data at rest needs encryption, and secrets belong in a secrets manager.",
@@ -332,5 +333,5 @@
       }
     }
   },
-  "source_sha": "3f0728ec7271082a"
+  "source_sha": "2d8ba73009ecf700"
 }
