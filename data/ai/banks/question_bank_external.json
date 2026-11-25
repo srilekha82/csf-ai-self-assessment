@@ -26,20 +26,13 @@
         "AGENT-15.2"
       ]
     },
-    "GV.SC-02": {
-      "threat": "Suppliers may use AI models, agents or MCP servers to serve you, and roles and expectations should state who is responsible for what. This includes data isolation, retention limits and how incidents are reported.",
-      "cis_refs": [
-        "LLM-15.4",
-        "MCP-15.4",
-        "AGENT-15.4"
-      ],
+    "GV.SC-04": {
+      "threat": "A supplier that uses AI on your data adds new points where it can be compromised: the model provider it calls, the agents and MCP tools acting with its access, and the prompts, logs and memory that hold your data along the way. The data's sensitivity and the impact of a leak do not change; the number of places it can leak from does. Knowing your suppliers now includes knowing where AI sits in how they handle your data.",
+      "decided_by": "human",
       "status": "needs_human_review",
       "review_reasons": {
         "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
-    },
-    "GV.SC-04": {
-      "threat": "Your suppliers may now include model providers, embedding services, tool backends and hosted MCP servers, even when you did not choose them directly. Knowing which suppliers touch your data and how sensitive that access is has become harder.",
+      },
       "cis_refs": [
         "LLM-15.1",
         "LLM-15.3",
@@ -47,11 +40,7 @@
         "MCP-15.3",
         "AGENT-15.1",
         "AGENT-15.3"
-      ],
-      "status": "needs_human_review",
-      "review_reasons": {
-        "0": "threat copied word for word from the reviewed exposure note in data/csf/ai_impact_notes.json (2026-11-24), not yet reviewed as an External AI threat: check it, edit it if needed, then set pass"
-      }
+      ]
     },
     "GV.SC-05": {
       "threat": "Suppliers may begin using AI agents or tools on your data. Contracts should set data handling and retention terms, breach notification and rapid revocation of access, so a supplier's change in technology does not weaken your protections.",
@@ -365,5 +354,5 @@
       }
     }
   },
-  "source_sha": "6c1f5fa4154e66b2"
+  "source_sha": "97693360923c1727"
 }
