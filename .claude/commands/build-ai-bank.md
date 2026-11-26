@@ -69,7 +69,7 @@ Two banks: **foundation** (GOVERN and the other foundation subcategories, asked 
 
 **Pilot or full.** If the gate's `pilot` line is not `accepted` (no pilot yet, or a question prompt changed): pilot.
 Propose about 6 subcategories and wait for the user's yes: GOVERN 1.2 and GOVERN 1.6 (foundation); one area
-subcategory with many areas (e.g. MEASURE 2.8); one with a producer detail; one with a folded subcategory; one MAP
+subcategory with many areas (e.g. MEASURE 2.8); one with a producer detail; one MAP
 subcategory on usage areas. Otherwise: full, one batch per AI RMF function, `--missing` (only what is not recorded),
 or `--ids` for the subcategories the gate lists as changed.
 

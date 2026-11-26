@@ -4,26 +4,16 @@
     "MAP 1.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "c55833e037493cb1",
+      "rows_sha": "f3af18df4c40f9de",
       "rows": {
         "customer_facing|MAP 1.1": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MAP 1.1": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "output|MAP 1.1": {
-          "area": "output",
-          "impact": [
-            "process"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -85,13 +75,10 @@
     "MAP 1.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "394c24574e342a89",
+      "rows_sha": "8b04177956e4b31d",
       "rows": {
         "model_building|MAP 1.2": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         }
       },
       "questions": [
@@ -115,25 +102,16 @@
     "MAP 1.4": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "ea6048b052e7450f",
+      "rows_sha": "4b637a12d38936d8",
       "rows": {
         "internal_process|MAP 1.4": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MAP 1.4": {
-          "area": "customer_facing",
-          "impact": [
-            "process"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MAP 1.4": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         }
       },
       "questions": [
@@ -176,20 +154,13 @@
     "MAP 1.6": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "546ab4e0291cd108",
+      "rows_sha": "0ea8f5755cb2c50d",
       "rows": {
         "model_building|MAP 1.6": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "source_data|MAP 1.6": {
-          "area": "source_data",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "source_data"
         }
       },
       "questions": [
@@ -234,20 +205,13 @@
     "MAP 2.1": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "9e497b9c924d7689",
+      "rows_sha": "238499a8d29f83a7",
       "rows": {
         "model_building|MAP 2.1": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "agent|MAP 2.1": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -290,64 +254,34 @@
     "MAP 2.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "2cdbca5a7d6a92f8",
+      "rows_sha": "fc86567cdc2a8479",
       "rows": {
         "internal_process|MAP 2.2": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MAP 2.2": {
-          "area": "customer_facing",
-          "impact": [
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MAP 2.2": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MAP 2.2": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "output|MAP 2.2": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "source_data|MAP 2.2": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MAP 2.2": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MAP 2.2": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         },
         "hosting|MAP 2.2": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -486,20 +420,13 @@
     "MAP 2.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "fefebfc02bf23757",
+      "rows_sha": "65b98f6c69e19a20",
       "rows": {
         "test_tuning_data|MAP 2.3": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data",
-            "assets"
-          ]
+          "area": "test_tuning_data"
         },
         "source_data|MAP 2.3": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         }
       },
       "questions": [
@@ -561,38 +488,22 @@
     "MAP 3.1": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "bc909ba4236a7cb0",
+      "rows_sha": "d7f778a779de0e52",
       "rows": {
         "internal_process|MAP 3.1": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MAP 3.1": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "model_building|MAP 3.1": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MAP 3.1": {
-          "area": "invisible_usage",
-          "impact": [
-            "data"
-          ]
+          "area": "invisible_usage"
         },
         "agent|MAP 3.1": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -670,34 +581,19 @@
     "MAP 3.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "14e57285c1c97bb8",
+      "rows_sha": "4a12f4d58751af6b",
       "rows": {
         "internal_process|MAP 3.2": {
-          "area": "internal_process",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MAP 3.2": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "output|MAP 3.2": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "hosting|MAP 3.2": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -787,58 +683,31 @@
     "MAP 3.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "75f8297fc65759b3",
+      "rows_sha": "69259a95d9461374",
       "rows": {
         "internal_process|MAP 3.3": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MAP 3.3": {
-          "area": "code_generation",
-          "impact": [
-            "assets"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MAP 3.3": {
-          "area": "customer_facing",
-          "impact": [
-            "process"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MAP 3.3": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MAP 3.3": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "output|MAP 3.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "mcp_tools|MAP 3.3": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MAP 3.3": {
-          "area": "agent",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -987,40 +856,22 @@
     "MAP 3.5": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "07506b2f1ad6614c",
+      "rows_sha": "612851cb417175a1",
       "rows": {
         "internal_process|MAP 3.5": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MAP 3.5": {
-          "area": "code_generation",
-          "impact": [
-            "assets"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MAP 3.5": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "mcp_tools|MAP 3.5": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MAP 3.5": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -1167,69 +1018,37 @@
     "MAP 4.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "b8b2c848f27bf078",
+      "rows_sha": "7991277923ef2a8d",
       "rows": {
         "code_generation|MAP 4.1": {
-          "area": "code_generation",
-          "impact": [
-            "assets"
-          ]
+          "area": "code_generation"
         },
         "vendor_ai|MAP 4.1": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MAP 4.1": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MAP 4.1": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "input|MAP 4.1": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "test_tuning_data|MAP 4.1": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data"
-          ]
+          "area": "test_tuning_data"
         },
         "model|MAP 4.1": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MAP 4.1": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MAP 4.1": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "hosting|MAP 4.1": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -1471,65 +1290,34 @@
     "MAP 4.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "def84e64a35f8cf5",
+      "rows_sha": "9e85a03ea62d1260",
       "rows": {
         "code_generation|MAP 4.2": {
-          "area": "code_generation",
-          "impact": [
-            "assets"
-          ]
+          "area": "code_generation"
         },
         "vendor_ai|MAP 4.2": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MAP 4.2": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MAP 4.2": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "test_tuning_data|MAP 4.2": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data"
-          ]
+          "area": "test_tuning_data"
         },
         "source_data|MAP 4.2": {
-          "area": "source_data",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MAP 4.2": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MAP 4.2": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         },
         "hosting|MAP 4.2": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -1734,48 +1522,25 @@
     "MAP 5.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "cdeb21f2cc76581b",
+      "rows_sha": "3b9d718b8975b8b3",
       "rows": {
         "invisible_usage|MAP 5.1": {
-          "area": "invisible_usage",
-          "impact": [
-            "data"
-          ]
+          "area": "invisible_usage"
         },
         "input|MAP 5.1": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MAP 5.1": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "mcp_tools|MAP 5.1": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MAP 5.1": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "data",
-            "access"
-          ]
+          "area": "agent"
         },
         "hosting|MAP 5.1": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -1881,13 +1646,10 @@
     "MAP 5.2": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "5a0a18fe839f5bbe",
+      "rows_sha": "8e3ca383fb984924",
       "rows": {
         "customer_facing|MAP 5.2": {
-          "area": "customer_facing",
-          "impact": [
-            "people"
-          ]
+          "area": "customer_facing"
         }
       },
       "questions": [
@@ -1914,14 +1676,10 @@
     "MEASURE 1.3": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "d41a7b0eb86e85f6",
+      "rows_sha": "5276941066b2ce66",
       "rows": {
         "output|MEASURE 1.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -1947,19 +1705,13 @@
     "MEASURE 2.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "b5a2b9266593b176",
+      "rows_sha": "c50ead53c6935f8e",
       "rows": {
         "output|MEASURE 2.1": {
-          "area": "output",
-          "impact": [
-            "process"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MEASURE 2.1": {
-          "area": "test_tuning_data",
-          "impact": [
-            "assets"
-          ]
+          "area": "test_tuning_data"
         }
       },
       "questions": [
@@ -2019,19 +1771,13 @@
     "MEASURE 2.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "3054d63127627450",
+      "rows_sha": "b02139a00c93e502",
       "rows": {
         "output|MEASURE 2.2": {
-          "area": "output",
-          "impact": [
-            "people"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MEASURE 2.2": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data"
-          ]
+          "area": "test_tuning_data"
         }
       },
       "questions": [
@@ -2073,27 +1819,16 @@
     "MEASURE 2.3": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "38ddec6cf78f075c",
+      "rows_sha": "7858ac3bc967e476",
       "rows": {
         "customer_facing|MEASURE 2.3": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "output|MEASURE 2.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "agent|MEASURE 2.3": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -2121,66 +1856,34 @@
     "MEASURE 2.4": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "ea932d8ce2daef2a",
+      "rows_sha": "183e013c618b650f",
       "rows": {
         "customer_facing|MEASURE 2.4": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MEASURE 2.4": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "invisible_usage|MEASURE 2.4": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "output|MEASURE 2.4": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "model|MEASURE 2.4": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MEASURE 2.4": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MEASURE 2.4": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MEASURE 2.4": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         },
         "hosting|MEASURE 2.4": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -2395,20 +2098,13 @@
     "MEASURE 2.5": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "3f814b5dfdd5e15f",
+      "rows_sha": "e8a6d85d1c809a99",
       "rows": {
         "output|MEASURE 2.5": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "agent|MEASURE 2.5": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -2454,53 +2150,28 @@
     "MEASURE 2.6": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "a954c101bdadf58c",
+      "rows_sha": "d66e215b59642e82",
       "rows": {
         "internal_process|MEASURE 2.6": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MEASURE 2.6": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "output|MEASURE 2.6": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "source_data|MEASURE 2.6": {
-          "area": "source_data",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MEASURE 2.6": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MEASURE 2.6": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         },
         "hosting|MEASURE 2.6": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -2638,73 +2309,37 @@
     "MEASURE 2.7": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "d8289da76441dda1",
+      "rows_sha": "9090600c74ad9dd2",
       "rows": {
         "code_generation|MEASURE 2.7": {
-          "area": "code_generation",
-          "impact": [
-            "assets"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MEASURE 2.7": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "customer_facing"
         },
         "invisible_usage|MEASURE 2.7": {
-          "area": "invisible_usage",
-          "impact": [
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "output|MEASURE 2.7": {
-          "area": "output",
-          "impact": [
-            "process"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MEASURE 2.7": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data",
-            "assets"
-          ]
+          "area": "test_tuning_data"
         },
         "model|MEASURE 2.7": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MEASURE 2.7": {
-          "area": "source_data",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MEASURE 2.7": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MEASURE 2.7": {
-          "area": "agent",
-          "impact": [
-            "access",
-            "process",
-            "data"
-          ]
+          "area": "agent"
         },
         "hosting|MEASURE 2.7": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -2886,100 +2521,49 @@
     "MEASURE 2.8": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "bfc30afe7b9270c0",
+      "rows_sha": "6f2b90dfeb4efe5a",
       "rows": {
         "internal_process|MEASURE 2.8": {
-          "area": "internal_process",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MEASURE 2.8": {
-          "area": "code_generation",
-          "impact": [
-            "assets",
-            "data"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MEASURE 2.8": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MEASURE 2.8": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MEASURE 2.8": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MEASURE 2.8": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "input|MEASURE 2.8": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MEASURE 2.8": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MEASURE 2.8": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data",
-            "assets"
-          ]
+          "area": "test_tuning_data"
         },
         "model|MEASURE 2.8": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MEASURE 2.8": {
-          "area": "source_data",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MEASURE 2.8": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MEASURE 2.8": {
-          "area": "agent",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "agent"
         },
         "hosting|MEASURE 2.8": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -3232,14 +2816,10 @@
     "MEASURE 2.9": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "076745b5b8bb46b9",
+      "rows_sha": "44cddbe914211e84",
       "rows": {
         "output|MEASURE 2.9": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -3264,55 +2844,31 @@
     "MEASURE 2.10": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "5086847c723b965d",
+      "rows_sha": "78e807a46a35ccfe",
       "rows": {
         "code_generation|MEASURE 2.10": {
-          "area": "code_generation",
-          "impact": [
-            "data"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MEASURE 2.10": {
-          "area": "customer_facing",
-          "impact": [
-            "data"
-          ]
+          "area": "customer_facing"
         },
         "invisible_usage|MEASURE 2.10": {
-          "area": "invisible_usage",
-          "impact": [
-            "data"
-          ]
+          "area": "invisible_usage"
         },
         "input|MEASURE 2.10": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "test_tuning_data|MEASURE 2.10": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data"
-          ]
+          "area": "test_tuning_data"
         },
         "source_data|MEASURE 2.10": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MEASURE 2.10": {
-          "area": "mcp_tools",
-          "impact": [
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MEASURE 2.10": {
-          "area": "agent",
-          "impact": [
-            "data"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -3489,13 +3045,10 @@
     "MEASURE 2.11": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "f27025b314993257",
+      "rows_sha": "349eb69216171c13",
       "rows": {
         "output|MEASURE 2.11": {
-          "area": "output",
-          "impact": [
-            "people"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -3521,13 +3074,10 @@
     "MEASURE 2.12": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "34c29e90c9b366c3",
+      "rows_sha": "ef02b34b8c726466",
       "rows": {
         "model_building|MEASURE 2.12": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         }
       },
       "questions": [
@@ -3552,19 +3102,13 @@
     "MEASURE 2.13": {
       "status": "pass",
       "turns": 1,
-      "rows_sha": "2643cc4b65d1f3aa",
+      "rows_sha": "699471e7621a0aa6",
       "rows": {
         "output|MEASURE 2.13": {
-          "area": "output",
-          "impact": [
-            "process"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MEASURE 2.13": {
-          "area": "test_tuning_data",
-          "impact": [
-            "assets"
-          ]
+          "area": "test_tuning_data"
         }
       },
       "questions": [
@@ -3604,31 +3148,19 @@
     "MEASURE 3.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "b7cc361c4afde4c2",
+      "rows_sha": "44899e41e6d43ff4",
       "rows": {
         "internal_process|MEASURE 3.3": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MEASURE 3.3": {
-          "area": "customer_facing",
-          "impact": [
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "model_building|MEASURE 3.3": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "agent|MEASURE 3.3": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -3707,32 +3239,19 @@
     "MEASURE 4.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "ccb6fbd7022f82f4",
+      "rows_sha": "8f70103e87683ebf",
       "rows": {
         "internal_process|MEASURE 4.2": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MEASURE 4.2": {
-          "area": "customer_facing",
-          "impact": [
-            "process"
-          ]
+          "area": "customer_facing"
         },
         "output|MEASURE 4.2": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "agent|MEASURE 4.2": {
-          "area": "agent",
-          "impact": [
-            "process"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -3794,14 +3313,10 @@
     "MEASURE 4.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "eda0cf6d7d165cbc",
+      "rows_sha": "461ad7e5345d7a08",
       "rows": {
         "output|MEASURE 4.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -3827,33 +3342,19 @@
     "MANAGE 1.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "d7059dd188e1ff4a",
+      "rows_sha": "b54c99b26bbef301",
       "rows": {
         "vendor_ai|MANAGE 1.1": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MANAGE 1.1": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "output|MANAGE 1.1": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "agent|MANAGE 1.1": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         }
       },
       "questions": [
@@ -3933,73 +3434,37 @@
     "MANAGE 2.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "93de24174b210bba",
+      "rows_sha": "365a41ea99606d81",
       "rows": {
         "internal_process|MANAGE 2.2": {
-          "area": "internal_process",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "internal_process"
         },
         "customer_facing|MANAGE 2.2": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "customer_facing"
         },
         "input|MANAGE 2.2": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MANAGE 2.2": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MANAGE 2.2": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data"
-          ]
+          "area": "test_tuning_data"
         },
         "model|MANAGE 2.2": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MANAGE 2.2": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MANAGE 2.2": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MANAGE 2.2": {
-          "area": "agent",
-          "impact": [
-            "access",
-            "process",
-            "data"
-          ]
+          "area": "agent"
         },
         "hosting|MANAGE 2.2": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -4181,101 +3646,49 @@
     "MANAGE 2.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "ebb379dbbacca3c2",
+      "rows_sha": "c1bf2bb3535d387d",
       "rows": {
         "internal_process|MANAGE 2.3": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MANAGE 2.3": {
-          "area": "code_generation",
-          "impact": [
-            "assets",
-            "data"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MANAGE 2.3": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MANAGE 2.3": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MANAGE 2.3": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MANAGE 2.3": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "input|MANAGE 2.3": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MANAGE 2.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "test_tuning_data|MANAGE 2.3": {
-          "area": "test_tuning_data",
-          "impact": [
-            "data",
-            "assets"
-          ]
+          "area": "test_tuning_data"
         },
         "model|MANAGE 2.3": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MANAGE 2.3": {
-          "area": "source_data",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MANAGE 2.3": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MANAGE 2.3": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access",
-            "data"
-          ]
+          "area": "agent"
         },
         "hosting|MANAGE 2.3": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -4552,92 +3965,46 @@
     "MANAGE 2.4": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "2c8a2ac1f423740d",
+      "rows_sha": "f026773281104763",
       "rows": {
         "internal_process|MANAGE 2.4": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MANAGE 2.4": {
-          "area": "code_generation",
-          "impact": [
-            "assets",
-            "data"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MANAGE 2.4": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MANAGE 2.4": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MANAGE 2.4": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MANAGE 2.4": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "input|MANAGE 2.4": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MANAGE 2.4": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "model|MANAGE 2.4": {
-          "area": "model",
-          "impact": [
-            "assets"
-          ]
+          "area": "model"
         },
         "source_data|MANAGE 2.4": {
-          "area": "source_data",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MANAGE 2.4": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MANAGE 2.4": {
-          "area": "agent",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "agent"
         },
         "hosting|MANAGE 2.4": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -4869,32 +4236,19 @@
     "MANAGE 3.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "b5cf3866d17e8f89",
+      "rows_sha": "b9aea1250a1ed517",
       "rows": {
         "vendor_ai|MANAGE 3.1": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "source_data|MANAGE 3.1": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MANAGE 3.1": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "hosting|MANAGE 3.1": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -4972,13 +4326,10 @@
     "MANAGE 3.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "e7861b64a935a760",
+      "rows_sha": "9d4bc7bae4034740",
       "rows": {
         "model_building|MANAGE 3.2": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         }
       },
       "questions": [
@@ -5008,46 +4359,25 @@
     "MANAGE 4.1": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "6477979b21b8bcd6",
+      "rows_sha": "2f6b8883d923d7ce",
       "rows": {
         "customer_facing|MANAGE 4.1": {
-          "area": "customer_facing",
-          "impact": [
-            "process"
-          ]
+          "area": "customer_facing"
         },
         "output|MANAGE 4.1": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "source_data|MANAGE 4.1": {
-          "area": "source_data",
-          "impact": [
-            "data"
-          ]
+          "area": "source_data"
         },
         "mcp_tools|MANAGE 4.1": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MANAGE 4.1": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "access"
-          ]
+          "area": "agent"
         },
         "hosting|MANAGE 4.1": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
@@ -5147,26 +4477,16 @@
     "MANAGE 4.2": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "f84626b15264f1ca",
+      "rows_sha": "dcedc214f8b3c29c",
       "rows": {
         "customer_facing|MANAGE 4.2": {
-          "area": "customer_facing",
-          "impact": [
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "model_building|MANAGE 4.2": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "output|MANAGE 4.2": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         }
       },
       "questions": [
@@ -5246,80 +4566,40 @@
     "MANAGE 4.3": {
       "status": "pass",
       "turns": 2,
-      "rows_sha": "b0675d0793f841d4",
+      "rows_sha": "7d5a09954a467e31",
       "rows": {
         "internal_process|MANAGE 4.3": {
-          "area": "internal_process",
-          "impact": [
-            "process"
-          ]
+          "area": "internal_process"
         },
         "code_generation|MANAGE 4.3": {
-          "area": "code_generation",
-          "impact": [
-            "assets",
-            "data"
-          ]
+          "area": "code_generation"
         },
         "customer_facing|MANAGE 4.3": {
-          "area": "customer_facing",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "customer_facing"
         },
         "vendor_ai|MANAGE 4.3": {
-          "area": "vendor_ai",
-          "impact": [
-            "data"
-          ]
+          "area": "vendor_ai"
         },
         "model_building|MANAGE 4.3": {
-          "area": "model_building",
-          "impact": [
-            "assets"
-          ]
+          "area": "model_building"
         },
         "invisible_usage|MANAGE 4.3": {
-          "area": "invisible_usage",
-          "impact": [
-            "data",
-            "access"
-          ]
+          "area": "invisible_usage"
         },
         "input|MANAGE 4.3": {
-          "area": "input",
-          "impact": [
-            "data"
-          ]
+          "area": "input"
         },
         "output|MANAGE 4.3": {
-          "area": "output",
-          "impact": [
-            "process",
-            "people"
-          ]
+          "area": "output"
         },
         "mcp_tools|MANAGE 4.3": {
-          "area": "mcp_tools",
-          "impact": [
-            "access",
-            "process",
-            "data"
-          ]
+          "area": "mcp_tools"
         },
         "agent|MANAGE 4.3": {
-          "area": "agent",
-          "impact": [
-            "process",
-            "data"
-          ]
+          "area": "agent"
         },
         "hosting|MANAGE 4.3": {
-          "area": "hosting",
-          "impact": [
-            "assets"
-          ]
+          "area": "hosting"
         }
       },
       "questions": [
