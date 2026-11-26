@@ -50,8 +50,8 @@ def question_context(inp: dict) -> dict:
         roles = area_roles(areas[area_id], qrules, scope_rules)
         for r in entry["rows"]:
             rows.setdefault(r["subcategory"], {})[row_id(area_id, r["subcategory"])] = {
-                "roles": roles, "cis_refs": r["cis_refs"], "folded": r.get("folded", []),
-                "area": area_id, "impact": r["impact"], "sig": [r["why"], r["cis_refs"], r.get("folded", [])]}
+                "roles": roles, "cis_refs": r["cis_refs"], "also_covers": r.get("also_covers", []),
+                "area": area_id, "impact": areas[area_id]["impact"], "sig": [r["why"], r["cis_refs"]]}
     return {"rows": rows, "foundation": foundation_subcategories(load_json(AI_MAPPING_RULES, "mapping_rules.json"), inp),
             "roles": list(qrules["roles"]), "flags": list(qrules["producer_flags"]),
             "foundation_count": qrules["foundation_questions"], "row_max": qrules["row_questions"]["max"]}
@@ -60,7 +60,7 @@ def question_context(inp: dict) -> dict:
 def rows_record(ctx: dict, sid: str) -> dict:
     """What an area bank entry stores about the rows its questions were written for."""
     return {"rows_sha": audit.json_sha({r: v["sig"] for r, v in ctx["rows"][sid].items()}),
-            "rows": {r: {"area": v["area"], "impact": v["impact"]} for r, v in ctx["rows"][sid].items()}}
+            "rows": {r: {"area": v["area"]} for r, v in ctx["rows"][sid].items()}}
 
 
 def bank_freshness(bank: str, doc: dict, inp: dict) -> tuple[bool, str]:
@@ -102,7 +102,7 @@ def check_question(tag: str, sid: str, q, bank: str, inp: dict, ctx: dict) -> li
         bad = [r for r in q["rows"] if r not in rows]
         if not q["rows"] or bad or len(set(q["rows"])) != len(q["rows"]):
             errors.append(f"{tag}: rows must be distinct mapping rows of {sid} (unknown: {bad})")
-    allowed_subs = {sid} | {f for r in covered for f in r["folded"]}
+    allowed_subs = {sid} | {f for r in covered for f in r["also_covers"]}   # a row's also_covers note may be cited
     if not q["playbook_refs"]:
         errors.append(f"{tag}: playbook_refs must name at least one suggested action")
     for ref in q["playbook_refs"]:
@@ -132,7 +132,7 @@ def check_question(tag: str, sid: str, q, bank: str, inp: dict, ctx: dict) -> li
 
 def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
     """The whole file, per subcategory: status, the questions, and coverage (area bank: every row asked once, or up to
-    row_questions max times, per role its area allows, folded outcomes cited; foundation: the count, a consumer and a producer question).
+    row_questions max times, per role its area allows; foundation: the count, a consumer and a producer question).
 
     A question: question_text, playbook_refs ["<subcategory> — suggested action N", ...], cis_refs, roles (none /
     consumer / producer), producer_flags (the producer details, data/ai/question_rules.json); in the area bank also
@@ -140,7 +140,8 @@ def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
 
     Area bank: the subcategory has rows in data/ai/mapping.json; each row is asked once (twice at most, row_questions
     max) for each role its area allows; a question's roles are allowed by every row it covers; its cis_refs are
-    safeguards of those rows; a row with folded subcategories has its question cite a suggested action of each.
+    safeguards of those rows; its playbook_refs are suggested actions of the subcategory (or of one a row's also_covers
+    note names).
     Foundation bank: the subcategory is a foundation one; it has question_rules.json foundation_questions min to max
     questions (plus producer_only_extra for producers), at least one consumer and one producer question without
     producer details, and no cis_refs. Both: real suggested action numbers, distinct question texts, and a question
@@ -182,11 +183,6 @@ def validate_questions(data, bank: str, inp: dict, ctx: dict) -> list[str]:
                     n = sum(1 for q in qs if rid in q["rows"] and role in q["roles"])
                     if not 1 <= n <= ctx["row_max"]:
                         errors.append(f"{sid}: row {rid} is asked {n} times for role {role} (1 to {ctx['row_max']})")
-                for f in row["folded"]:
-                    if not any(rid in q["rows"] and any(str(r).startswith(f + " ") for r in q["playbook_refs"])
-                               for q in qs):
-                        errors.append(f"{sid}: row {rid} folds {f}; one of its questions must cite a suggested action "
-                                      f"of {f}")
         else:
             fc = ctx["foundation_count"]
             lo, hi, extra = fc["min"], fc["max"], fc["producer_only_extra"]

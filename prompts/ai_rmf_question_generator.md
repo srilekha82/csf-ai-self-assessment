@@ -4,12 +4,11 @@ flags. So each question says exactly who it is for, and must read correctly for 
 batch file the command names (`prepare_ai_bank.py batch`) and this file. Do not read PDFs or other data files.
 
 ## Input
-- `bank`: `areas` or `foundation`. `definitions`: roles, producer flags, impacts, `criticality_frame`,
+- `bank`: `areas` or `foundation`. `definitions`: roles, producer flags, `criticality_frame`,
   `criticality_frame_optional`.
 - `items`: per AI RMF subcategory, its `outcome`, `actions_preamble` and numbered `suggested_actions`.
 - Area bank: each item's `rows`, one per AI area mapped to it: `row_id`, `area`, `why` (what is checked for that area;
-  the question is written from it), `impact`, `cis_refs`, `folded` (other subcategories this row also asks, with their
-  outcome and actions). `areas`: each area's `name`, `applies_to`, `roles_allowed`, `covers`. `cis_safeguards`: title
+  the question is written from it), `cis_refs`. `areas`: each area's `name`, `applies_to`, `roles_allowed`, `covers`. `cis_safeguards`: title
   and AI text.
 - Foundation bank: `ai_areas` (name an area to the client by its `client_label`), `ai_system_inventory`,
   `questions_per_subcategory` (`min`, `max`, `producer_only_extra`).
@@ -37,10 +36,8 @@ batch file the command names (`prepare_ai_bank.py batch`) and this file. Do not 
   or by two when its `why` holds two different practices (e.g. finding the AI tools staff use, and blocking the ones
   not allowed). Never more than two; never split one practice.
 - **The core of the `why`.** Ask the practice at its centre, keeping its main subject (what is logged, tested or
-  decided) and every `folded` outcome; trim only extra details. Stay inside the area: what its `covers` gives to
+  decided); trim only extra details. Stay inside the area: what its `covers` gives to
   another area is not asked here.
-- **Folded.** A row with `folded` is the only place those outcomes are asked: its question asks them too, and
-  `playbook_refs` cites an action of each.
 - **Once for all AI systems, framed by criticality.** Never once per AI system. Start with `criticality_frame` ("for
   your highest-criticality AI systems, ...") where the row is about systems the organisation runs. Leave it out where
   it is not (AI used without approval). Optional for the areas in

@@ -94,9 +94,7 @@ class Recording(unittest.TestCase):
             groups.setdefault(tuple(r["roles"]), []).append(rid)
         qs = []
         for n, (roles, rids) in enumerate(groups.items(), 1):
-            folds = sorted({f for rid in rids for f in rows[rid]["folded"]})
-            qs.append(self.question(sid, n, rows=rids, roles=list(roles),
-                                    playbook_refs=[f"{x} — suggested action 1" for x in [sid] + folds]))
+            qs.append(self.question(sid, n, rows=rids, roles=list(roles), playbook_refs=[f"{sid} — suggested action 1"]))
         return qs
 
     def test_questions_areas(self):
@@ -141,16 +139,17 @@ class Recording(unittest.TestCase):
         flagged = [dict(q_model, producer_flags=["built_on_existing_model"])] + [q for q in qs if q is not q_model]
         self.assertEqual(self.run_mode("questions", {sid: dict(good[sid], questions=flagged)}, "areas"), 0)
 
-    def test_questions_area_folds(self):
-        sid = "MAP 3.2"                                              # internal_process folds MAP 5.1 into it
+    def test_a_question_may_cite_a_subcategory_its_row_also_covers(self):
+        sid = "MAP 3.2"                                              # internal_process's row also covers MAP 5.1
         qs = self.area_questions(sid)
         self.assertEqual(self.run_mode("questions", {sid: {"status": "pass", "turns": 1, "questions": qs}}, "areas"), 0)
-        unfolded = [dict(q, playbook_refs=[f"{sid} — suggested action 1"]) for q in qs]
-        self.assertEqual(self.run_mode("questions", {sid: {"status": "pass", "turns": 1, "questions": unfolded}}, "areas"), 1)
-        folding = next(q for q in qs if len(q["playbook_refs"]) > 1)   # a split row: one of its two questions cites it
-        second = self.question(sid, 9, rows=folding["rows"], roles=folding["roles"])
-        self.assertEqual(self.run_mode("questions", {sid: {"status": "pass", "turns": 1, "questions": qs + [second]}},
-                                       "areas"), 0)
+        rid = next(r for q in qs for r in q["rows"] if r.startswith("internal_process|"))
+        also = [dict(q, playbook_refs=q["playbook_refs"] + ["MAP 5.1 — suggested action 1"]) if rid in q["rows"] else q
+                for q in qs]
+        self.assertEqual(self.run_mode("questions", {sid: {"status": "pass", "turns": 1, "questions": also}}, "areas"), 0)
+        other = [dict(q, playbook_refs=q["playbook_refs"] + ["MAP 1.1 — suggested action 1"]) if rid in q["rows"] else q
+                 for q in qs]
+        self.assertEqual(self.run_mode("questions", {sid: {"status": "pass", "turns": 1, "questions": other}}, "areas"), 1)
 
     def test_questions_foundation(self):
         sid = "GOVERN 1.1"
@@ -250,8 +249,7 @@ class Recording(unittest.TestCase):
         self.assertEqual(set(doc["cis_safeguards"]), {c for e in mapping.values() for r in e["rows"] for c in r["cis_refs"]})
         self.assertEqual(doc["areas"]["invisible_usage"]["roles_allowed"], ["none", "consumer", "producer"])
         self.assertEqual(doc["areas"]["model"]["roles_allowed"], ["producer"])
-        folds = [f for i in doc["items"] for r in i["rows"] for f in r["folded"]]
-        self.assertTrue(folds and all(f["suggested_actions"] for f in folds))   # so a fold's action can be cited
+        self.assertTrue(all(set(r) == {"row_id", "area", "why", "cis_refs"} for i in doc["items"] for r in i["rows"]))
         found = json.loads(P.AI_MAPPING_RULES.read_text())["foundation"]
         self.assertFalse({i["subcategory_id"] for i in doc["items"]} & set(found["subcategories"]))
 
@@ -371,16 +369,16 @@ class Scope(unittest.TestCase):
                 self.q("base model risk", ["producer"], flags=["built_on_existing_model"])]}}}
         areas = {"subcategories": {
             "MEASURE 2.8": {"status": "pass", "turns": 1, "rows_sha": "x",
-                            "rows": {m28("agent"): {"area": "agent", "impact": ["access", "process"]},
-                                     m28("mcp_tools"): {"area": "mcp_tools", "impact": ["access"]},
-                                     m28("model"): {"area": "model", "impact": ["assets"]},
-                                     m28("invisible_usage"): {"area": "invisible_usage", "impact": ["data"]}},
+                            "rows": {m28("agent"): {"area": "agent"},
+                                     m28("mcp_tools"): {"area": "mcp_tools"},
+                                     m28("model"): {"area": "model"},
+                                     m28("invisible_usage"): {"area": "invisible_usage"}},
                             "questions": [self.q("action logging", ["consumer", "producer"], [m28("agent"), m28("mcp_tools")]),
                                           self.q("weights access logging", ["producer"], [m28("model")]),
                                           self.q("shadow AI logging", ["none", "consumer", "producer"],
                                                  [m28("invisible_usage")])]},
             "MANAGE 2.4": {"status": "needs_human_review", "turns": 2, "review_reasons": {"1": "vague"}, "rows_sha": "y",
-                           "rows": {"model_building|MANAGE 2.4": {"area": "model_building", "impact": ["assets"]}},
+                           "rows": {"model_building|MANAGE 2.4": {"area": "model_building"}},
                            "questions": [self.q("withdrawing a release", ["producer"], ["model_building|MANAGE 2.4"],
                                                 flags=["given_to_others"])]}}}
         self.banks = {}
@@ -431,7 +429,10 @@ class Scope(unittest.TestCase):
                          f"This question covers: {self.names['agent']}; {self.names['mcp_tools']}")
         self.assertEqual(single["applies_to"], self.names["invisible_usage"])
         ev = json.loads(BQ.AI_EVIDENCE_PROMPTS.read_text())
-        self.assertEqual(shared["evidence_prompt"], " ".join([ev["by_impact"]["access"], ev["by_impact"]["process"]]))
+        impacts = {i for a in json.loads(BQ.AI_AREAS.read_text())["ai_areas"] if a["id"] in ("agent", "mcp_tools")
+                   for i in a["impact"]}                             # the impacts of the areas the question is asked for
+        order = list(json.loads(BQ.AI_QUESTION_RULES.read_text())["impacts"])
+        self.assertEqual(shared["evidence_prompt"], " ".join(ev["by_impact"][i] for i in order if i in impacts))
         self.assertEqual(e["question_type"], "full_discovery")
         f = json.loads((self.run / "ai_questions_draft_foundation.json").read_text())
         self.assertTrue(all(q["applies_to"] == "Whole organisation" for x in f for q in x["questions"]))
@@ -554,8 +555,8 @@ class Mapping(unittest.TestCase):
         agents["sg_doc"]["sources"]["AGENT"]["sha256_16"] = "new-agents-edition"
         self.assertEqual(R.mapping_freshness(entry, "agent", agents), "redraft")
 
-    def row(self, function, sub, cis=(), impact=("access",), why=None):
-        return {"function": function, "subcategory": sub, "cis_refs": list(cis), "impact": list(impact),
+    def row(self, function, sub, cis=(), why=None):
+        return {"function": function, "subcategory": sub, "cis_refs": list(cis),
                 "why": why or f"{sub} checks how the org handles MCP servers and tool credentials."}
 
     def good(self):
@@ -654,7 +655,7 @@ class Mapping(unittest.TestCase):
             "unknown subcategory": [self.row("MAP", "MAP 9.9")] + rows,
             "subcategory of another function": [self.row("MAP", "GOVERN 2.1")] + rows,
             "safeguard not a candidate": [self.row("MAP", "MAP 3.5", ["LLM-3.1"])] + rows,
-            "impact the area does not have": [self.row("MAP", "MAP 3.5", impact=["assets"])] + rows,
+            "impact on a row (impact is the area's, not the row's)": [dict(rows[0], impact=["data"])] + rows[1:],
             "repeated row": rows + [rows[0]],
             "short why": [self.row("MAP", "MAP 3.5", why="tools")] + rows,
             "missing function": [r for r in rows if r["function"] != "MANAGE"],
@@ -662,17 +663,16 @@ class Mapping(unittest.TestCase):
             "audit row without a control 8 safeguard": [dict(r, cis_refs=["MCP-6.8"]) if r["subcategory"] == "MEASURE 2.8"
                                                         else r for r in rows],
             "GOVERN row (foundation, never per area)": [self.row("GOVERN", "GOVERN 1.6", ["MCP-2.1"])] + rows,
-            "folded subcategory that is also a row": [dict(rows[0], folded=["MAP 2.2"])] + rows[1:],
-            "folded foundation subcategory": [dict(rows[0], folded=["MANAGE 1.2"])] + rows[1:],
-            "folded GOVERN subcategory": [dict(rows[0], folded=["GOVERN 1.6"])] + rows[1:],
-            "folded into two rows": [dict(rows[0], folded=["MAP 1.6"]), dict(rows[1], folded=["MAP 1.6"])] + rows[2:],
+            "also_covers an unknown subcategory": [dict(rows[0], also_covers=["MAP 9.9"])] + rows[1:],
+            "also_covers its own subcategory": [dict(rows[0], also_covers=[rows[0]["subcategory"]])] + rows[1:],
+            "also_covers not a list": [dict(rows[0], also_covers="MAP 1.6")] + rows[1:],
             "unknown field": [dict(rows[0], note="x")] + rows[1:],
         }
         for name, rs in cases.items():
             self.assertEqual(self.go(dict(g, rows=rs)), 1, name)
             self.assertFalse(R.AI_MAPPING.exists(), name)
         self.assertEqual(self.go(dict(g, area="no_such_area")), 1)
-        self.assertEqual(self.go(dict(g, rows=[dict(rows[0], folded=["MAP 1.6"])] + rows[1:])), 0)   # a valid fold
+        self.assertEqual(self.go(dict(g, rows=[dict(rows[0], also_covers=["MAP 1.6"])] + rows[1:])), 0)   # a valid note
         R.AI_MAPPING.unlink()
         self.assertEqual(self.go(g, review=[{"function": "MAP", "subcategory": "MAP 9.9", "reason": "x"}]), 1)
         self.assertEqual(self.go(dict(g, rows=[r for r in rows if r["function"] != "MAP"],
@@ -690,19 +690,21 @@ class Mapping(unittest.TestCase):
         review = [{"kind": "missing", "function": "MANAGE", "subcategory": "MANAGE 4.1",
                    "reason": "Nothing checks that a tool's actions can be overridden and rolled back."},
                   {"kind": "note", "function": "MEASURE", "subcategory": "MEASURE 2.7",
-                   "reason": "Protects processes too; the area's impacts may be too narrow."}]
+                   "reason": "Reaches beyond the tools themselves; the area's covers may be too narrow."}]
         self.assertEqual(self.go(g, review=review), 0)
         entry = json.loads(R.AI_MAPPING.read_text())["areas"]["mcp_tools"]
         self.assertEqual([x["subcategory"] for x in entry["missing"]], ["MANAGE 4.1"])
         self.assertEqual([x["subcategory"] for x in entry["notes"]], ["MEASURE 2.7"])
         self.assertTrue(all(r["status"] == "pass" for r in entry["rows"]))     # no MANAGE row is flagged
 
-    def test_a_fold_counts_as_reached(self):
+    def test_an_also_covers_note_is_a_comment_not_a_row(self):
         g = self.good()
-        self.assertEqual(self.go(dict(g, rows=[dict(g["rows"][0], folded=["MAP 1.6"])] + g["rows"][1:])), 0)
-        reached, unreached = R.mapping_coverage(json.loads(R.AI_MAPPING.read_text()), self.inp,
-                                                json.loads(R.AI_MAPPING_RULES.read_text()))
-        self.assertIn("MAP 1.6", reached)
+        self.assertEqual(self.go(dict(g, rows=[dict(g["rows"][0], also_covers=["MAP 1.6"])] + g["rows"][1:])), 0)
+        doc = json.loads(R.AI_MAPPING.read_text())
+        self.assertEqual(doc["areas"]["mcp_tools"]["rows"][0]["also_covers"], ["MAP 1.6"])   # the fact is kept
+        reached, unreached = R.mapping_coverage(doc, self.inp, json.loads(R.AI_MAPPING_RULES.read_text()))
+        self.assertNotIn("MAP 1.6", reached)                                                # but it is not counted
+        self.assertIn("MAP 1.6", unreached)
 
     def test_a_redraft_that_breaks_the_rules_with_the_persons_decisions_is_rejected(self):
         self.assertEqual(self.go(self.good()), 0)
@@ -721,6 +723,13 @@ class Mapping(unittest.TestCase):
         rules = json.loads(real_rules.read_text())
         tmp_rules, tmp_areas = self.tmp / "rules.json", self.tmp / "areas.json"
         try:
+            impacts = json.loads(real_areas.read_text())                 # an area's impact changes: nothing to do
+            for a in impacts["ai_areas"]:
+                a["impact"] = ["people"] if a["id"] == "mcp_tools" else a["impact"][:1]
+            tmp_areas.write_text(json.dumps(impacts))
+            R.AI_AREAS = tmp_areas
+            self.assertEqual(R.mapping_freshness(entry(), "mcp_tools", self.inp), "current")
+            R.AI_AREAS = real_areas
             R.AI_MAPPING_RULES = tmp_rules                               # a subcategory no row uses becomes foundation
             tmp_rules.write_text(json.dumps(dict(rules, foundation=dict(rules["foundation"], subcategories=
                                  rules["foundation"]["subcategories"] + ["MAP 1.4"]))))
@@ -736,8 +745,8 @@ class Mapping(unittest.TestCase):
             self.assertTrue(any("MAP 2.2 is foundation" in ln for ln in lines), lines)
             self.assertEqual((entry()["rows"], R.mapping_freshness(entry(), "mcp_tools", self.inp)), (before, "recheck"))
             R.AI_MAPPING_RULES = real_rules
-            areas = json.loads(real_areas.read_text())                   # another area's row changes: recheck
-            for a in areas["ai_areas"]:
+            areas = json.loads(real_areas.read_text())
+            for a in areas["ai_areas"]:                                  # another area's row changes: recheck
                 if a["id"] == "agent":
                     a["covers"] += " Changed."
             tmp_areas.write_text(json.dumps(areas))
@@ -761,7 +770,8 @@ class Mapping(unittest.TestCase):
         rows = {r["subcategory"]: r for r in doc["areas"]["mcp_tools"]["rows"]}
         self.assertEqual(rows["MEASURE 2.7"]["status"], "needs_human_review")
         self.assertEqual(rows["MAP 4.1"]["status"], "pass")
-        self.assertEqual(doc["areas"]["mcp_tools"]["inputs"]["ai_areas"], R.audit.sha(R.AI_AREAS))
+        self.assertEqual(doc["areas"]["mcp_tools"]["inputs"]["ai_areas"],
+                         R.audit.json_sha([R.drafter_view(a) for a in json.loads(R.AI_AREAS.read_text())["ai_areas"]]))
         rules = json.loads(R.AI_MAPPING_RULES.read_text())
         reached, unreached = R.mapping_coverage(doc, self.inp, rules)
         self.assertIn("GOVERN 4.1", reached)            # foundation
@@ -1037,11 +1047,11 @@ class RegressionCheck(unittest.TestCase):
         self.assertEqual(R.stored_mapping_problems(inp, m), [])
         doc = J.loads((FIXTURE / "mapping.json").read_text())
         area = next(iter(doc["areas"]))
-        doc["areas"][area]["rows"][0]["impact"] = ["not-an-impact"]
+        doc["areas"][area]["rows"][0]["cis_refs"] = ["LLM-77.7"]
         R.AI_MAPPING = tmp / "mapping.json"
         R.AI_MAPPING.write_text(J.dumps(doc))
         problems = R.stored_mapping_problems(inp, m)
-        self.assertTrue(problems and problems[0].startswith(f"mapping {area}: ") and "impact" in problems[0])
+        self.assertTrue(problems and problems[0].startswith(f"mapping {area}: ") and "cis_refs" in problems[0])
 
 
 class ParseUpToDate(unittest.TestCase):

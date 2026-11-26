@@ -7,9 +7,8 @@ The questions go into a bank of every possible question; a script picks a client
 (`none`, `consumer`, `producer`) and producer flags. The script already checks the mechanics (every row asked once or
 twice per allowed role, ids, roles, flags, safeguards given for the row); you judge what it cannot.
 
-Batch file: `bank`, `definitions` (roles, producer flags, impacts, `criticality_frame`, `criticality_frame_optional`),
-`items` (`outcome`, numbered `suggested_actions`; area bank: `rows` with `row_id`, `area`, `why`, `impact`,
-`cis_refs`, `folded`), and for the area bank `areas` (name, applies to, covers) and `cis_safeguards` (title, AI text).
+Batch file: `bank`, `definitions` (roles, producer flags, `criticality_frame`, `criticality_frame_optional`),
+`items` (`outcome`, numbered `suggested_actions`; area bank: `rows` with `row_id`, `area`, `why`, `cis_refs`), and for the area bank `areas` (name, applies to, covers) and `cis_safeguards` (title, AI text).
 
 ## Fail a question if ANY of these is true
 1. **Checkbox.** It can be answered "yes / no" or "we have a policy" without showing how the organisation operates.
@@ -23,8 +22,8 @@ Batch file: `bank`, `definitions` (roles, producer flags, impacts, `criticality_
    people it applies to come to know it and its changes; and the `ai_system_inventory` question pointing to its sheet
    and asking, per AI system, what it involves and its worst realistic outcome.
 4. **Misaligned.** It tests a neighbouring subcategory, not this outcome. Area bank: it does not ask the main subject
-   of a covered row's `why` (trimming extra details is fine), it asks what the area's `covers` gives to another area,
-   or a row with `folded` is asked without the folded outcome.
+   of a covered row's `why` (trimming extra details is fine), or it asks what the area's `covers` gives to another
+   area.
 5. **Wrong audience.** It does not make sense for one of its `roles` (a producer question about only using a vendor's
    AI, a consumer question about training the model); a `none` question assumes the organisation has AI or an AI
    policy; a producer flag the question does not depend on, or a missing one where it only makes sense with it.

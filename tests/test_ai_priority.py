@@ -20,12 +20,13 @@ def system(name, areas, fin="Under USD 100k", rep="None", harm="No"):
     return {"name": name, "areas": areas, FIN: fin, REP: rep, HARM: harm}
 
 
-# A small mapping: MAP 1.4 reached by internal_process (process impact) and folded into by customer_facing's MAP 3.3;
-# MEASURE 2.11 reached by customer_facing with a people impact.
+# A small mapping: MAP 1.4 reached by internal_process and by customer_facing; MAP 3.3 by customer_facing; MEASURE
+# 2.11 by an area with a people impact. A row carries its area's impacts.
 CTX = {"foundation": ["MAP 1.5"], "rows": {
-    "MAP 1.4": {"internal_process:MAP 1.4": {"area": "internal_process", "impact": ["process"], "folded": []}},
-    "MAP 3.3": {"customer_facing:MAP 3.3": {"area": "customer_facing", "impact": ["process"], "folded": ["MAP 1.4"]}},
-    "MEASURE 2.11": {"customer_facing:MEASURE 2.11": {"area": "customer_facing", "impact": ["people"], "folded": []}},
+    "MAP 1.4": {"internal_process:MAP 1.4": {"area": "internal_process", "impact": ["process"]},
+                "customer_facing:MAP 1.4": {"area": "customer_facing", "impact": ["process"]}},
+    "MAP 3.3": {"customer_facing:MAP 3.3": {"area": "customer_facing", "impact": ["process"]}},
+    "MEASURE 2.11": {"customer_facing:MEASURE 2.11": {"area": "customer_facing", "impact": ["people"]}},
 }}
 
 
@@ -51,7 +52,7 @@ class Priority(unittest.TestCase):
         self.assertEqual(got["GOVERN 1.1"], "Medium")      # organisation-wide: the highest system
         self.assertEqual(got["MAP 1.5"], "Medium")
         self.assertEqual(got["MAP 3.3"], "Low")            # only the chatbot uses customer_facing
-        self.assertEqual(got["MAP 1.4"], "Medium")         # its own row (HR screening) and a fold (chatbot): highest
+        self.assertEqual(got["MAP 1.4"], "Medium")         # two areas' rows (HR screening, chatbot): the highest
         self.assertEqual(got["MEASURE 2.11"], "Low")
         self.assertEqual(got["MEASURE 2.6"], "High")       # no row reaches it for this client: unknown counts high
 

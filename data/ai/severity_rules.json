@@ -17,5 +17,5 @@
     "note": "Loss of life is possible in these sectors: a subcategory reached through a row with a people impact, and MEASURE 2.6 (safety), are always High."
   },
   "foundation": "A foundation subcategory (all of GOVERN and mapping_rules.json foundation.subcategories) is organisation-wide: the highest criticality of any system.",
-  "areas": "Any other subcategory: the highest criticality among the systems marked with an AI area whose mapping row (or a row that folds it) reaches the subcategory. Subcategories not in the client's questionnaire get no priority."
+  "areas": "Any other subcategory: the highest criticality among the systems marked with an AI area with a mapping row on the subcategory. Subcategories not in the client's questionnaire get no priority."
 }

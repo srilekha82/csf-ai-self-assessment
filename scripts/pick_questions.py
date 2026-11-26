@@ -187,15 +187,17 @@ def ai_questions_for(bank: str, rec: dict, roles: list, flags: list, areas: list
     return out
 
 
-def ai_evidence_prompt(bank: str, rec: dict, rows: list, evidence: dict, impact_order: list) -> str:
+def ai_evidence_prompt(bank: str, rec: dict, rows: list, evidence: dict, impact_order: list,
+                       area_impacts: dict) -> str:
+    """A question with no evidence line of its own: the lines for the impacts of the areas it is asked for."""
     if bank == "foundation":
         return evidence["foundation"]
-    impacts = {i for r in rows for i in rec["rows"][r]["impact"]}
+    impacts = {i for r in rows for i in area_impacts[rec["rows"][r]["area"]]}
     return " ".join(evidence["by_impact"][i] for i in impact_order if i in impacts) or evidence["default"]
 
 
 def ai_entry(bank: str, sid: str, rec: dict, picked: list, outcome: str, names: dict, rules: dict, evidence: dict,
-             impact_order: list) -> dict:
+             impact_order: list, area_impacts: dict) -> dict:
     questions = []
     for q, rows in picked:
         client_areas = [names[rec["rows"][r]["area"]] for r in rows]
@@ -207,7 +209,8 @@ def ai_entry(bank: str, sid: str, rec: dict, picked: list, outcome: str, names: 
                            rules["covers_note"].format(areas="; ".join(client_areas)) if len(q["rows"]) > 1
                            else client_areas[0]),
             "rows": rows,
-            "evidence_prompt": q.get("evidence_prompt") or ai_evidence_prompt(bank, rec, rows, evidence, impact_order),
+            "evidence_prompt": q.get("evidence_prompt") or ai_evidence_prompt(bank, rec, rows, evidence, impact_order,
+                                                                                area_impacts),
         })
     flag = rules["review_flag"] if rec["status"] == "needs_human_review" else ""
     return draft_entry(sid, sid.split()[0], outcome, rules["default_type"], questions,
@@ -226,7 +229,9 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
     qrules = json.loads(AI_QUESTION_RULES.read_text())
     evidence = json.loads(AI_EVIDENCE_PROMPTS.read_text())
     labels = json.loads(AI_AREA_LABELS.read_text())["labels"]
-    names = {a["id"]: labels.get(a["id"]) for a in json.loads(AI_AREAS.read_text())["ai_areas"]}
+    ai_areas = json.loads(AI_AREAS.read_text())["ai_areas"]
+    names = {a["id"]: labels.get(a["id"]) for a in ai_areas}
+    area_impacts = {a["id"]: a["impact"] for a in ai_areas}
     if not all(names.values()):
         ev.fail(f"[pick_questions] ERROR: {AI_AREA_LABELS} has no label for "
                 f"{', '.join(a for a, n in names.items() if not n)}", inputs)
@@ -254,7 +259,7 @@ def pick_ai(run_dir: Path, ev) -> tuple[list, list, str]:
                                 "No question of this subcategory applies to the client's role, flags or AI areas"})
             if picked:
                 entries.append(ai_entry(bank, sid, rec, picked, outcomes[sid], names, rules, evidence,
-                                        list(qrules["impacts"])))
+                                        list(qrules["impacts"]), area_impacts))
         entries.sort(key=lambda e: (AI_FUNCTION_ORDER.get(e["function"], 99),
                                     list(outcomes).index(e["subcategory_id"])))
         outputs += write_draft(run_dir, f"ai_questions_draft_{bank}.json", entries, bank_file,
