@@ -5,28 +5,35 @@ there harms (impacts) -> questions per AI RMF function -> maturity per AI RMF su
 discussion from this page.
 
 ## 1. AI areas: the decision, in a spreadsheet
-`data/ai/authoring/ai_areas.xlsx` is written by a person and is the decision. `scripts/sheet_io.py import ai_areas`
-checks it and writes `data/ai/ai_areas.json`, which scripts and agents read. Columns: ID, AI area, Kind, Applies to,
-Impact, What it covers, Example question (spreadsheet only).
+`data/ai/authoring/ai_areas.xlsx` is written by a person and is the decision. It has two tabs: **Usage** (the ways AI
+is used, or used around the organisation) and **Components** (the parts of the AI ecosystem); the tab sets an area's
+kind. `scripts/sheet_io.py import ai_areas` checks both tabs and writes `data/ai/ai_areas.json`, which scripts and agents
+read. Columns: ID, AI area, Applies to, Impact, What it covers, Example question (spreadsheet only).
 
-| AI area | Kind | Applies to | Impact |
-|---|---|---|---|
-| Internal process | usage | both | process, data |
-| Code generation (AI-specific part only; secure development is assessed by the CSF) | usage | both | assets, data |
-| Customer-facing application | usage | both | process, data, people |
-| Vendor AI (vendors and products running AI on the org's data: Jira, Slack, ServiceNow, GitHub, RPA) | usage | both | data |
-| Model building (owning a model, built from scratch or on an existing one: purpose and design, evaluation before use, the base model, release to others) | usage | producer | assets |
-| Invisible AI usage (shadow AI: unapproved use inside; outside AI is on the External AI sheet) | usage | both | data, access |
-| Input | component | both | data |
-| Output (wrong answers that are then trusted: steered by an attacker, or simply inaccurate, inconsistent or drifting) | component | both | process, people |
-| Test, tuning and evaluation data (including the harness reliability is measured with, and feedback reused for tuning) | component | producer | data, assets |
-| Model (as IP) | component | producer | assets |
-| Source data (RAG / knowledge graph; includes data classification) | component | both | data, access |
-| MCP / tools (hosted inside or used from outside; an outside server is also a supplier) | component | both | access, process, data |
-| Agent | component | both | access, process, data |
-| Hosting (a model the org hosts, as a producer or for a proof of concept) | component | both | assets |
+**Usage**
 
-- **Kind:** usage is a way AI is used (or used around the organisation); component is a part of the AI ecosystem.
+| AI area | Applies to | Impact |
+|---|---|---|
+| Internal process | both | process, data |
+| Code generation (AI-specific part only; secure development is assessed by the CSF) | both | assets, data |
+| Customer-facing application | both | process, data, people |
+| Vendor AI (vendors and products running AI on the org's data: Jira, Slack, ServiceNow, GitHub, RPA) | both | data |
+| Model building (owning a model, built from scratch or on an existing one: purpose and design, evaluation before use, the base model, release to others) | producer | assets |
+| Invisible AI usage (shadow AI: unapproved use inside; outside AI is on the External AI sheet) | both | data, access |
+
+**Components**
+
+| AI area | Applies to | Impact |
+|---|---|---|
+| Input | both | data |
+| Output (wrong answers that are then trusted: steered by an attacker, or simply inaccurate, inconsistent or drifting) | both | process, people |
+| Test, tuning and evaluation data (including the harness reliability is measured with, and feedback reused for tuning) | producer | data, assets |
+| Model (as IP) | producer | assets |
+| Source data (RAG / knowledge graph; includes data classification) | both | data, access |
+| MCP / tools (hosted inside or used from outside; an outside server is also a supplier) | both | access, process, data |
+| Agent | both | access, process, data |
+| Hosting (a model the org hosts, as a producer or for a proof of concept) | both | assets |
+
 - **Impact** is what a failure harms: **data** (exposed, leaked, poisoned), **access** (permissions and credentials
   used or abused), **process** (a business process or decision goes wrong), **assets** (model, code or infrastructure
   stolen, damaged or taken down), **people** (harm to individuals from what the AI says or decides). People harm is set
