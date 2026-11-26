@@ -36,15 +36,15 @@ class AiAreasSheet(unittest.TestCase):
         shutil.copy(AI_AREAS_XLSX, self.xlsx)   # the committed spreadsheet is the decision
         self.assertEqual(self.do_import(), 0)
 
-    def edit(self, row, header, value):
+    def edit(self, row, header, value, tab="Usage"):
         wb = openpyxl.load_workbook(self.xlsx)
-        ws = wb[self.spec["sheet"]]
+        ws = wb[tab]
         col = [c.value for c in ws[1]].index(header) + 1
         ws.cell(row=row, column=col, value=value)
         wb.save(self.xlsx)
 
-    def cell(self, row, header):
-        ws = openpyxl.load_workbook(self.xlsx)[self.spec["sheet"]]
+    def cell(self, row, header, tab="Usage"):
+        ws = openpyxl.load_workbook(self.xlsx)[tab]
         return ws.cell(row=row, column=[c.value for c in ws[1]].index(header) + 1).value
 
     def do_import(self):
@@ -69,7 +69,7 @@ class AiAreasSheet(unittest.TestCase):
 
     def test_bad_cells_are_rejected_and_nothing_is_written(self):
         second_id = self.cell(3, "ID")
-        for header, value in (("Applies to", "everyone"), ("Kind", "asset"), ("Impact", "data, money"),
+        for header, value in (("Applies to", "everyone"), ("Impact", "data, money"),
                               ("Impact", ""), ("ID", "Bad Id"), ("AI area", ""), ("ID", second_id)):
             self.setUp()
             before = self.json.read_text()
@@ -93,7 +93,35 @@ class AiAreasSheet(unittest.TestCase):
 
     def test_wrong_headers_are_rejected(self):
         wb = openpyxl.load_workbook(self.xlsx)
-        wb[self.spec["sheet"]].cell(row=1, column=2, value="Surface")
+        wb["Components"].cell(row=1, column=2, value="Surface")
+        wb.save(self.xlsx)
+        self.assertEqual(self.do_import(), 1)
+
+    def test_the_tab_sets_the_kind(self):
+        wb = openpyxl.load_workbook(self.xlsx)
+        self.assertEqual(wb.sheetnames, ["Usage", "Components", "Read me"])
+        self.assertNotIn("Kind", [c.value for c in wb["Usage"][1]])
+        areas = json.loads(self.json.read_text())["ai_areas"]
+        kinds = {a["id"]: a["kind"] for a in areas}
+        for tab, kind in (("Usage", "usage"), ("Components", "component")):
+            ids = [r[0] for r in wb[tab].iter_rows(min_row=2, values_only=True) if r[0]]
+            self.assertTrue(ids)
+            self.assertEqual({kinds[i] for i in ids}, {kind}, tab)
+
+    def test_an_area_moved_to_the_other_tab_changes_kind_and_a_missing_tab_or_repeated_id_is_rejected(self):
+        wb = openpyxl.load_workbook(self.xlsx)
+        row = [c.value for c in wb["Usage"][2]]
+        wb["Usage"].delete_rows(2)
+        wb["Components"].append(row)
+        wb.save(self.xlsx)
+        self.assertEqual(self.do_import(), 0)
+        moved = next(a for a in json.loads(self.json.read_text())["ai_areas"] if a["id"] == row[0])
+        self.assertEqual(moved["kind"], "component")
+        wb = openpyxl.load_workbook(self.xlsx)
+        wb["Usage"].append([c.value for c in wb["Components"][2]])
+        wb.save(self.xlsx)
+        self.assertEqual(self.do_import(), 1)
+        del wb["Components"]
         wb.save(self.xlsx)
         self.assertEqual(self.do_import(), 1)
 
