@@ -17,7 +17,9 @@ Usage: .venv/bin/python ./scripts/sheet_io.py export <sheet> [--xlsx PATH] [--js
            overwrite them.
 
 Sheets:
-  ai_areas                the list of AI areas. Here the spreadsheet is the decision; the JSON is made from it.
+  ai_areas                the list of AI areas, in two tabs: Usage (ways AI is used) and Components (parts of the AI
+                          ecosystem); the tab sets the area's kind. Here the spreadsheet is the decision; the JSON is
+                          made from it.
   mapping                 which AI RMF subcategories apply to each AI area (data/ai/mapping.json): one line per
                           area x subcategory, mapped or not, plus a Coverage sheet.
   area_questions,         the two AI RMF question banks, one line per question. Lines may be edited, added or
@@ -72,6 +74,19 @@ def json_columns(spec: dict) -> list[dict]:
     return [c for c in spec["columns"] if c.get("in_json", True)]
 
 
+def tabs(spec: dict) -> list[tuple[str | None, str]]:
+    """[(value, tab title)]: a sheet split into tabs by one column (spec "tabs"), whose value the tab sets; else one
+    tab, the spec's "sheet"."""
+    split = spec.get("tabs")
+    return list(split["sheets"].items()) if split else [(None, spec["sheet"])]
+
+
+def sheet_columns(spec: dict) -> list[dict]:
+    """The columns shown in the spreadsheet: all of them, except the one the tabs set."""
+    by = (spec.get("tabs") or {}).get("column")
+    return [c for c in spec["columns"] if c["key"] != by]
+
+
 # ── cells ───────────────────────────────────────────────────────────────────
 
 def parse_cell(col: dict, raw) -> tuple[object, list[str]]:
@@ -121,37 +136,44 @@ def cell_text(col: dict, value) -> str:
 # ── import ──────────────────────────────────────────────────────────────────
 
 def read_sheet(spec: dict, xlsx: Path) -> tuple[list[dict], list[str]]:
-    """(rows, problems) from the spreadsheet; rows are dicts keyed by column key (all columns)."""
+    """(rows, problems) from the spreadsheet; rows are dicts keyed by column key (all columns). A sheet split into tabs
+    is read tab by tab, and each row takes its tab's value for the column the tabs set."""
     try:
         wb = openpyxl.load_workbook(xlsx, data_only=True)
     except (OSError, ValueError, KeyError) as e:
         return [], [f"cannot open {xlsx}: {e}"]
-    if spec["sheet"] not in wb.sheetnames:
-        return [], [f"no sheet named {spec['sheet']!r} (sheets: {wb.sheetnames})"]
-    rows = list(wb[spec["sheet"]].iter_rows(values_only=True))
-    headers = [str(h).strip() if h is not None else "" for h in (rows[0] if rows else [])]
-    want = [c["header"] for c in spec["columns"]]
-    missing = [h for h in want if h not in headers]
-    extra = [h for h in headers if h and h not in want]
-    if missing or extra:
-        return [], [f"headers must be {want}; missing {missing}, unexpected {extra}"]
-    idx = {h: headers.index(h) for h in want}
+    split = spec.get("tabs")
+    columns = sheet_columns(spec)
+    want = [c["header"] for c in columns]
     out, problems, seen = [], [], {}
-    for n, row in enumerate(rows[1:], start=2):
-        if all(v is None or str(v).strip() == "" for v in row):
+    for value, title in tabs(spec):
+        if title not in wb.sheetnames:
+            problems.append(f"no sheet named {title!r} (sheets: {wb.sheetnames})")
             continue
-        rec = {}
-        for c in spec["columns"]:
-            raw = row[idx[c["header"]]] if idx[c["header"]] < len(row) else None
-            value, errs = parse_cell(c, raw)
-            problems += [f"row {n}, {c['header']}: {e}" for e in errs]
-            rec[c["key"]] = value
-        key = rec.get(spec["key"]) if spec["key"] else None   # no single key (mapping): its converter checks repeats
-        if key and key in seen:
-            problems.append(f"row {n}: {spec['key']} {key!r} already used in row {seen[key]}")
-        elif key:
-            seen[key] = n
-        out.append(rec)
+        where = f"{title} " if split else ""
+        rows = list(wb[title].iter_rows(values_only=True))
+        headers = [str(h).strip() if h is not None else "" for h in (rows[0] if rows else [])]
+        missing = [h for h in want if h not in headers]
+        extra = [h for h in headers if h and h not in want]
+        if missing or extra:
+            problems.append(f"{where}headers must be {want}; missing {missing}, unexpected {extra}")
+            continue
+        idx = {h: headers.index(h) for h in want}
+        for n, row in enumerate(rows[1:], start=2):
+            if all(v is None or str(v).strip() == "" for v in row):
+                continue
+            rec = {split["column"]: value} if split else {}
+            for c in columns:
+                raw = row[idx[c["header"]]] if idx[c["header"]] < len(row) else None
+                parsed, errs = parse_cell(c, raw)
+                problems += [f"{where}row {n}, {c['header']}: {e}" for e in errs]
+                rec[c["key"]] = parsed
+            key = rec.get(spec["key"]) if spec["key"] else None   # no single key (mapping): its converter checks repeats
+            if key and key in seen:
+                problems.append(f"{where}row {n}: {spec['key']} {key!r} already used in {seen[key]}")
+            elif key:
+                seen[key] = f"{where}row {n}"
+            out.append(rec)
     if not out and not problems:
         problems.append("the sheet has no rows")
     return out, problems
@@ -245,25 +267,19 @@ def import_external(xlsx: Path, json_path: Path, ev, rows: list[dict]) -> str:
 
 # ── export ──────────────────────────────────────────────────────────────────
 
-def write_xlsx(spec: dict, rows: list[dict], xlsx: Path, extra: dict[str, list[list]] | None = None) -> None:
-    """Write the spreadsheet: one row per record (missing columns blank), dropdowns, a Read me sheet, and any extra
-    read-only sheets ({title: rows of cells, header first})."""
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = spec["sheet"]
-    fill, font = PatternFill("solid", fgColor="1A56DB"), Font(bold=True, color="FFFFFF")
-    for i, c in enumerate(spec["columns"], 1):
+def write_tab(ws, spec: dict, columns: list[dict], rows: list[dict], fill, font) -> None:
+    for i, c in enumerate(columns, 1):
         cell = ws.cell(row=1, column=i, value=c["header"])
         cell.fill, cell.font, cell.alignment = fill, font, Alignment(wrap_text=True, vertical="top")
         ws.column_dimensions[get_column_letter(i)].width = c.get("width", 20)
     for r, rec in enumerate(rows, 2):
-        for i, c in enumerate(spec["columns"], 1):
+        for i, c in enumerate(columns, 1):
             cell = ws.cell(row=r, column=i, value=cell_text(c, rec.get(c["key"])))
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             if rec.get("_comments", {}).get(c["key"]):   # a note on the cell (hover), not part of the value
                 cell.comment = Comment(rec["_comments"][c["key"]], "sheet_io")
     last = max(len(rows) + 1, 2) + 200  # room for new rows
-    for i, c in enumerate(spec["columns"], 1):
+    for i, c in enumerate(columns, 1):
         choices = c["allowed"] if c["type"] == "enum" else ["yes", "no"] if c["type"] == "bool" else None
         if choices:
             dv = DataValidation(type="list", formula1='"' + ",".join(choices) + '"', allow_blank=not c.get("required"))
@@ -271,7 +287,19 @@ def write_xlsx(spec: dict, rows: list[dict], xlsx: Path, extra: dict[str, list[l
             dv.add(f"{col}2:{col}{last}")
             ws.add_data_validation(dv)
     ws.freeze_panes = spec.get("freeze", "C2")
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(spec['columns']))}{max(len(rows) + 1, 2)}"
+    ws.auto_filter.ref = f"A1:{get_column_letter(len(columns))}{max(len(rows) + 1, 2)}"
+
+
+def write_xlsx(spec: dict, rows: list[dict], xlsx: Path, extra: dict[str, list[list]] | None = None) -> None:
+    """Write the spreadsheet: one row per record (missing columns blank), dropdowns, a Read me sheet, and any extra
+    read-only sheets ({title: rows of cells, header first}). A sheet split into tabs gets one tab per value."""
+    wb = openpyxl.Workbook()
+    fill, font = PatternFill("solid", fgColor="1A56DB"), Font(bold=True, color="FFFFFF")
+    by, columns = (spec.get("tabs") or {}).get("column"), sheet_columns(spec)
+    for n, (value, title) in enumerate(tabs(spec)):
+        ws = wb.active if n == 0 else wb.create_sheet(title)
+        ws.title = title
+        write_tab(ws, spec, columns, [r for r in rows if by is None or r.get(by) == value], fill, font)
 
     for title, cells in (extra or {}).items():
         xs = wb.create_sheet(title)
@@ -293,7 +321,7 @@ def write_xlsx(spec: dict, rows: list[dict], xlsx: Path, extra: dict[str, list[l
     for i, h in enumerate(("Column", "Type", "Required", "Allowed values", "In JSON", "Help"), 1):
         cell = rd.cell(row=start, column=i, value=h)
         cell.fill, cell.font = fill, font
-    for n, c in enumerate(spec["columns"], start + 1):
+    for n, c in enumerate(columns, start + 1):
         allowed = ", ".join(c["allowed"]) if c.get("allowed") else "yes, no" if c["type"] == "bool" else ""
         for i, v in enumerate((c["header"], c["type"], "yes" if c.get("required") else "no", allowed,
                                "yes" if c.get("in_json", True) else "no", c.get("help", "")), 1):

@@ -76,7 +76,7 @@ The questions ask how something is done, by whom and with what proof, not just "
 | CSF question banks | `data/csf/banks/question_bank_<sector>.json` | CSET questions per subcategory, one file per sector |
 | CSF tailoring rules | `data/csf/scope_rules.json`, `data/csf/crosswalks/` | How certifications change each question; the ISO 27001, PCI DSS and CIS Controls v8.1 mappings to CSF (from NIST) |
 | AI RMF framework | `data/ai/ai_rmf_core.json` | The 72 AI RMF subcategories and the Playbook's suggested actions |
-| AI areas | `data/ai/authoring/ai_areas.xlsx` → `data/ai/ai_areas.json` | The 14 AI areas. A person decides them in the spreadsheet. |
+| AI areas | `data/ai/authoring/ai_areas.xlsx` → `data/ai/ai_areas.json` | The 14 AI areas, in two tabs: Usage and Components. A person decides them in the spreadsheet. |
 | Mapping | `data/ai/mapping.json` (review copy: `data/ai/authoring/mapping.xlsx`) | Which AI RMF subcategories apply to each AI area, and why |
 | AI RMF question banks | `data/ai/banks/` | Foundation questions and area questions |
 | External AI bank | `data/ai/banks/question_bank_external.json` (review copy: `data/ai/authoring/questions_external.xlsx`) | Per CSF subcategory: the threat from AI outside and its questions |
