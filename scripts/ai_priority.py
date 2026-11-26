@@ -48,13 +48,8 @@ def system_level(system: dict, rules: dict) -> str:
 
 
 def reach(ctx: dict) -> dict[str, list[tuple[str, list]]]:
-    """{subcategory: [(area, impacts)]} from the mapping rows, a folded subcategory reached through its row."""
-    out: dict[str, list] = {}
-    for sid, rows in ctx["rows"].items():
-        for r in rows.values():
-            for target in [sid, *r["folded"]]:
-                out.setdefault(target, []).append((r["area"], r["impact"]))
-    return out
+    """{subcategory: [(area, the area's impacts)]} from the mapping rows."""
+    return {sid: [(r["area"], r["impact"]) for r in rows.values()] for sid, rows in ctx["rows"].items()}
 
 
 def subcategory_priorities(subcategories, systems: list[dict], sector: str, client_areas, ctx: dict,

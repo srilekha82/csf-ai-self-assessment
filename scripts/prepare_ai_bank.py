@@ -32,7 +32,7 @@ Usage: .venv/bin/python ./scripts/prepare_ai_bank.py mapping --area ID
                          examples, the threat a person decided, and the AI text of the CIS safeguards NIST links to it.
                          --missing: only subcategories with no questions yet.
 
-Terms (AI area, mapping row, foundation, impact, folded subcategory, required check, needs human review): see
+Terms (AI area, mapping row, foundation, impact, required check, needs human review): see
 docs/guide.md, Glossary. The full model: docs/ai-rmf-model.md.
 """
 
@@ -47,7 +47,7 @@ from config import (AI_AREAS, AI_AREA_LABELS, AI_BANKS, AI_BUILD, AI_WORK, AI_CO
                      AI_SCOPE_RULES, AI_BANK_EXTERNAL, CSF_CORE, ai_bank_path)
 from ai_bank_common import (area_roles, foundation_subcategories, load_inputs, load_json, rel,  # noqa: E402
                             require_cis_text, row_id)
-from ai_mapping import area_candidates, area_rules, check_mapping_rules, mapping_status  # noqa: E402
+from ai_mapping import area_candidates, area_rules, check_mapping_rules, drafter_view, mapping_status  # noqa: E402
 
 import audit  # noqa: E402
 
@@ -69,11 +69,8 @@ def area_items(inp: dict, chosen: list[str] | None) -> list[dict]:
     for area_id, entry in load_json(AI_MAPPING, "mapping.json")["areas"].items():
         for r in entry["rows"]:
             rows.setdefault(r["subcategory"], []).append({
-                "row_id": row_id(area_id, r["subcategory"]), "area": area_id, "why": r["why"], "impact": r["impact"],
-                "cis_refs": r["cis_refs"],
-                "folded": [{"subcategory_id": f, "outcome": inp["subs"][f]["outcome"],
-                            "suggested_actions": inp["subs"][f]["suggested_actions"]} for f in r.get("folded", [])],
-            })
+                "row_id": row_id(area_id, r["subcategory"]), "area": area_id, "why": r["why"],
+                "cis_refs": r["cis_refs"]})
     return [{**sub_fields(inp["subs"][sid]), "rows": rows[sid]} for sid in inp["subs"]
             if sid in rows and (chosen is None or sid in chosen)]
 
@@ -130,7 +127,7 @@ def prepare_batch(inp: dict, bank: str, ids: list[str], function: str | None, ev
         chosen = [s for s in chosen if s not in done]
     if not chosen:
         sys.exit("[prepare_ai_bank] ERROR: no subcategories selected" + (" (all already recorded)" if missing_only else ""))
-    definitions = {k: qrules[k] for k in ("roles", "roles_note", "producer_flags", "impacts", "criticality_frame",
+    definitions = {k: qrules[k] for k in ("roles", "roles_note", "producer_flags", "criticality_frame",
                                           "criticality_frame_optional")}
     if bank == "foundation":
         doc = {"bank": bank, "definitions": definitions, "questions_per_subcategory": qrules["foundation_questions"],
@@ -168,7 +165,7 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
     out = AI_WORK / f"mapping_input_{area_id}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
-        "area": areas[area_id],
+        "area": drafter_view(areas[area_id]),
         "other_areas": [{k: a[k] for k in ("id", "name", "applies_to", "covers")}
                         for a in areas.values() if a["id"] != area_id],   # the rest of the AI areas sheet
         "functions": rules["functions"],
@@ -185,14 +182,15 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
 
 def prepare_evidence(inp: dict, bank: str) -> Path:
     """The evidence writer's input: every question of the bank with no evidence_prompt yet, numbered as in the bank,
-    with its outcome, the areas and impacts it is asked for (area bank) and the titles of the safeguards it cites."""
+    with its outcome, the areas it is asked for and their impacts (area bank) and the titles of the safeguards it cites."""
     require_cis_text(inp, "the evidence input")
     doc = json.loads(ai_bank_path(bank, AI_BANKS).read_text())
-    names = {a["id"]: a["name"] for a in json.loads(AI_AREAS.read_text())["ai_areas"]}
+    areas = {a["id"]: a for a in json.loads(AI_AREAS.read_text())["ai_areas"]}
     items = {}
     for sid, e in doc["subcategories"].items():
         qs = [{"number": n, "question_text": q["question_text"],
-               **({"areas": [{"area": names[e["rows"][r]["area"]], "impact": e["rows"][r]["impact"]} for r in q["rows"]]}
+               **({"areas": [{"area": areas[e["rows"][r]["area"]]["name"], "impact": areas[e["rows"][r]["area"]]["impact"]}
+                             for r in q["rows"]]}
                   if bank == "areas" else {}),
                "cis": [f"{c}: {inp['safeguards'][c]['title']}" for c in q["cis_refs"] if c in inp["safeguards"]]}
               for n, q in enumerate(e["questions"], 1) if not q.get("evidence_prompt")]

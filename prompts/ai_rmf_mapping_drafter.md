@@ -2,8 +2,7 @@ You map ONE AI area to the NIST AI RMF 1.0. You judge from `data/ai/bank_build/w
 only. Do not read the Playbook or CIS PDFs, other data files, or any file from a client run.
 
 ## Input
-- `area`: the AI area: `covers` (what is exposed, what can go wrong) and `impact` (what a failure hits: data, access,
-  process, assets, people).
+- `area`: the AI area: `covers` (what is exposed, what can go wrong).
 - `other_areas`: the rest of the AI areas, each mapped on its own.
 - `functions` (MAP, MEASURE, MANAGE) and `function_definitions` (the Playbook's statement of each function).
 - `foundation`: GOVERN and the subcategories listed with it, asked once for the organisation elsewhere. Never map them.
@@ -38,12 +37,11 @@ you decide only where they land.
    that row cites a safeguard of that control.
 4. `cis_refs`: every safeguard from `cis_candidates` that supports the row (evidence an assessor would ask for), and no
    others; prefer the lowest IG that fits. Look through all the candidates: `[]` only when none supports it.
-5. `impact`: the area's impacts this row protects (a privacy row on source data is `data`; a retrieval permissions row
-   is `access`). Never one the area does not list.
-6. `why`: one sentence on what this subcategory checks about this area.
-7. `folded` (optional): another subcategory of this area that this row's question fully asks, merged instead of a
-   second row, e.g. `"folded": ["MAP 2.2"]`. It gets no question of its own. When in doubt, write two rows.
-8. Do not decide by sector, organisation size or how any client works. Never invent an id.
+5. `why`: one sentence on what this subcategory checks about this area.
+6. `also_covers` (optional): a note naming other subcategories whose practice this row's `why` already covers, so it
+   was not written as a second row (rule 2), e.g. `"also_covers": ["MAP 2.2"]`. It is a comment for the person
+   reviewing, not a row: a subcategory that needs its own question for this area is a row.
+7. Do not decide by sector, organisation size or how any client works. Never invent an id.
 
 ## Output
 Write ONE JSON object to the file the command names:
@@ -52,9 +50,9 @@ Write ONE JSON object to the file the command names:
 {
   "area": "mcp_tools",
   "rows": [
-    {"function": "MAP", "subcategory": "MAP 4.1", "cis_refs": ["MCP-2.1"], "impact": ["access"],
+    {"function": "MAP", "subcategory": "MAP 4.1", "cis_refs": ["MCP-2.1"],
      "why": "The MCP servers and tools the AI can call, inside and outside, are identified with what each can reach."},
-    {"function": "MEASURE", "subcategory": "MEASURE 2.8", "cis_refs": ["MCP-8.2"], "impact": ["access"],
+    {"function": "MEASURE", "subcategory": "MEASURE 2.8", "cis_refs": ["MCP-8.2"],
      "why": "Tool calls are logged with the credentials used, so actions can be traced and accounted for."}
   ],
   "no_question": [
@@ -63,11 +61,11 @@ Write ONE JSON object to the file the command names:
 }
 ```
 
-A script checks the whole file (ids, functions, candidates, impacts, required checks) and rejects it if anything is
+A script checks the whole file (ids, functions, candidates, required checks) and rejects it if anything is
 wrong; nothing is stored until it passes.
 
 ## Revision turn
 If you are given the evaluator's failures, return the complete corrected file: fix or remove each failing row, add a
 row for each `missing` subcategory unless you are sure it does not check this area (it then stays flagged for the
 person reviewing), and leave correct rows unchanged. `note` entries are for the person; you need not act on them. When
-you remove a row and move its content into another, list the removed subcategory in that row's `folded`.
+you remove a row and move its content into another, name the removed subcategory in that row's `also_covers`.
