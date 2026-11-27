@@ -1,0 +1,149 @@
+{
+  "recorded_at": "2026-11-27T15:08:02.374121+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_input_draft2.json",
+    "sha": "a42ad24cec438f78"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "020a37b16bf62070"
+  },
+  "output_snapshot": {
+    "area": "input",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [],
+        "why": "Requirements for what may be sent to the model, such as privacy, no provider retention or training on prompts and data residency, are elicited from the relevant actors and drive how inputs are handled."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [
+          "LLM-3.2",
+          "LLM-3.8"
+        ],
+        "why": "Where prompts, pasted text and uploaded files go is documented: which models and outside providers receive them and which external connections they cross."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [],
+        "why": "Provider terms are reviewed for whether prompts and files sent to the model are kept, reused for training or seen by the provider."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.7"
+        ],
+        "why": "Prompts and files are classified under the enterprise scheme and the controls deciding which data classes may be sent to which model are identified."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 5.1",
+        "cis_refs": [],
+        "why": "The likelihood and impact of sensitive data leaving through prompts and of hidden instructions in pasted text or files steering the AI are assessed.",
+        "also_covers": [
+          "MAP 3.2"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-3.12"
+        ],
+        "why": "Resistance to prompt injection is tested, for example by red-teaming with hidden instructions placed in pasted text and uploaded files."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5"
+        ],
+        "why": "Prompts, uploaded files and responses are logged with who sent them, so inputs that caused leaks or harmful actions can be traced."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.10",
+        "cis_refs": [
+          "LLM-3.4",
+          "LLM-3.5",
+          "LLM-3.14"
+        ],
+        "why": "Personal and sensitive data in prompts and in kept prompt and response logs is examined, with access, retention and deletion of those logs controlled."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-8.11"
+        ],
+        "why": "Inputs reaching the model in production are monitored for adversarial prompt patterns, injection attempts and sensitive data being sent."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.12",
+          "LLM-3.13",
+          "LLM-14.4",
+          "LLM-14.5"
+        ],
+        "why": "Controls are applied to inputs in use: DLP and sanitisation of prompts and files, isolation of untrusted content, and staff trained on what they may paste."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-9.2",
+          "LLM-17.9"
+        ],
+        "why": "An input channel, such as file uploads or a provider receiving prompts, can be quickly blocked or switched off when it leaks data or is used for injection, with thresholds deciding when."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "LLM-8.12"
+        ],
+        "why": "The providers that receive prompts and files are monitored over time for changes in retention, training use or access terms and for provider-side warnings, with controls adjusted."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-14.6",
+          "LLM-17.2",
+          "LLM-17.3",
+          "LLM-17.4",
+          "LLM-17.8"
+        ],
+        "why": "Data leaks through prompts and prompt injection incidents are reported, handled with the provider where needed, and recorded with the prompts preserved."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_input_eval2.json",
+  "review": []
+}

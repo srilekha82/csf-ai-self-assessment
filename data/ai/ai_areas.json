@@ -1,7 +1,7 @@
 {
   "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with its scope, its AI threat and the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
   "source": "data/ai/authoring/ai_areas.xlsx",
-  "source_sha": "d6809f47909006e4",
+  "source_sha": "e6ee05ff0742543b",
   "generated_by": "scripts/sheet_io.py import ai_areas",
   "ai_areas": [
     {
@@ -86,10 +86,11 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "data"
+        "data",
+        "process"
       ],
       "scope": "Prompts, pasted text and files people and systems send to the model, and prompt and response logs kept as a record (retention, access).",
-      "threat": "Sensitive data can leave the org or reach a provider that keeps it."
+      "threat": "Sensitive data can leave the org or reach a provider that keeps it. Hidden instructions in pasted text or files can steer the AI into wrong or harmful actions."
     },
     {
       "id": "output",
