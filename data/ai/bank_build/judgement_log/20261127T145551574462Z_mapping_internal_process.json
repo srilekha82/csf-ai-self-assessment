@@ -1,0 +1,169 @@
+{
+  "recorded_at": "2026-11-27T14:55:51.573569+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_internal_process_draft2.json",
+    "sha": "20ea8762d7777b73"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "b02e450d5f265068"
+  },
+  "output_snapshot": {
+    "area": "internal_process",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.1",
+        "cis_refs": [],
+        "why": "The internal decisions and workflows (HR, finance, approvals, operations) that AI output feeds are documented with their purpose and business value, the task the AI performs in them (such as scoring, classifying, summarising or recommending), the staff who use it and the people those decisions affect.",
+        "also_covers": [
+          "MAP 1.4",
+          "MAP 2.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [],
+        "why": "Requirements for how staff work with AI output in each internal process (review steps, override, which decisions a person must make) are gathered from the staff who use it and the people its decisions affect before the process relies on it."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [],
+        "why": "Staff using AI output in internal processes are told its knowledge limits and how they should check, challenge and override it before acting on it."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.1",
+        "cis_refs": [],
+        "why": "The expected benefit of using AI output in each internal process is examined against the staff-only baseline, so its use is justified by the process and not by habit."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.3",
+        "cis_refs": [],
+        "why": "The internal decisions AI output may and may not be used for are specified, so staff do not stretch it to decisions it was not meant to drive."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.5",
+        "cis_refs": [],
+        "why": "Human review of AI output in internal workflows is defined, including which decisions need a named person to check and sign off before they take effect."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 5.1",
+        "cis_refs": [],
+        "why": "Internal decisions made on AI output are rated by likelihood and magnitude of harm to staff and others affected, so high-impact decisions are known and treated differently.",
+        "also_covers": [
+          "MAP 3.2"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 1.3",
+        "cis_refs": [],
+        "why": "High-impact internal decisions made on AI output are regularly assessed by people independent of the process owners, such as internal audit or an independent reviewer."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.3",
+        "cis_refs": [],
+        "why": "The human-AI workflow, with staff checking and overriding AI output, is tried out with real staff under real working conditions (volume, time pressure) before go-live, and the results are documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5",
+          "LLM-8.10",
+          "LLM-8.11"
+        ],
+        "why": "Decisions made on AI output are recorded with who reviewed, accepted or overrode it, and the records are reviewed so high-impact decisions and insider misuse can be audited."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.9",
+        "cis_refs": [],
+        "why": "Staff receive AI output with enough context (reasons, sources, confidence) to interpret it in their process and challenge it rather than accept it as is."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 3.3",
+        "cis_refs": [],
+        "why": "Staff and the people affected by internal decisions made on AI output can report problems and appeal those decisions, and the reports are counted and analysed.",
+        "also_covers": [
+          "MAP 5.2"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 4.2",
+        "cis_refs": [],
+        "why": "Over-reliance is measured: how often staff override or accept AI output unchanged in internal processes, and what they report about trusting it, and the results are used, with the staff involved, to change the process, its review steps or the AI use.",
+        "also_covers": [
+          "MANAGE 4.2"
+        ]
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 1.1",
+        "cis_refs": [],
+        "why": "Each internal process using AI output is periodically judged on whether it meets its purpose and whether the AI use should continue, change or stop."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [],
+        "why": "Business rules in the workflow limit what AI output can decide on its own, such as thresholds above which a human approval is enforced before the decision takes effect."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-17.9"
+        ],
+        "why": "Staff can set aside AI output and the process can fall back to a manual route when the output proves unreliable, with named people deciding when to do so."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.1",
+        "cis_refs": [],
+        "why": "Each internal process using AI output has a monitoring plan after go-live covering staff feedback, appeals and overrides, changes to the process or AI use, incident handling and retiring the AI use."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-17.3",
+          "LLM-17.4",
+          "LLM-17.8"
+        ],
+        "why": "Wrong decisions made on AI output are tracked as incidents, communicated to the people affected, corrected and reviewed afterwards.",
+        "also_covers": [
+          "MANAGE 2.3"
+        ]
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_internal_process_eval2.json",
+  "review": []
+}

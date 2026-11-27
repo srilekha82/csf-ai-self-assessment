@@ -31,7 +31,6 @@
   },
   "impacts": {
     "data": "Data exposed, leaked or poisoned.",
-    "access": "Permissions and credentials used or abused.",
     "process": "A business process or decision goes wrong.",
     "assets": "Model, code or infrastructure stolen, damaged or taken down.",
     "people": "Harm to individuals from what the AI says or decides."

@@ -11,6 +11,7 @@ AI RMF: every question is in the bank; each is for a role, producer details and 
         the bank gives this organisation is missing.
 External AI: every client gets every question of every reviewed (pass) subcategory of the bank, word for word, with
         its threat and NIST's implementation examples; nothing else.
+Always:  every client, AI in use or not, gets every shadow AI (invisible_usage) question and the External AI questions.
 """
 import json
 import shutil
@@ -22,7 +23,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
-from config import AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, CSF_CORE, SCOPE_RULES, load_csf_intake  # noqa: E402
+from config import AI_BANK_AREAS, AI_QUESTION_BANKS, AI_SCOPE_RULES, CERT_LABELS, CSF_CORE, SCOPE_RULES, load_csf_intake  # noqa: E402
 from pick_questions import ai_client_roles, ai_questions_for  # noqa: E402
 
 CSF_DRAFT = "csf_questions_draft.json"
@@ -216,6 +217,20 @@ class Picks(unittest.TestCase):
                 self.assertEqual(check_csf(run), [])
                 self.assertEqual(check_ai(run), [])
                 self.assertEqual(check_external(run), [])
+
+    def test_every_client_gets_shadow_ai_and_external_ai(self):
+        # every organisation, AI in use or not, gets every shadow AI question and the External AI questions
+        def shadow(questions):
+            return [q["question_text"] for q in questions if any(r.startswith("invisible_usage|") for r in q.get("rows", []))]
+        bank = json.loads(AI_BANK_AREAS.read_text())["subcategories"]
+        want = sorted(shadow(q for e in bank.values() for q in e["questions"]))
+        self.assertTrue(want, "the areas bank has no shadow AI (invisible_usage) questions")
+        for name, run in self.runs.items():
+            with self.subTest(client=name):
+                areas = json.loads((run / "ai_questions_draft_areas.json").read_text())
+                self.assertEqual(sorted(shadow(q for e in areas for q in e["questions"])), want)
+                ext = json.loads((run / "external_questions_draft.json").read_text())
+                self.assertTrue(ext and all(e["questions"] for e in ext), "no External AI questions")
 
     def test_the_clients_differ(self):
         # guard against a check that passes on anything: the five clients really get different questionnaires

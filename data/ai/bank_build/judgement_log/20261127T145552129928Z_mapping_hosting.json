@@ -1,0 +1,206 @@
+{
+  "recorded_at": "2026-11-27T14:55:52.129486+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_hosting_draft2.json",
+    "sha": "43f58300ec0fa09a"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "8384e81d016e9474"
+  },
+  "output_snapshot": {
+    "area": "hosting",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.1",
+        "cis_refs": [],
+        "why": "The hosting's deployment settings are documented: who calls the serving endpoints (the org's own products or a consumer's PoC), where the hosting runs, and which laws apply there, such as data residency."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.4",
+        "cis_refs": [],
+        "why": "The business case for hosting the model on the org's own infrastructure rather than using a provider's API, including GPU spend, is defined and re-evaluated."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [],
+        "why": "Requirements for hosting the model (availability, capacity, isolation, spending limits, key handling) are set before serving endpoints are built."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [
+          "LLM-12.4"
+        ],
+        "why": "The hosting's connections are documented: which networks and the internet can reach the serving endpoints, and which systems depend on them."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.2",
+        "cis_refs": [],
+        "why": "The cost of a hosting compromise, an outage of the serving endpoints and runaway or abused GPU spend is examined against the risk tolerance, with the likelihood and magnitude of each rated on a set scale.",
+        "also_covers": [
+          "MAP 5.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "LLM-1.1",
+          "LLM-2.1",
+          "LLM-2.2",
+          "LLM-2.4"
+        ],
+        "why": "The hosting components (servers, GPUs, model registry, serving runtimes, secrets stores) and the third-party hardware, cloud and software they rely on are inventoried."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-2.5",
+          "LLM-2.6",
+          "LLM-4.1",
+          "LLM-4.4",
+          "LLM-4.6",
+          "LLM-12.2",
+          "LLM-12.8",
+          "LLM-13.4"
+        ],
+        "why": "The controls on each hosting component are identified: hardened configuration, host firewalls, network isolation, allowlisted runtimes and scoped secrets."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-13.2",
+          "LLM-13.3",
+          "LLM-13.6",
+          "LLM-13.7",
+          "LLM-13.11"
+        ],
+        "why": "Hosting is monitored in production against set baselines for availability, load, GPU spend and anomalous traffic or host changes, and changes after runtime or driver updates are checked and recorded as improvements or declines.",
+        "also_covers": [
+          "MEASURE 4.3"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.6",
+        "cis_refs": [],
+        "why": "Serving infrastructure is stress-tested under high load and failure, and shown to fail safely rather than expose the model or run up cost.",
+        "also_covers": [
+          "MEASURE 2.3"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-7.1",
+          "LLM-7.5",
+          "LLM-7.6",
+          "LLM-11.5"
+        ],
+        "why": "The security and resilience of the hosting are evaluated: vulnerability scans of hosts and exposed endpoints, penetration tests and recovery tests."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.3",
+          "LLM-8.4",
+          "LLM-8.9",
+          "LLM-8.10",
+          "LLM-8.11"
+        ],
+        "why": "Access to hosts, the model registry, serving endpoints and keys is logged with identity, so compromise and cost abuse can be traced."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.12",
+        "cis_refs": [],
+        "why": "The energy use and efficiency of the GPUs and servers hosting the model are measured against set baselines."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "LLM-7.2",
+          "LLM-7.3",
+          "LLM-7.4",
+          "LLM-7.7",
+          "LLM-12.3",
+          "LLM-12.5",
+          "LLM-13.10"
+        ],
+        "why": "Serving endpoints are kept secure and affordable in use: authenticated gateways, rate limits and quotas, and patching of runtimes and GPU drivers."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.3",
+        "cis_refs": [
+          "LLM-17.1",
+          "LLM-17.2",
+          "LLM-17.3",
+          "LLM-17.4",
+          "LLM-17.7",
+          "LLM-17.8"
+        ],
+        "why": "Incidents on the hosting (compromise, outage, leaked keys, cost abuse) are responded to and recovered from under a rehearsed procedure, recorded and tracked, and communicated to those affected, such as consumers whose PoC runs on the hosting.",
+        "also_covers": [
+          "MANAGE 4.3"
+        ]
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-11.1",
+          "LLM-11.2",
+          "LLM-11.3",
+          "LLM-11.4",
+          "LLM-17.9"
+        ],
+        "why": "Serving endpoints can be taken offline and keys revoked when thresholds are crossed, with backups or failover to restore service."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "LLM-2.2"
+        ],
+        "why": "Third-party cloud, GPU and serving-software providers the hosting relies on are monitored, with their risks and support tracked."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_hosting_eval2.json",
+  "review": [
+    {
+      "kind": "missing",
+      "function": "MANAGE",
+      "subcategory": "MANAGE 4.1",
+      "reason": "Dropping MANAGE 4.1 from also_covers leaves it unmapped. No row checks a post-deployment plan for the hosting: change management for servers, runtimes, registry and endpoints, and taking in reports from the callers of the endpoints (such as consumers whose PoC runs on the hosting)."
+    }
+  ]
+}

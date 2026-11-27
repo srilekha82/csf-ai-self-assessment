@@ -1,0 +1,211 @@
+{
+  "recorded_at": "2026-11-27T14:55:51.925938+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_output_draft2.json",
+    "sha": "edb3608cfe17c898"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "f59d7f82f67a87e7"
+  },
+  "output_snapshot": {
+    "area": "output",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.1",
+        "cis_refs": [],
+        "why": "The decisions and actions the AI's answers feed into, who relies on them and what a wrong answer would affect downstream are understood and documented."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [],
+        "why": "Requirements for the AI's answers (the accuracy, consistency and fairness levels they must meet) are set with the people who rely on them and understood by those who build, test and run the AI."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [],
+        "why": "The knowledge limits of the AI's answers (topics, conditions and questions where it is unreliable) and how its output is meant to be used and checked are documented for those who rely on it."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.3",
+        "cis_refs": [],
+        "why": "How the AI's answers are to be tested for accuracy, consistency and bias is designed and documented: test design, how test cases are chosen and whether they represent real questions."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.2",
+        "cis_refs": [],
+        "why": "The costs of wrong, made-up, inconsistent or biased answers, and who or what they could harm, are examined against the organisation's risk tolerance."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 5.1",
+        "cis_refs": [
+          "LLM-16.14"
+        ],
+        "why": "The likelihood and impact of wrong or attacker-steered answers (prompt injection, poisoned answers) are identified using threat modelling, red teaming and known public incidents."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 1.3",
+        "cis_refs": [],
+        "why": "Testing of the AI's answers for accuracy, consistency and bias involves assessors or domain experts independent of those who built or deployed it."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.1",
+        "cis_refs": [],
+        "why": "The test sets, harness, metrics and tools used to evaluate the AI's answers are documented so results can be repeated and reviewed."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.3",
+        "cis_refs": [],
+        "why": "Answer quality is measured before deployment under conditions like real use, including realistic and non-optimised questions, and the results are documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.5",
+        "cis_refs": [],
+        "why": "The AI's answers are shown to be accurate and consistent (the same question gives the same answer) before deployment, and the limits beyond which this was not shown are documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.6",
+        "cis_refs": [
+          "LLM-16.13"
+        ],
+        "why": "The AI is tested for how it behaves beyond its knowledge limits, so it declines or flags uncertainty instead of making up facts, and downstream fail-safes hold against bad answers."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-16.3",
+          "LLM-16.13",
+          "LLM-18.1",
+          "LLM-18.2"
+        ],
+        "why": "The AI's answers are tested adversarially for prompt injection through user input or retrieved content, jailbreaks and unsafe or steered output, and results are documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.9",
+        "cis_refs": [],
+        "why": "The AI's answers can be explained or interpreted in context (e.g. sources or reasoning shown), so people and systems relying on them can judge whether to trust them."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.11",
+        "cis_refs": [],
+        "why": "The AI's answers are evaluated for bias, whether they treat people or groups unequally, with results documented per group."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.13",
+        "cis_refs": [],
+        "why": "The metrics and tests used to judge answer quality are reviewed for whether they actually catch wrong, inconsistent and biased answers."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-8.11"
+        ],
+        "why": "Answer quality is monitored in production against pre-deployment results, with alerts when accuracy drifts or anomalous answers appear."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5",
+          "LLM-8.10"
+        ],
+        "why": "The AI's answers are logged with the request that produced them and who received them, so a wrong or steered answer can be traced and reviewed."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 4.2",
+        "cis_refs": [],
+        "why": "Feedback from users and domain experts on whether answers are correct and trustworthy is used to confirm the AI performs as intended in use."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 4.3",
+        "cis_refs": [],
+        "why": "Baselines for answer quality are kept and changes after model, prompt or data updates are measured, so declines in accuracy or consistency are found."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 1.1",
+        "cis_refs": [],
+        "why": "Test results on answer accuracy, consistency and bias are used to decide whether the AI is good enough to deploy or keep in use."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "LLM-16.10",
+          "LLM-16.11"
+        ],
+        "why": "Controls such as guardrails, output filtering and business rules limit or restrict what answers the AI can give in a given context."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.3",
+        "cis_refs": [
+          "LLM-17.4",
+          "LLM-17.7",
+          "LLM-18.3"
+        ],
+        "why": "When a new way the AI's answers go wrong or are steered is found (a new injection or failure mode), there is a procedure to respond and recover."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-17.9"
+        ],
+        "why": "Thresholds and mechanisms exist to stop relying on, bypass or switch off the AI when its answers fall below the intended quality."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.2",
+        "cis_refs": [],
+        "why": "Findings and feedback on wrong, inconsistent or biased answers are fed into model, prompt or data updates as measurable improvements to answer quality."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-17.3",
+          "LLM-17.8"
+        ],
+        "why": "Wrong, harmful or biased answers are recorded as errors or incidents, tracked to resolution and communicated to those affected."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_output_eval2.json",
+  "review": []
+}

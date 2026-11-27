@@ -6,7 +6,7 @@ guides or any other file.
 ## Input
 `items`: per AI RMF subcategory, its `outcome` and the `questions` that have no evidence prompt yet, each with its
 `number`, `question_text`, the `cis` safeguards it cites (id: title) and, in the area bank, the `areas` it is asked for
-with their areas' impacts (data, access, process, assets, people).
+with their areas' impacts (data, process, assets, people).
 
 ## Write, for every question
 One evidence prompt of 1 to 2 short sentences (at most 400 characters) that:
