@@ -1,0 +1,137 @@
+{
+  "recorded_at": "2026-11-27T14:55:51.655088+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_code_generation_draft2.json",
+    "sha": "96d4e8db2eb31d53"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "2b708677aa8e8238"
+  },
+  "output_snapshot": {
+    "area": "code_generation",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.3",
+        "cis_refs": [],
+        "why": "Which repositories, languages and coding tasks AI code generation may be used for, and where it is not allowed, are specified and documented.",
+        "also_covers": [
+          "MAP 1.1",
+          "MAP 2.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [],
+        "why": "The known limits of the coding assistant (invented packages and APIs, outdated or unsafe patterns) are documented for developers so they know what to check before using its output."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.1",
+        "cis_refs": [],
+        "why": "The benefits expected from AI code generation (developer productivity, code quality) are examined and documented, so they can be weighed against what it actually delivers."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.5",
+        "cis_refs": [
+          "LLM-16.8"
+        ],
+        "why": "The human oversight of AI-generated code is defined: who must review and approve it before merge, and how AI-written code and artifacts are marked so the review is not skipped."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "LLM-16.4",
+          "LLM-16.5"
+        ],
+        "why": "Dependencies the AI suggests are checked for existence, provenance and trust before use, and licence or intellectual property risks of generated code are identified and documented."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-2.3",
+          "LLM-3.1",
+          "LLM-3.11",
+          "LLM-3.13"
+        ],
+        "why": "Controls specific to code generation are identified, such as an approved package source blocking unknown dependencies and keeping secrets and sensitive files out of the assistant's prompts and context.",
+        "also_covers": [
+          "MANAGE 2.2"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-3.13",
+          "LLM-3.14"
+        ],
+        "why": "The use of AI code generation is monitored in practice, for example suggested dependencies that do not exist, secrets reaching prompts, and AI-generated changes later reverted or tied to defects."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5",
+          "LLM-8.8"
+        ],
+        "why": "AI-assisted changes are traceable: assistant activity and any code it executes are logged, and commits record that AI was used and who reviewed and merged them."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 3.3",
+        "cis_refs": [
+          "LLM-17.3"
+        ],
+        "why": "Developers have a way to report unsafe or invented suggestions and leaked secrets from the coding assistant, and these reports feed into how its use is evaluated."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 1.1",
+        "cis_refs": [],
+        "why": "From what has been mapped and monitored, the organisation decides whether the coding assistant meets its purpose and whether its use should continue, be restricted or stop."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-17.9"
+        ],
+        "why": "The organisation can disable the coding assistant or withdraw its access to repositories and credentials when it produces unsafe output, with assigned responsibility and defined thresholds."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-17.4",
+          "LLM-17.8"
+        ],
+        "why": "Incidents from AI-generated code, such as a malicious package it suggested or a secret sent in a prompt, are tracked, responded to (removal, secret rotation) and reviewed afterwards."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_code_generation_eval2.json",
+  "review": []
+}

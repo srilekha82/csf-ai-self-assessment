@@ -1,0 +1,150 @@
+{
+  "recorded_at": "2026-11-27T14:55:51.875343+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_input_draft2.json",
+    "sha": "ca70cabaf1029338"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "2bea6af831f6b779"
+  },
+  "output_snapshot": {
+    "area": "input",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.7"
+        ],
+        "why": "Requirements are set for each AI system on which data classes may be put into prompts, pasted text and files, and how inputs are minimised or sanitised before they reach the model."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "LLM-3.2"
+        ],
+        "why": "For each external model provider receiving prompts and files, the terms on retention, reuse for training and data location are reviewed and the flow of inputs to that provider is documented."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.13",
+          "LLM-14.4"
+        ],
+        "why": "The controls that stop sensitive data going into prompts and uploads (DLP, sanitisation, user guidance on what may be pasted) are identified and documented for each AI system and provider."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-3.14",
+          "LLM-8.11"
+        ],
+        "why": "Prompts and uploads in production are monitored for sensitive data and unexpected patterns, with alerts when inputs break the set rules."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.13",
+          "LLM-9.2",
+          "LLM-9.3"
+        ],
+        "why": "The input controls (DLP, sanitisation, blocking of unapproved AI services) are tested to show they stop sensitive data in prompts and uploads and cannot easily be bypassed, including pasted text and files carrying injected instructions."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5"
+        ],
+        "why": "Prompt and response logs are kept with the user or system that sent each input, so what data was sent to which model can be traced and reviewed."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.10",
+        "cis_refs": [
+          "LLM-3.7",
+          "LLM-3.2"
+        ],
+        "why": "The privacy risk of personal data in prompts, uploaded files and kept logs is examined and documented, including what the provider can see and keep."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "LLM-3.3",
+          "LLM-3.4",
+          "LLM-3.5",
+          "LLM-3.11"
+        ],
+        "why": "Prompt and response logs are kept only as long as set, access to them is restricted, they are encrypted, and they are securely deleted, including on deletion requests."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-9.2",
+          "LLM-9.3",
+          "LLM-17.9"
+        ],
+        "why": "Sending prompts and files to a provider or AI tool can be cut off quickly (blocking the endpoint, disabling uploads) when inputs are found to leak sensitive data, with set thresholds for doing so."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "LLM-17.2",
+          "LLM-8.12"
+        ],
+        "why": "External providers receiving prompts and files are monitored over time for changes in retention, training use or data handling, and controls are adjusted when they change."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-14.6",
+          "LLM-17.2",
+          "LLM-17.3",
+          "LLM-17.4"
+        ],
+        "why": "Sensitive data sent in prompts or files is handled as an incident: staff report it, the provider is contacted to remove it, and the response is tracked and recorded.",
+        "also_covers": [
+          "MANAGE 2.3"
+        ]
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_input_eval2.json",
+  "review": [
+    {
+      "kind": "note",
+      "function": "MEASURE",
+      "subcategory": "MEASURE 2.7",
+      "reason": "The row also tests how pasted text and files carrying injected instructions are handled, but the area's threat speaks only of sensitive data leaving the org; the threat may be too narrow."
+    }
+  ]
+}

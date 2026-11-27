@@ -1,0 +1,184 @@
+{
+  "recorded_at": "2026-11-27T14:55:51.775364+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_vendor_ai_draft2.json",
+    "sha": "2e3545fc53a9c408"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "0b85a75e3a30755a"
+  },
+  "output_snapshot": {
+    "area": "vendor_ai",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.1",
+        "cis_refs": [],
+        "why": "For each vendor product, the AI features in use are documented: what each is for, who uses it, and which of the org's data and processes it acts on."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [
+          "LLM-15.2",
+          "LLM-15.4"
+        ],
+        "why": "The org sets requirements for vendor AI (no training on its data, retention limits, data residency, notice of AI changes) and puts them to the vendor before the feature is used."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [
+          "LLM-3.2",
+          "LLM-3.8"
+        ],
+        "why": "Which org data each vendor AI feature reads and where it goes, including the vendor's own model provider, is documented as a data flow and dependency."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.3",
+        "cis_refs": [
+          "LLM-15.3",
+          "LLM-3.7"
+        ],
+        "why": "The data classifications, spaces and processes each vendor AI feature may act on are specified, and features are kept out of the rest."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.5",
+        "cis_refs": [
+          "LLM-15.2"
+        ],
+        "why": "The vendor AI features that act on the org's data (changing tickets, records or code) are identified, and which of those actions need human review and how that review is set up is defined."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "LLM-15.1",
+          "LLM-15.5"
+        ],
+        "why": "Vendors running AI on the org's data are inventoried and their terms, model providers, sub-processors and AI feature roadmaps are reviewed for risk."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-15.2",
+          "LLM-3.13"
+        ],
+        "why": "Procurement, security and privacy controls the org applies to vendor AI features (opt-outs, admin settings, data loss prevention) are identified and documented."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 5.1",
+        "cis_refs": [
+          "LLM-15.3"
+        ],
+        "why": "The likelihood and magnitude of harm from each vendor's AI use of the org's data (by data classification, retention or training at the model provider) are assessed, so vendor AI features are ranked by impact."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-15.6"
+        ],
+        "why": "Vendor AI features are watched in use for changes the vendor makes without notice, such as new features, defaults, models or data handling."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-15.5"
+        ],
+        "why": "The security of vendor AI features is evaluated, including how they handle hostile content in the org's data (prompt injection) and the vendor's own security test evidence."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.12",
+          "LLM-8.2"
+        ],
+        "why": "Vendor AI activity on the org's data (who invoked it, what it read and changed) is logged and the vendor's logs are collected so actions can be traced."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.10",
+        "cis_refs": [
+          "LLM-15.5"
+        ],
+        "why": "The privacy risk of personal data the vendor's AI processes, keeps or trains on, including at its model provider, is examined and documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 3.3",
+        "cis_refs": [
+          "LLM-17.3"
+        ],
+        "why": "Staff using a vendor's AI feature can report problems with it (wrong actions, unexpected data use), and these reports feed the evaluation of that vendor feature."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 1.1",
+        "cis_refs": [
+          "LLM-15.2"
+        ],
+        "why": "Before a vendor AI feature is turned on or kept on, the org decides whether it meets its purpose and risk requirements, with features off by default until then."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-17.9"
+        ],
+        "why": "The org can switch off a vendor AI feature, with someone responsible and set thresholds, when it misbehaves or the vendor changes how it uses the org's data."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "LLM-15.6",
+          "LLM-15.4"
+        ],
+        "why": "Risk controls on each vendor's AI use of the org's data are applied and regularly re-checked against the contract and the vendor's current terms."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.1",
+        "cis_refs": [
+          "LLM-15.7",
+          "LLM-3.5"
+        ],
+        "why": "When a vendor or its AI feature is dropped, the org's data held by the vendor and its model provider is deleted and access revoked."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-17.2",
+          "LLM-17.4"
+        ],
+        "why": "Incidents involving a vendor's AI and the org's data are reported to and from the vendor, tracked and responded to, with vendor contacts kept current."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_vendor_ai_eval2.json",
+  "review": []
+}

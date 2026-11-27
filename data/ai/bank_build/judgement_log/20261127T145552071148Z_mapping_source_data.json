@@ -1,0 +1,209 @@
+{
+  "recorded_at": "2026-11-27T14:55:52.070816+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_source_data_draft2.json",
+    "sha": "e045583add60fcaf"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "4828d6a519ca11b1"
+  },
+  "output_snapshot": {
+    "area": "source_data",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.6",
+        "cis_refs": [
+          "LLM-3.3",
+          "LLM-3.7"
+        ],
+        "why": "Requirements for the retrieval store are set before it is connected, such as the AI returning only content the asker is already allowed to see and keeping classified data out of answers."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [
+          "LLM-3.8"
+        ],
+        "why": "The AI's dependence on each RAG store or knowledge graph is documented with what the store covers and does not, so users know the limits of what the AI can answer from it."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.3",
+        "cis_refs": [
+          "LLM-3.2"
+        ],
+        "why": "The content chosen for the store is checked for provenance, suitability and currency before it is indexed, so the AI does not answer from unsuitable or untrusted sources."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.1",
+        "cis_refs": [],
+        "why": "The benefit of connecting each store to the AI is documented, so the exposure it opens can be weighed against what it is meant to deliver."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.2",
+        "cis_refs": [
+          "LLM-3.7"
+        ],
+        "why": "The likelihood and the harm of the store leaking data to the wrong asker, being copied out through the AI or being poisoned are examined against the organisation's risk tolerance and the data's classification.",
+        "also_covers": [
+          "MAP 5.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.3",
+        "cis_refs": [
+          "LLM-3.7"
+        ],
+        "why": "Which data and which classification levels each store may hold is set according to who can query the AI that retrieves from it."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "LLM-1.1",
+          "LLM-3.2"
+        ],
+        "why": "The retrieval stores and the data sources feeding them, including third-party and licensed content, are inventoried with their owners and any rights or licence limits on use by the AI."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.3",
+          "LLM-3.7",
+          "LLM-3.11",
+          "LLM-3.12",
+          "LLM-6.1",
+          "LLM-6.8"
+        ],
+        "why": "The controls on the store are identified and documented: classification, access rights carried into retrieval, protection against unauthorised change, encryption and segmentation from untrusted inputs."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "LLM-8.11",
+          "LLM-3.14"
+        ],
+        "why": "Changes to the store's content and retrieval patterns are monitored in use to spot poisoning, unexpected content and attempts to pull sensitive data through the AI."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.6",
+        "cis_refs": [],
+        "why": "The AI is shown to fail safely when a question falls outside what the store covers or the store is unavailable, instead of answering from nothing or from the wrong content."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "LLM-3.3"
+        ],
+        "why": "The store is tested for whether an asker can retrieve content beyond their own rights, whether injected content changes answers and whether bulk content can be extracted through the AI."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "LLM-8.1",
+          "LLM-8.2",
+          "LLM-8.5",
+          "LLM-3.14"
+        ],
+        "why": "Retrievals are logged with who asked and which documents were returned, and changes to the store are recorded, so exposure of data through the AI can be traced."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.10",
+        "cis_refs": [
+          "LLM-3.2",
+          "LLM-3.7",
+          "LLM-3.13"
+        ],
+        "why": "Personal data held in the store is identified and the privacy risk of it being disclosed or inferred through AI answers is examined."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 3.3",
+        "cis_refs": [
+          "LLM-17.3"
+        ],
+        "why": "Users and data owners can report that the AI exposed content they should not see or answered from wrong content, and these reports feed the store's evaluation."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "LLM-3.1",
+          "LLM-3.4",
+          "LLM-3.5"
+        ],
+        "why": "The store is kept current and clean: outdated content is removed, deletion and correction requests reach the index and embeddings, and retention is applied."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.3",
+        "cis_refs": [
+          "LLM-17.4",
+          "LLM-17.8"
+        ],
+        "why": "When poisoned content or data exposure through the store is found, the content is quarantined, the index is rebuilt from a trusted source and affected answers are reviewed."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "LLM-17.9"
+        ],
+        "why": "A store or a part of its content can be disconnected from the AI quickly when it leaks or gives poisoned answers, with someone assigned to decide this."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "LLM-3.1"
+        ],
+        "why": "Third-party content feeds already connected to the store are monitored over time for changes, quality and trust, with integrity controls applied against unauthorised modification of what they deliver."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "LLM-17.2",
+          "LLM-17.3"
+        ],
+        "why": "Data exposed or altered through the store is reported to the data owners and affected people, and such incidents and changes to the store are tracked."
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_source_data_eval2.json",
+  "review": [
+    {
+      "kind": "note",
+      "function": "MEASURE",
+      "subcategory": "MEASURE 2.6",
+      "reason": "Failing safely when a question is outside the store's coverage or the store is unavailable addresses wrong answers, which the area's threat (exposure, poisoning, copy-out) does not mention; the threat may be too narrow."
+    }
+  ]
+}
