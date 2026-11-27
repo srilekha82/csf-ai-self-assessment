@@ -78,9 +78,9 @@ class AiAreasSheet(unittest.TestCase):
             self.assertEqual(self.json.read_text(), before, (header, value))
 
     def test_impact_is_a_list(self):
-        self.edit(2, "Impact", "Access, data, access")
+        self.edit(2, "Impact", "Process, data, process")
         self.assertEqual(self.do_import(), 0)
-        self.assertEqual(json.loads(self.json.read_text())["ai_areas"][0]["impact"], ["access", "data"])
+        self.assertEqual(json.loads(self.json.read_text())["ai_areas"][0]["impact"], ["process", "data"])
 
     def test_export_never_overwrites_the_decision(self):
         with self.assertRaises(SystemExit):   # in sync, but the spreadsheet holds a column the JSON does not keep

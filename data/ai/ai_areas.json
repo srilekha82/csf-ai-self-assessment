@@ -1,7 +1,7 @@
 {
   "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with its scope, its AI threat and the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
   "source": "data/ai/authoring/ai_areas.xlsx",
-  "source_sha": "9e54b766e4475eef",
+  "source_sha": "d6809f47909006e4",
   "generated_by": "scripts/sheet_io.py import ai_areas",
   "ai_areas": [
     {
@@ -11,10 +11,11 @@
       "applies_to": "both",
       "impact": [
         "process",
-        "data"
+        "data",
+        "people"
       ],
       "scope": "AI output driving internal decisions and workflows (HR, finance, approvals, operations); staff are the users. Here: how staff check, challenge and override it, and how high-impact decisions made on it are caught and audited. Not here: whether the output is wrong or biased (Output).",
-      "threat": "Over-reliance, misuse by insiders, decisions made on wrong output."
+      "threat": "Over-reliance, misuse by insiders, decisions made on wrong output, which in turn affect the other people involved."
     },
     {
       "id": "code_generation",
@@ -23,10 +24,11 @@
       "applies_to": "both",
       "impact": [
         "assets",
-        "data"
+        "data",
+        "process"
       ],
-      "scope": "Only the AI-specific part of writing code with AI. Not here: secure development (review, testing, scanning), which the CSF assesses.",
-      "threat": "Made-up or untrusted dependencies, secrets placed in prompts, AI code merged without review."
+      "scope": "Only the AI-specific part of writing code with AI. Not here: secure development (secure review, testing, scanning), which the CSF assesses as part of the secure software development life cycle.",
+      "threat": "Made-up or untrusted dependencies, secrets placed in prompts, AI code merged without review, and generated artifacts that may not be safe."
     },
     {
       "id": "customer_facing",
@@ -39,7 +41,7 @@
         "people"
       ],
       "scope": "AI the public uses, whose output reaches customers directly. Here: how customers report problems and negative feedback, and how high-impact answers are caught and audited. Not here: whether answers are wrong or biased (Output).",
-      "threat": "Public users can attack the AI (prompt injection, abuse); wrong, harmful or leaked answers in front of customers."
+      "threat": "Public users can attack the AI (prompt injection, abuse); wrong, harmful or leaked answers in front of customers; incorrect information that changes what the customer or the process then does."
     },
     {
       "id": "vendor_ai",
@@ -47,10 +49,11 @@
       "kind": "usage",
       "applies_to": "both",
       "impact": [
-        "data"
+        "data",
+        "process"
       ],
       "scope": "Vendors and products the org uses that run AI on the org's data (Jira, Slack, ServiceNow, GitHub, RPA).",
-      "threat": "The org does not control the model: data flows to the vendor's model provider, the vendor may keep or train on it, features change without notice."
+      "threat": "The org does not control how the vendor uses its data with AI or LLMs: data flows to the vendor's model provider, the vendor may keep or train on it, and its AI features can change without notice, including how they read and act on the org's data. The same threats the org faces when using AI apply, on one more surface to know about."
     },
     {
       "id": "model_building",
@@ -61,7 +64,7 @@
         "assets"
       ],
       "scope": "The org builds or tunes its own model, from scratch or by domain-specific training or tuning of an existing model. The activity: the base models and components chosen, how building and tuning are run and changed, releasing versions to others (API, weights, embedded in a product), telling recipients the limits, and withdrawing a release. Not here: testing how accurate, consistent or fair its answers are (Output), the weights and versions as IP (Model), the training and test data (Test, tuning and evaluation data).",
-      "threat": ""
+      "threat": "A poisoned or backdoored base model or component; a release that hides its limits or cannot be withdrawn."
     },
     {
       "id": "invisible_usage",
@@ -69,8 +72,10 @@
       "kind": "usage",
       "applies_to": "both",
       "impact": [
+        "process",
         "data",
-        "access"
+        "people",
+        "assets"
       ],
       "scope": "AI use inside the org that nobody approved and the org may not see: staff using AI tools, features, browser extensions or local models nobody approved (including PoCs and experiments), or installing AI software themselves (agent frameworks, MCP clients and servers, plugins). Applies even when no AI is in use. Not here: AI outside the org (other people's agents, MCP clients and scrapers reaching the org's systems), which the External AI sheet asks about.",
       "threat": "It may be missing from the software inventory and come from unvetted public sources. Data leaves through it; it runs with the person's privileges and may hold access staff granted it, and that access must end when the person leaves or changes role."
@@ -92,6 +97,7 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
+        "data",
         "process",
         "people"
       ],
@@ -128,7 +134,7 @@
       "applies_to": "both",
       "impact": [
         "data",
-        "access"
+        "assets"
       ],
       "scope": "The data the AI retrieves to answer (RAG, knowledge graph), including its data classification.",
       "threat": "The AI becomes a new path to the data: anyone who can ask the AI may see what the store holds, poisoned content changes answers, and the content can be copied out through the AI."
@@ -139,12 +145,12 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "access",
         "process",
-        "data"
+        "data",
+        "assets"
       ],
       "scope": "Tools and MCP servers the AI can call, hosted by the org or used from outside, and the credentials they use. An outside server is also a supplier: who runs it and whether it is trusted.",
-      "threat": "The AI can read, write and act with those permissions, often sized for a human or borrowed from the user."
+      "threat": "The AI can read, write and act with those permissions, often sized for a human or borrowed from the user. An MCP server on the machine of someone with privileged access, or on an asset holding classified data, is a new attack surface, so which asset it runs on and who uses it become critical."
     },
     {
       "id": "agent",
@@ -152,12 +158,12 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "access",
         "process",
-        "data"
+        "data",
+        "assets"
       ],
       "scope": "Agents acting inside processes with little or no human oversight.",
-      "threat": "Chains of actions, irreversible changes, actions triggered by manipulated input."
+      "threat": "Chains of actions, irreversible changes, actions triggered by manipulated input. Access hijacking: the agent acts with the identity and rights of whoever runs it. Its memory and stored context can hold sensitive data and be poisoned to steer later actions. Agents that call other agents pass trust and access along a chain nobody fully sees."
     },
     {
       "id": "hosting",

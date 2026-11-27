@@ -34,8 +34,8 @@
          "allowed": ["both", "consumer", "producer"],
          "help": "Which question bank: consumer, producer or both."},
         {"key": "impact", "header": "Impact", "type": "list", "required": true, "width": 18,
-         "allowed": ["data", "access", "process", "assets", "people"],
-         "help": "The attack areas a failure here hits, one or more: data (exposed, leaked, poisoned), access (permissions and credentials used or abused), process (a business process or decision goes wrong), assets (model, code or infrastructure stolen, damaged or taken down), people (individuals harmed by what the AI says or decides: wrong advice, unfair treatment, safety; AI RMF harm to People). Ecosystem harm is not used."},
+         "allowed": ["data", "process", "assets", "people"],
+         "help": "The attack areas a failure here hits, one or more: data (exposed, leaked, poisoned), process (a business process or decision goes wrong), assets (model, code or infrastructure stolen, damaged or taken down), people (individuals harmed by what the AI says or decides: wrong advice, unfair treatment, safety; AI RMF harm to People). Ecosystem harm is not used."},
         {"key": "scope", "header": "Scope", "type": "text", "required": true, "width": 55,
          "help": "What is in this area and what is not (and where that is asked instead). The agents that draft the mapping and write the questions read this."},
         {"key": "threat", "header": "AI threat", "type": "text", "required": false, "width": 55,
@@ -52,7 +52,7 @@
         "The freshness check reports this sheet as stale until it has been imported.",
         "Which areas a client gets comes from the intake: the usage and component menus list these ids, and data/ai/scope_rules.json (ai_area_rules) adds the automatic ones.",
         "Each area is checked through MAP, MEASURE and MANAGE in the mapping step (GOVERN is the foundation, asked once for the organisation); see docs/ai-rmf-model.md.",
-        "Dropdowns limit Applies to; Impact takes one or more of data, access, process, assets, people separated by commas. Column help is below."
+        "Dropdowns limit Applies to; Impact takes one or more of data, process, assets, people separated by commas. Column help is below."
       ]
     },
     "mapping": {

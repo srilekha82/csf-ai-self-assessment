@@ -1,7 +1,7 @@
 {
   "description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with its scope, its AI threat and the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
   "source": "data/ai/authoring/ai_areas.xlsx",
-  "source_sha": "10ff914303d54c66",
+  "source_sha": "db824ffa77224ae2",
   "generated_by": "scripts/sheet_io.py import ai_areas",
   "ai_areas": [
     {
@@ -69,8 +69,7 @@
       "kind": "usage",
       "applies_to": "both",
       "impact": [
-        "data",
-        "access"
+        "data"
       ],
       "scope": "AI use the org did not choose and may not see. Inside out: staff using AI tools or features nobody approved (including PoCs and experiments), so data leaves through them. Outside in: other people's agents, MCP clients and scrapers reaching the org's systems (signing in on behalf of users, calling APIs, at machine speed). Applies even when no AI is in use.",
       "threat": ""
@@ -127,8 +126,7 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "data",
-        "access"
+        "data"
       ],
       "scope": "The data the AI retrieves to answer. The AI becomes a new path to it: anyone who can ask the AI may see what the store holds, poisoned content changes answers, and the content can be copied out through the AI. Includes data classification.",
       "threat": ""
@@ -139,7 +137,6 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "access",
         "process",
         "data"
       ],
@@ -152,7 +149,6 @@
       "kind": "component",
       "applies_to": "both",
       "impact": [
-        "access",
         "process",
         "data"
       ],
