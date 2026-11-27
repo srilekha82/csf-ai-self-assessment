@@ -602,7 +602,8 @@ class Mapping(unittest.TestCase):
         others = {a["id"]: a for a in doc["other_areas"]}                   # the rest of the AI areas sheet
         self.assertEqual(len(others), 13)
         self.assertNotIn("mcp_tools", others)
-        self.assertEqual(set(others["model_building"]), {"id", "name", "applies_to", "covers"})
+        self.assertEqual(set(others["model_building"]), {"id", "name", "applies_to", "scope"})
+        self.assertEqual(set(doc["area"]) & {"scope", "threat", "impact"}, {"scope", "threat"})   # impact is not drafted from
         self.assertEqual(doc["foundation"], ["GOVERN"] + ["MAP 1.3", "MAP 1.5", "MAP 3.4", "MEASURE 1.1", "MEASURE 1.2", "MEASURE 3.1", "MEASURE 3.2", "MEASURE 4.1", "MANAGE 1.2", "MANAGE 1.3", "MANAGE 1.4", "MANAGE 2.1"])
         self.assertIn("audit trail", [c["name"] for c in doc["rules"]["required_checks"]])
 
@@ -748,13 +749,13 @@ class Mapping(unittest.TestCase):
             areas = json.loads(real_areas.read_text())
             for a in areas["ai_areas"]:                                  # another area's row changes: recheck
                 if a["id"] == "agent":
-                    a["covers"] += " Changed."
+                    a["scope"] += " Changed."
             tmp_areas.write_text(json.dumps(areas))
             R.AI_AREAS = tmp_areas
             self.assertEqual(R.mapping_freshness(entry(), "mcp_tools", self.inp), "recheck")
             for a in areas["ai_areas"]:                                  # its own row changes: re-draft
                 if a["id"] == "mcp_tools":
-                    a["covers"] += " Changed."
+                    a["scope"] += " Changed."
             tmp_areas.write_text(json.dumps(areas))
             self.assertEqual(R.mapping_freshness(entry(), "mcp_tools", self.inp), "redraft")
             _, lines, cleared = R.revalidate(self.inp, R.mapping_inputs(self.inp))

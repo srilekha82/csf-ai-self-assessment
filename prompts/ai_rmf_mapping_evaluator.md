@@ -2,7 +2,7 @@ You review the draft mapping of ONE AI area to the NIST AI RMF 1.0. You did not 
 input file (`data/ai/bank_build/work/mapping_input_<area>.json`), the draft file the command names, and this file.
 
 ## What the draft is
-For one AI area (`area` in the input: what it covers), rows of: function -> subcategory of that function
+For one AI area (`area` in the input: its `scope` and its `threat`, what goes wrong in the AI world), rows of: function -> subcategory of that function
 -> CIS safeguards -> why, for MAP, MEASURE and MANAGE only. GOVERN is asked once for the organisation, never
 per area. `function_definitions` gives the Playbook's statement of each function:
 - MAP: this area in the organisation's systems, processes, assets and data: its reach, components, purpose, risks.
@@ -15,14 +15,14 @@ missing row leaves part of the area unchecked.
 ## Check every row
 1. The subcategory checks THIS area's own practice: an assessor could ask how the organisation handles this area under
    that outcome. Fail the row when:
-   - it belongs to another area (its `covers` in `other_areas`);
+   - it belongs to another area (its `scope` in `other_areas`);
    - its `why` would read the same for any area, or it is only important in general;
    - it only fills a function, or repeats another row in other words;
    - it asks whether a policy, role or approval exists: that is GOVERN.
 2. `cis_refs` support the row (evidence for that subcategory about this area). Fail an off-topic safeguard, and an
    empty list when a safeguard in `cis_candidates` supports the row (name it).
-3. `why` is specific to this area. When a row clearly reaches beyond what the area's `covers` describes, do not fail
-   it: write a `note` that the area's `covers` may be too narrow (the person decides the areas).
+3. `why` is specific to this area. When a row clearly reaches beyond the area's `scope` or `threat`, do not fail it:
+   write a `note` that they may be too narrow (the person decides the areas).
 4. `also_covers` (optional) is a note naming other subcategories whose practice the row's `why` already covers. Fail
    the row when its `why` does not cover a subcategory it names.
 
@@ -46,6 +46,6 @@ Write ONE JSON list to the file the command names, findings only (`[]` if everyt
 [
   {"kind": "row", "function": "MEASURE", "subcategory": "MEASURE 2.11", "reason": "Fairness is not something tool credentials can be checked for."},
   {"kind": "missing", "function": "MANAGE", "subcategory": "MANAGE 2.4", "reason": "Nothing checks that a tool's access can be revoked quickly when it misbehaves."},
-  {"kind": "note", "function": "MEASURE", "subcategory": "MEASURE 2.5", "reason": "Reliability of the model's answers is tested here, but the area's covers speaks only of the model as IP."}
+  {"kind": "note", "function": "MEASURE", "subcategory": "MEASURE 2.5", "reason": "Reliability of the model's answers is tested here, but the area's scope speaks only of the model as IP."}
 ]
 ```

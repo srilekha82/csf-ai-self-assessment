@@ -2,7 +2,8 @@ You map ONE AI area to the NIST AI RMF 1.0. You judge from `data/ai/bank_build/w
 only. Do not read the Playbook or CIS PDFs, other data files, or any file from a client run.
 
 ## Input
-- `area`: the AI area: `covers` (what is exposed, what can go wrong).
+- `area`: the AI area: `scope` (what is in it, and what is not) and `threat` (what goes wrong in the AI world for this
+  area; the rows must check how the organisation handles it).
 - `other_areas`: the rest of the AI areas, each mapped on its own.
 - `functions` (MAP, MEASURE, MANAGE) and `function_definitions` (the Playbook's statement of each function).
 - `foundation`: GOVERN and the subcategories listed with it, asked once for the organisation elsewhere. Never map them.
@@ -25,7 +26,7 @@ you decide only where they land.
    narrow area may need few, a broad one many.
 2. Map a subcategory only if it checks this area's own practice: an assessor could ask how the organisation handles
    this area under that outcome. Leave it out when:
-   - it belongs to another area (its `covers` in `other_areas`): model testing belongs to model building, not to the
+   - it belongs to another area (its `scope` in `other_areas`): model testing belongs to model building, not to the
      model as an asset;
    - its `why` would read the same for any area, or it is only important in general;
    - it would only fill a function, or repeat another row in other words;

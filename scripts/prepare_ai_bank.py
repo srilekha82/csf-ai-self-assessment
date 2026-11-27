@@ -84,7 +84,7 @@ def area_context(inp: dict, qrules: dict, items: list[dict]) -> dict:
     cut = limits()["ai_text_chars"]
     return {
         "areas": {a: {"name": areas[a]["name"], "applies_to": areas[a]["applies_to"],
-                      "roles_allowed": area_roles(areas[a], qrules, scope_rules), "covers": areas[a]["covers"]}
+                      "roles_allowed": area_roles(areas[a], qrules, scope_rules), "scope": areas[a]["scope"]}
                   for a in areas if a in used},
         "cis_safeguards": {c: {"title": inp["safeguards"][c]["title"],
                                "ai_text": trunc(inp["safeguards"][c]["ai_applicability"], cut)}
@@ -166,7 +166,7 @@ def prepare_mapping(inp: dict, area_id: str) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
         "area": drafter_view(areas[area_id]),
-        "other_areas": [{k: a[k] for k in ("id", "name", "applies_to", "covers")}
+        "other_areas": [{k: a[k] for k in ("id", "name", "applies_to", "scope")}
                         for a in areas.values() if a["id"] != area_id],   # the rest of the AI areas sheet
         "functions": rules["functions"],
         "function_definitions": {f["id"]: f["description"] for f in inp["core"]["functions"]},

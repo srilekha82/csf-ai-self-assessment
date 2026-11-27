@@ -284,7 +284,7 @@ def keep_human_decisions(rows: list, no_question: list, prev: dict | None, inp: 
 
 def mapping_input_hashes(inp: dict, area_id: str) -> dict:
     """What a recorded area was built from: its own row of the AI areas sheet (`area`), the whole sheet and the rules
-    (both reach the drafter: other areas' covers, candidates, foundation), and the sources. The areas are hashed as the
+    (both reach the drafter: other areas' scope, candidates, foundation), and the sources. The areas are hashed as the
     drafter sees them, without their impact."""
     areas = load_json(AI_AREAS, "ai_areas.json")["ai_areas"]
     row = next((a for a in areas if a["id"] == area_id), None)

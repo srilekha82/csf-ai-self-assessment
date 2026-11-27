@@ -21,7 +21,7 @@
       "tabs": {"column": "kind", "sheets": {"usage": "Usage", "component": "Components"}},
       "list_key": "ai_areas",
       "key": "id",
-      "json_description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
+      "json_description": "AI areas of the AI RMF assessment: the ways AI is used and the components of the AI ecosystem, each with its scope, its AI threat and the attack areas it impacts. Generated from data/ai/authoring/ai_areas.xlsx by scripts/sheet_io.py import; the spreadsheet is the decision, edit it, not this file. Model: docs/ai-rmf-model.md.",
       "columns": [
         {"key": "id", "header": "ID", "type": "id", "required": true, "width": 20,
          "help": "Short lowercase id, letters, digits and _ only. The intake menus use it; never reuse an id for a different area."},
@@ -36,8 +36,10 @@
         {"key": "impact", "header": "Impact", "type": "list", "required": true, "width": 18,
          "allowed": ["data", "access", "process", "assets", "people"],
          "help": "The attack areas a failure here hits, one or more: data (exposed, leaked, poisoned), access (permissions and credentials used or abused), process (a business process or decision goes wrong), assets (model, code or infrastructure stolen, damaged or taken down), people (individuals harmed by what the AI says or decides: wrong advice, unfair treatment, safety; AI RMF harm to People). Ecosystem harm is not used."},
-        {"key": "covers", "header": "What it covers", "type": "text", "required": true, "width": 60,
-         "help": "What is exposed and what can go wrong. The agents that draft the mapping read this."},
+        {"key": "scope", "header": "Scope", "type": "text", "required": true, "width": 55,
+         "help": "What is in this area and what is not (and where that is asked instead). The agents that draft the mapping and write the questions read this."},
+        {"key": "threat", "header": "AI threat", "type": "text", "required": false, "width": 55,
+         "help": "What goes wrong in the AI world for this area. Yours to decide; the mapping rows and their questions are written from it."},
         {"key": "example_question", "header": "Example question", "type": "text", "required": false, "width": 50,
          "in_json": false,
          "help": "One question that shows the area, for people reading the sheet. Not copied to the JSON."}

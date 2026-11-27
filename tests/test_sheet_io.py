@@ -58,7 +58,7 @@ class AiAreasSheet(unittest.TestCase):
     def test_spreadsheet_only_columns_stay_out_of_the_json(self):
         first = json.loads(self.json.read_text())["ai_areas"][0]
         self.assertNotIn("example_question", first)
-        self.assertEqual(sorted(first), ["applies_to", "covers", "id", "impact", "kind", "name"])
+        self.assertEqual(sorted(first), ["applies_to", "id", "impact", "kind", "name", "scope", "threat"])
 
     def test_an_edit_is_stale_until_imported(self):
         self.edit(2, "AI area", "Internal business process")
