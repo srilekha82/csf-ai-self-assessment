@@ -1,0 +1,258 @@
+{
+  "recorded_at": "2026-11-27T11:57:42.988167+00:00",
+  "step": "ai_mapping",
+  "decided_by": "agent",
+  "model": "claude-opus-5-5",
+  "session": "evaluator=claude-opus-5-5",
+  "prompts": [
+    {
+      "path": "prompts/ai_rmf_mapping_drafter.md",
+      "sha": "e9a178e715168650"
+    },
+    {
+      "path": "prompts/ai_rmf_mapping_evaluator.md",
+      "sha": "b4d3c4018495ae54"
+    }
+  ],
+  "input_file": {
+    "path": "data/ai/bank_build/work/mapping_agent_draft2.json",
+    "sha": "77df84e914889dda"
+  },
+  "store": {
+    "path": "data/ai/mapping.json",
+    "sha": "5d08b19e0cf1b9db"
+  },
+  "output_snapshot": {
+    "area": "agent",
+    "rows": [
+      {
+        "function": "MAP",
+        "subcategory": "MAP 1.1",
+        "cis_refs": [
+          "AGENT-1.1"
+        ],
+        "why": "Each agent's intended task, the processes it acts in, its business owner and the degree of autonomy it is meant to have are documented.",
+        "also_covers": [
+          "MAP 2.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 2.2",
+        "cis_refs": [
+          "AGENT-1.1"
+        ],
+        "why": "Each agent's limits, the situations and settings outside its approved use, and its dependencies on the other agents and systems it calls or is called by along a chain are documented."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.1",
+        "cis_refs": [],
+        "why": "The expected benefits and business value of letting each agent act with little oversight (time saved, errors avoided) are examined and documented, and re-evaluated for agents already in use, to justify its autonomy against its costs.",
+        "also_covers": [
+          "MAP 1.4"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.2",
+        "cis_refs": [
+          "AGENT-16.14"
+        ],
+        "why": "The likelihood and cost of agent errors, including chained actions, irreversible changes and actions triggered by manipulated input or poisoned memory, are examined and documented against the organisation's risk tolerance.",
+        "also_covers": [
+          "MAP 5.1"
+        ]
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.3",
+        "cis_refs": [
+          "AGENT-2.1"
+        ],
+        "why": "Each agent's scope of action is narrowed and documented: which systems, tools, data and kinds of action it may touch, and which it may not."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 3.5",
+        "cis_refs": [],
+        "why": "The agent actions that need human approval or review (for example irreversible or high-impact changes) are identified and the oversight process for them is defined."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.1",
+        "cis_refs": [
+          "AGENT-2.1",
+          "AGENT-16.4"
+        ],
+        "why": "The third-party components an agent is built from (orchestration frameworks, models, memory stores, plug-ins) are inventoried and their technology and legal risks mapped."
+      },
+      {
+        "function": "MAP",
+        "subcategory": "MAP 4.2",
+        "cis_refs": [
+          "AGENT-5.1",
+          "AGENT-5.5",
+          "AGENT-6.6"
+        ],
+        "why": "The identities, credentials and delegated rights each agent acts with, and the controls on its memory and execution environment, are identified and documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.3",
+        "cis_refs": [
+          "AGENT-16.13"
+        ],
+        "why": "Agents are tested on realistic workflows in conditions similar to production and shown to act reliably, and the limits of where that tested behaviour holds are documented, before they may act with their intended autonomy.",
+        "also_covers": [
+          "MEASURE 2.5"
+        ]
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.4",
+        "cis_refs": [
+          "AGENT-8.11",
+          "AGENT-17.9"
+        ],
+        "why": "Agent behaviour in production is monitored for anomalies such as unexpected tool calls, runaway loops, cost spikes or unusual decision paths, with alerts on thresholds."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.6",
+        "cis_refs": [
+          "AGENT-16.10",
+          "AGENT-16.13"
+        ],
+        "why": "Agents are shown to fail safely when they meet situations beyond their limits, stopping or escalating instead of continuing a chain of actions, with circuit breakers tested."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.7",
+        "cis_refs": [
+          "AGENT-18.1",
+          "AGENT-18.2",
+          "AGENT-18.4",
+          "AGENT-18.5",
+          "AGENT-16.14"
+        ],
+        "why": "Agents are red-teamed against manipulated input, memory poisoning, hijacking of their access and sandbox breakout, and the results are documented."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.8",
+        "cis_refs": [
+          "AGENT-8.1",
+          "AGENT-8.2",
+          "AGENT-8.5",
+          "AGENT-8.7",
+          "AGENT-8.8",
+          "AGENT-8.9",
+          "AGENT-8.12",
+          "AGENT-6.1"
+        ],
+        "why": "Every agent action, tool call, memory access and hand-off to another agent is logged against a unique agent identity and the person it acts for, so actions can be traced end to end."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.9",
+        "cis_refs": [
+          "AGENT-8.1",
+          "AGENT-8.5"
+        ],
+        "why": "Why an agent took an action over a chain of steps (its reasoning trace, the inputs and tool outputs it acted on) can be reconstructed and explained to the person it acted for or to an investigator."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 2.10",
+        "cis_refs": [
+          "AGENT-5.4"
+        ],
+        "why": "The privacy risk of sensitive data held in agent memory and stored context is examined, including who can read it and how long it is kept."
+      },
+      {
+        "function": "MEASURE",
+        "subcategory": "MEASURE 3.3",
+        "cis_refs": [
+          "AGENT-17.3"
+        ],
+        "why": "Staff and operators working alongside agents can report unexpected agent actions, and these reports feed the evaluation of the agents."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 1.1",
+        "cis_refs": [],
+        "why": "A decision is made and recorded, based on testing, whether an agent may go into production and at what level of autonomy."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.2",
+        "cis_refs": [
+          "AGENT-6.1",
+          "AGENT-6.8",
+          "AGENT-5.2",
+          "AGENT-5.6",
+          "AGENT-6.7",
+          "AGENT-2.5",
+          "AGENT-2.7",
+          "AGENT-16.10"
+        ],
+        "why": "Controls keep agents within their scope in use: least-privilege identities, separate credentials per component, allowlisted tools and scripts, and business rules limiting what actions they can take."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 2.4",
+        "cis_refs": [
+          "AGENT-17.9",
+          "AGENT-6.2"
+        ],
+        "why": "Agents can be stopped or disconnected quickly when they act outside intended use, with thresholds that trigger it, named people responsible and a fallback for the process."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 3.1",
+        "cis_refs": [
+          "AGENT-8.12",
+          "AGENT-16.5",
+          "AGENT-2.2"
+        ],
+        "why": "Third-party agent platforms and outside agents in an agent chain are monitored, with trusted, supported components and provider logs collected."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.1",
+        "cis_refs": [
+          "AGENT-16.1",
+          "AGENT-2.4",
+          "AGENT-6.2"
+        ],
+        "why": "Changes to an agent's prompts, tools and permissions go through controlled release, and retired agents have their identities and credentials removed."
+      },
+      {
+        "function": "MANAGE",
+        "subcategory": "MANAGE 4.3",
+        "cis_refs": [
+          "AGENT-17.1",
+          "AGENT-17.2",
+          "AGENT-17.4",
+          "AGENT-17.5",
+          "AGENT-17.8"
+        ],
+        "why": "Agent incidents are handled by people who understand agent failure modes, communicated to affected parties and providers, and reviewed through the chain of actions, memory and tool outputs.",
+        "also_covers": [
+          "MANAGE 2.3"
+        ]
+      }
+    ],
+    "no_question": []
+  },
+  "review_file": "data/ai/bank_build/work/mapping_agent_eval2.json",
+  "review": [
+    {
+      "kind": "missing",
+      "function": "MAP",
+      "subcategory": "MAP 1.6",
+      "reason": "With also_covers dropped from MAP 3.3, nothing checks that the requirements for an agent (what it shall and shall not do alone, when it must hand back to a person) are elicited from the operators and the people it acts for, and that design decisions weigh the socio-technical effect of removing human oversight."
+    }
+  ]
+}
