@@ -242,13 +242,24 @@ class MappingSheet(unittest.TestCase):
                  "also covers an unknown subcategory": lambda: self.edit("MAP 4.1", **{"Also covers": "MAP 9.9"}),
                  "a line twice": lambda: self.add("MAP 2.2", Why=why),
                  "an area not drafted": lambda: self.add("MAP 2.2", area="agent", Why=why),
-                 "every line of an area deleted": lambda: [self.delete(s) for s in list(self.rows())]}
+                 "every line of an area deleted": lambda: [self.delete(s) for s in list(self.rows())],
+                 "also covers a row of the area, set to pass": lambda: self.edit("MAP 4.1", **{"Also covers": "MAP 2.2"})}
         for name, change in cases.items():
             self.setUp()
             before = self.json.read_text()
             change()
             self.assertEqual(self.do_import(), 1, name)
             self.assertEqual(self.json.read_text(), before, name)
+
+    def test_a_note_repeating_a_row_may_stay_only_while_flagged(self):
+        self.edit("MAP 4.1", **{"Also covers": "MAP 2.2", "Status": "needs_human_review"})
+        self.assertEqual(self.do_import(), 0)                            # flagged: the person has not decided yet
+        self.export()
+        self.edit("MAP 4.1", Status="pass")
+        self.assertEqual(self.do_import(), 1)                            # cannot pass with the note still there
+        self.edit("MAP 4.1", **{"Also covers": ""})
+        self.assertEqual(self.do_import(), 0)
+        self.assertEqual(self.rows()["MAP 4.1"]["status"], "pass")
 
     def test_also_covers_is_a_note_that_can_be_edited(self):
         self.edit("MAP 4.1", **{"Also covers": ""})
@@ -313,6 +324,7 @@ class MappingSheet(unittest.TestCase):
         self.assertEqual(rows["MEASURE 2.10"]["decided_by"], "human")
         self.assertTrue(rows["MANAGE 2.4"]["why"].startswith("The agent's new wording"))
         self.assertIn("2 human decisions kept", line)
+        self.assertEqual((rows["MEASURE 2.10"]["status"], rows["MANAGE 2.4"]["status"]), ("needs_human_review", "pass"))
 
     def test_the_mapping_gate(self):
         import ai_mapping as PL

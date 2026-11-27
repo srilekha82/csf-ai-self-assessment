@@ -6,6 +6,8 @@
     "rows_changed": "the mapping rows changed since these questions were written: check them against the rows, then set pass",
     "flagged": "flagged in the review sheet",
     "missing": "Missing: ",
+    "kept_on_redraft": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it.",
+    "also_own_row": "Also covers {}, which has its own row: keep one row, or clear the note.",
     "note": "Note: ",
     "coverage_headers": ["Function", "Subcategory", "What it means (Playbook outcome)", "Areas with a row"],
     "not_drafted": "{} (not drafted)",

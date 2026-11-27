@@ -4,7 +4,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "581a65489d22698f",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -23,16 +23,18 @@
             "MAP 1.4",
             "MAP 2.1"
           ],
-          "status": "pass",
-          "decided_by": "agent"
+          "status": "needs_human_review",
+          "decided_by": "agent",
+          "review_reason": "Also covers MAP 1.4, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MAP",
           "subcategory": "MAP 1.4",
           "cis_refs": [],
           "why": "The business value of using AI output in each internal workflow, and what decisions and data depend on it, are defined.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -63,11 +65,12 @@
           "subcategory": "MAP 3.2",
           "cis_refs": [],
           "why": "The likelihood and size of both the costs and the benefits of AI output in internal decisions (HR, finance, approvals, operations) are examined, using past use and feedback, so high-impact decisions are identified.",
-          "status": "pass",
+          "status": "needs_human_review",
           "decided_by": "human",
           "also_covers": [
             "MAP 5.1"
-          ]
+          ],
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Also covers MAP 5.1, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MAP",
@@ -93,8 +96,9 @@
           "also_covers": [
             "MAP 3.2"
           ],
-          "status": "pass",
-          "decided_by": "agent"
+          "status": "needs_human_review",
+          "decided_by": "agent",
+          "review_reason": "Also covers MAP 3.2, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MEASURE",
@@ -212,7 +216,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "a514eff43379693f",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -279,8 +283,9 @@
             "LLM-16.5"
           ],
           "why": "Dependencies suggested by the AI are checked against approved sources and for known vulnerabilities before they are used.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -352,7 +357,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "df88bc046f56fa31",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -375,8 +380,9 @@
           "subcategory": "MAP 1.4",
           "cis_refs": [],
           "why": "The business value of the customer-facing AI, and how its answers are used further by customers and the business, are defined.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -401,8 +407,9 @@
           "subcategory": "MAP 3.1",
           "cis_refs": [],
           "why": "The benefits customers are meant to get from the AI are examined, with customer input on what they value, so they can be weighed against the harms.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -438,8 +445,9 @@
           "subcategory": "MEASURE 2.3",
           "cis_refs": [],
           "why": "Performance of the customer-facing AI is measured under real public conditions (unexpected, non-optimised use by customers), not only in the lab.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -493,8 +501,9 @@
             "LLM-3.13"
           ],
           "why": "Leaks of personal or confidential data in answers to customers are monitored and examined.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -505,16 +514,18 @@
             "MAP 5.2",
             "MEASURE 4.2"
           ],
-          "status": "pass",
-          "decided_by": "agent"
+          "status": "needs_human_review",
+          "decided_by": "agent",
+          "review_reason": "Also covers MEASURE 4.2, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MEASURE",
           "subcategory": "MEASURE 4.2",
           "cis_refs": [],
           "why": "Customer feedback, positive and negative, and how often answers are overridden are used to check that the application performs as intended in front of customers.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -542,8 +553,9 @@
           "subcategory": "MANAGE 4.1",
           "cis_refs": [],
           "why": "Post-deployment monitoring of the customer-facing AI is run in practice, capturing customer input, appeal and override, and changes to the application.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -574,7 +586,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "cf90fa07124bc3e3",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -597,8 +609,9 @@
           "subcategory": "MAP 1.4",
           "cis_refs": [],
           "why": "The business purpose each vendor AI feature serves in internal processes is decided and owned.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -627,8 +640,9 @@
           "subcategory": "MAP 3.3",
           "cis_refs": [],
           "why": "Each vendor AI feature is scoped to the systems, data classes and uses it may touch, so the data it is exposed to is limited.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -649,11 +663,12 @@
             "LLM-15.5"
           ],
           "why": "The risks of each vendor's AI are assessed and documented before and during use: its model provider, data retention and training use, terms of service, the vendor's security and tenant isolation, and what happens when the AI feature fails or is unavailable.",
-          "status": "pass",
+          "status": "needs_human_review",
           "decided_by": "human",
           "also_covers": [
             "MEASURE 2.7"
-          ]
+          ],
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Also covers MEASURE 2.7, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MAP",
@@ -662,8 +677,9 @@
             "LLM-15.4"
           ],
           "why": "The controls for each vendor AI feature (training opt-out, history retention off, risky features disabled, which data classes may go to it) are identified and documented.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -746,8 +762,9 @@
             "LLM-3.1"
           ],
           "why": "Each vendor's AI is monitored regularly for changes (new features, model provider, terms) and the agreed controls are checked as still applied.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -781,7 +798,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "69d28fd408d0e2dc",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -807,8 +824,9 @@
           "subcategory": "MAP 1.2",
           "cis_refs": [],
           "why": "The people who build and tune the model bring the range of skills, domain and user experience and backgrounds needed to spot bias and misuse in what it is built for, and who took part is documented.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -914,8 +932,9 @@
           "subcategory": "MEASURE 3.3",
           "cis_refs": [],
           "why": "Recipients of a released model have a way to report problems with it, and the reports feed back into building and tuning.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -935,8 +954,9 @@
             "LLM-17.8"
           ],
           "why": "A problem found in a released model is responded to and recovered from by a defined procedure that covers rebuilding and restoring it",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -991,7 +1011,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "2c8164b6700d5ed4",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1006,8 +1026,9 @@
           "subcategory": "MAP 3.1",
           "cis_refs": [],
           "why": "Why staff use unapproved AI, the benefit they get from it, is understood, and approved alternatives are checked to meet that need.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -1021,8 +1042,9 @@
             "LLM-3.8"
           ],
           "why": "The org finds and lists the AI tools, features, PoCs and local models staff use without approval, what data they receive and where it goes, and the outside AI agents connecting in, not only the approved ones.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -1046,8 +1068,9 @@
           "subcategory": "MAP 5.1",
           "cis_refs": [],
           "why": "For the unapproved AI use and outside agents it finds, the org assesses how likely and how serious the harm is (what data, how sensitive, how often), to prioritise treatment.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -1279,8 +1302,9 @@
             "LLM-8.3"
           ],
           "why": "Prompts and responses are logged as a record with who sent what, who can read those logs , so exposure can be traced and accounted for.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -1293,11 +1317,12 @@
             "LLM-8.11"
           ],
           "why": "Personal and sensitive data in prompts and files, and what staff and systems send in production (volumes, file types, unexpected input), are monitored, with alerts when sensitive data appears or leaves the org.",
-          "status": "pass",
+          "status": "needs_human_review",
           "decided_by": "human",
           "also_covers": [
             "MEASURE 2.4"
-          ]
+          ],
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Also covers MEASURE 2.4, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MANAGE",
@@ -1329,8 +1354,9 @@
           "subcategory": "MANAGE 4.3",
           "cis_refs": [],
           "why": "Exposures of sensitive input are recorded and communicated to the affected people, providers and regulators after they are found.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         }
       ],
       "no_question": [],
@@ -1343,7 +1369,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "88833db0fba3fb99",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1358,8 +1384,9 @@
           "subcategory": "MAP 1.1",
           "cis_refs": [],
           "why": "The intended purpose and settings of the AI's answers, and what counts as a correct answer for them, are defined, so accuracy, consistency and bias tests have a target.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -1408,19 +1435,21 @@
           "subcategory": "MEASURE 1.3",
           "cis_refs": [],
           "why": "Accuracy, consistency and bias tests of answers are done or reviewed by people other than those who built the system (independent assessors, domain experts, affected users).",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
           "subcategory": "MEASURE 2.1",
           "cis_refs": [],
           "why": "The test sets, metrics and tools used to test answers for accuracy, consistency and bias are documented, with how the test data was chosen and why the tests measure what they claim.",
-          "status": "pass",
+          "status": "needs_human_review",
           "decided_by": "human",
           "also_covers": [
             "MAP 2.3"
-          ]
+          ],
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Also covers MAP 2.3, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MEASURE",
@@ -1489,8 +1518,9 @@
           "subcategory": "MEASURE 2.9",
           "cis_refs": [],
           "why": "Answers are presented with enough context (basis, confidence, limits) for people to judge how far to trust them before acting.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -1513,8 +1543,9 @@
           "subcategory": "MEASURE 4.2",
           "cis_refs": [],
           "why": "Domain experts and users confirm that answers are valid, reliable and consistent in real use.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -1591,7 +1622,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "88830aaa7349d775",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1791,7 +1822,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "d9d9e404f05e3ec2",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1816,8 +1847,9 @@
             "LLM-2.1"
           ],
           "why": "The legal and IP risks of the model as an asset are mapped: who owns the weights and versions, the licence they are released under, and the risk of the model leaking or infringing rights.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -1857,8 +1889,9 @@
             "LLM-8.10"
           ],
           "why": "Access to weights, prompts and configurations, and changes to model versions, are logged so copying or tampering can be traced to who did it.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -1871,8 +1904,9 @@
             "LLM-11.2"
           ],
           "why": "Controls such as restricted access, encryption and protected backups are applied to weights, fine-tuned versions and system prompts.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -1937,7 +1971,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "3f4bcc1a83e891bb",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -1952,16 +1986,18 @@
           "subcategory": "MAP 1.6",
           "cis_refs": [],
           "why": "Requirements for the store (who may see which content through the AI, privacy and entitlement expectations) are set, and retrieval entitlements follow them.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
           "subcategory": "MAP 2.2",
           "cis_refs": [],
           "why": "What the store does not cover, and where answers built on it should not be relied on, is documented and told to users so they know when to check elsewhere.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -2047,8 +2083,9 @@
           "subcategory": "MEASURE 2.6",
           "cis_refs": [],
           "why": "Retrieval fails safely: it refuses rather than exposing restricted content when permission or classification checks fail or the store misbehaves.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Note: Failing safely when a question is outside the store's coverage or the store is unavailable addresses wrong answers, which the area's threat (exposure, poisoning, copy-out) does not mention; the threat may be too narrow."
         },
         {
           "function": "MEASURE",
@@ -2114,8 +2151,9 @@
             "LLM-17.4"
           ],
           "why": "When store content is found poisoned or leaked, it is cleaned, re-indexed and access reviewed by a defined procedure that is followed in practice.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -2132,8 +2170,9 @@
           "subcategory": "MANAGE 3.1",
           "cis_refs": [],
           "why": "Third-party and external content feeding the store is monitored over time, and its risks controlled, not only identified when it is added.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -2147,20 +2186,13 @@
           "decided_by": "agent"
         }
       ],
-      "no_question": [],
-      "notes": [
-        {
-          "function": "MEASURE",
-          "subcategory": "MEASURE 2.6",
-          "reason": "Failing safely when a question is outside the store's coverage or the store is unavailable addresses wrong answers, which the area's threat (exposure, poisoning, copy-out) does not mention; the threat may be too narrow."
-        }
-      ]
+      "no_question": []
     },
     "mcp_tools": {
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "8f7c6fd9ddcf84ad",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2210,8 +2242,9 @@
           "subcategory": "MAP 3.5",
           "cis_refs": [],
           "why": "Tool actions that need a person to confirm them before they run (writes, deletes, payments, external sends) are identified, and the confirmation is enforced.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -2236,8 +2269,9 @@
             "MCP-2.5"
           ],
           "why": "Internal controls for each tool or MCP server (approval before use, allowed versions) are identified and documented.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -2256,8 +2290,9 @@
           "subcategory": "MEASURE 2.6",
           "cis_refs": [],
           "why": "The AI fails safely when a tool or MCP server errors, times out, is unavailable or returns something unexpected, instead of retrying or leaving partial changes.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -2345,8 +2380,9 @@
             "MCP-15.7"
           ],
           "why": "Post-deployment monitoring of tools covers change management for new tools or permissions and decommissioning of unused tools.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -2372,7 +2408,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "f27e263ad14087d1",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2410,8 +2446,9 @@
           "subcategory": "MAP 3.1",
           "cis_refs": [],
           "why": "The benefit that justifies giving the agent autonomy (time saved, error rate against a person doing the task) is examined with its users.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MAP",
@@ -2423,8 +2460,9 @@
           "also_covers": [
             "MAP 5.1"
           ],
-          "status": "pass",
-          "decided_by": "agent"
+          "status": "needs_human_review",
+          "decided_by": "agent",
+          "review_reason": "Also covers MAP 5.1, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MAP",
@@ -2466,11 +2504,12 @@
             "AGENT-16.5"
           ],
           "why": "The components an agent is built on (models, orchestration frameworks, libraries, executors) are inventoried and held to approved versions, with their legal, IP and supply-chain risks documented.",
-          "status": "pass",
+          "status": "needs_human_review",
           "decided_by": "human",
           "also_covers": [
             "MAP 4.1"
-          ]
+          ],
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it. Also covers MAP 4.1, which has its own row: keep one row, or clear the note."
         },
         {
           "function": "MAP",
@@ -2479,16 +2518,18 @@
             "AGENT-16.14"
           ],
           "why": "The likelihood and magnitude of harm from agent actions are assessed, including irreversible changes and actions triggered by manipulated input.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
           "subcategory": "MEASURE 2.3",
           "cis_refs": [],
           "why": "The agent's task performance is measured in conditions like the real deployment (real systems, messy inputs), not only in tests.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -2508,8 +2549,9 @@
             "AGENT-16.13"
           ],
           "why": "The agent is shown to complete its tasks within its autonomy limits under realistic conditions, and where it must not act on its own is documented.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -2558,8 +2600,9 @@
           "subcategory": "MEASURE 2.10",
           "cis_refs": [],
           "why": "Privacy risk from personal data the agent keeps in memory across sessions and moves between systems by its actions is examined.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MEASURE",
@@ -2627,8 +2670,9 @@
             "AGENT-16.1"
           ],
           "why": "Post-deployment plans for each agent cover change management of its configuration and tools, and retiring agents that are no longer needed.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -2664,7 +2708,7 @@
       "recorded_on": "2026-11-27",
       "inputs": {
         "area": "9c723c429855d184",
-        "ai_areas": "6aa282ff52831eb0",
+        "ai_areas": "03f31493ececacce",
         "rules": "55d1624f0abf1d57",
         "playbook": "65d6101d80650287",
         "guides": {
@@ -2825,8 +2869,9 @@
             "LLM-4.1"
           ],
           "why": "Controls that protect the hosted service are applied: authenticated access, network isolation, throttling, firewalling, scoped secrets and keys, and a hardened serving configuration.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         },
         {
           "function": "MANAGE",
@@ -2878,12 +2923,13 @@
             "LLM-7.3"
           ],
           "why": "Post-deployment plans for the hosting environment cover patching and change management of the hosting stack.",
-          "status": "pass",
-          "decided_by": "human"
+          "status": "needs_human_review",
+          "decided_by": "human",
+          "review_reason": "Decided by a person before this area was re-drafted: confirm it still fits the area's Scope and AI threat, and that no new row repeats it."
         }
       ],
       "no_question": []
     }
   },
-  "source_sha": "3e01987f5f937ea0"
+  "source_sha": "b9368278fd60729d"
 }

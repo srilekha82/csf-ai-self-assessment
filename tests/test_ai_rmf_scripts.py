@@ -695,8 +695,43 @@ class Mapping(unittest.TestCase):
         self.assertEqual(self.go(g, review=review), 0)
         entry = json.loads(R.AI_MAPPING.read_text())["areas"]["mcp_tools"]
         self.assertEqual([x["subcategory"] for x in entry["missing"]], ["MANAGE 4.1"])
-        self.assertEqual([x["subcategory"] for x in entry["notes"]], ["MEASURE 2.7"])
-        self.assertTrue(all(r["status"] == "pass" for r in entry["rows"]))     # no MANAGE row is flagged
+        self.assertNotIn("notes", entry)                                       # a note on a row flags that row
+        rows = {r["subcategory"]: r for r in entry["rows"]}
+        self.assertEqual(rows["MEASURE 2.7"]["status"], "needs_human_review")
+        self.assertIn("Note: Reaches beyond", rows["MEASURE 2.7"]["review_reason"])
+        self.assertEqual([s for s, r in rows.items() if r["status"] != "pass"], ["MEASURE 2.7"])   # no other row
+
+    def test_a_note_on_a_subcategory_that_is_not_a_row_stays_a_note(self):
+        review = [{"kind": "note", "function": "MAP", "subcategory": "MAP 1.6", "reason": "Worth a thought later."}]
+        self.assertEqual(self.go(self.good(), review=review), 0)
+        entry = json.loads(R.AI_MAPPING.read_text())["areas"]["mcp_tools"]
+        self.assertEqual([x["subcategory"] for x in entry["notes"]], ["MAP 1.6"])
+        self.assertTrue(all(r["status"] == "pass" for r in entry["rows"]))
+
+    def test_also_covers_naming_a_row_of_the_area_is_rejected_in_a_draft(self):
+        g = self.good()
+        bad = dict(g, rows=[dict(g["rows"][0], also_covers=["MAP 2.2"])] + g["rows"][1:])   # MAP 2.2 is a row
+        self.assertEqual(self.go(bad), 1)
+        self.assertFalse(R.AI_MAPPING.exists())
+
+    def test_a_redraft_flags_every_row_the_person_kept_and_a_note_that_repeats_a_new_row(self):
+        g = self.good()
+        self.assertEqual(self.go(dict(g, rows=[r for r in g["rows"] if r["subcategory"] != "MAP 2.2"])), 0)
+        doc = json.loads(R.AI_MAPPING.read_text())                       # the person decides MAP 4.1, noting MAP 2.2
+        for r in doc["areas"]["mcp_tools"]["rows"]:
+            if r["subcategory"] == "MAP 4.1":
+                r.update(decided_by="human", also_covers=["MAP 2.2"])
+        R.AI_MAPPING.write_text(json.dumps(doc))
+        self.assertEqual(self.go(g), 0)                                  # the re-draft brings MAP 2.2 as its own row
+        rows = {r["subcategory"]: r for r in json.loads(R.AI_MAPPING.read_text())["areas"]["mcp_tools"]["rows"]}
+        kept = rows["MAP 4.1"]
+        self.assertEqual((kept["status"], kept["decided_by"], kept["also_covers"]), ("needs_human_review", "human", ["MAP 2.2"]))
+        self.assertIn("re-drafted", kept["review_reason"])
+        self.assertIn("Also covers MAP 2.2, which has its own row", kept["review_reason"])
+        self.assertEqual([s for s, r in rows.items() if r["status"] != "pass"], ["MAP 4.1"])   # agent rows that passed
+        self.assertEqual(self.go(g), 0)                                  # a second re-draft does not repeat the reasons
+        again = {r["subcategory"]: r for r in json.loads(R.AI_MAPPING.read_text())["areas"]["mcp_tools"]["rows"]}
+        self.assertEqual(again["MAP 4.1"]["review_reason"], kept["review_reason"])
 
     def test_an_also_covers_note_is_a_comment_not_a_row(self):
         g = self.good()

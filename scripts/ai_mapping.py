@@ -114,7 +114,7 @@ def mapping_inputs(inp: dict) -> dict:
     return {"areas": {a["id"]: a for a in load_json(AI_AREAS, "ai_areas.json")["ai_areas"]}, "rules": rules}
 
 
-def validate_mapping(data, inp, m: dict, review) -> list[str]:
+def validate_mapping(data, inp, m: dict, review, merged: bool = False) -> list[str]:
     """One AI area's mapping (the drafter's file, after the evaluator's turn):
         {"area": "mcp_tools",
          "rows": [{"function": "MEASURE", "subcategory": "MEASURE 2.8", "cis_refs": ["MCP-8.2"], "why": "..."}],
@@ -124,7 +124,8 @@ def validate_mapping(data, inp, m: dict, review) -> list[str]:
     foundation, asked once for the organisation, never per area); each subcategory exists and belongs to that
     function; cis_refs come from the area's candidates (mapping_rules.json area_cis); every row has a why; an optional
     `also_covers` note names other AI RMF subcategories the row's practice also covers (a comment: it is not a row,
-    and it is not counted or scored); every function has rows or a no_question reason (not both); no function +
+    and it is not counted or scored), never one that is a row of the area itself (`merged`: an area merged with a
+    person's kept rows, where store_mapping flags such a row for review instead); every function has rows or a no_question reason (not both); no function +
     subcategory twice; every required check that applies to the area is met.
 
     --review is the evaluator's last list [{"kind", "function", "subcategory", "reason"}]: "row" (default) fails a
@@ -167,7 +168,7 @@ def validate_mapping(data, inp, m: dict, review) -> list[str]:
                           f"{[g for g in r['cis_refs'] if g not in allowed] if isinstance(r['cis_refs'], list) else r['cis_refs']}")
         if len(str(r["why"]).strip()) < rules["min_why_chars"]:
             errors.append(f"{tag}: why must say in a sentence why this subcategory checks this area")
-    errors += also_covers_problems(rows, inp)
+    errors += also_covers_problems(rows, inp, allow_own_rows=merged)
     with_rows = {r.get("function") for r in rows if isinstance(r, dict)}
     for s in skips:
         if not isinstance(s, dict) or s.get("function") not in rules["functions"] or \
@@ -209,17 +210,41 @@ def validate_mapping(data, inp, m: dict, review) -> list[str]:
     return errors
 
 
-def also_covers_problems(rows: list, inp: dict) -> list[str]:
+def also_covers_problems(rows: list, inp: dict, allow_own_rows: bool = False) -> list[str]:
     """`also_covers` (optional on a row): a note naming other AI RMF subcategories whose practice this row also covers.
-    Only the ids are checked: real subcategories, other than the row's own."""
-    errors = []
+    The ids must be real subcategories other than the row's own, and not a row of the area itself (the note would
+    repeat it; `allow_own_rows` while store_mapping flags such a row for a person instead)."""
+    errors, own = [], {r.get("subcategory") for r in rows if isinstance(r, dict)}
     for r in rows:
         if not isinstance(r, dict) or "also_covers" not in r:
             continue
         ids = r["also_covers"]
         if not isinstance(ids, list) or [x for x in ids if x not in inp["subs"] or x == r.get("subcategory")]:
             errors.append(f"{r.get('subcategory')}: also_covers must list other AI RMF subcategory ids")
+        elif not allow_own_rows and own & set(ids):
+            errors.append(f"{r.get('subcategory')}: also_covers names {', '.join(sorted(own & set(ids)))}, which has its "
+                          "own row in this area; keep one row, or clear the note")
     return errors
+
+
+def flag_for_review(rows: list, kept: set, row_notes: dict) -> list:
+    """Rows a person must look at, marked needs_human_review with the reason added (nothing is dropped or changed):
+    a person's row kept through a re-draft (`kept`, subcategories), a row an evaluator note is about (`row_notes`,
+    subcategory -> [reasons]), and a row whose also_covers names another row of the area."""
+    own = {r["subcategory"] for r in rows}
+    out = []
+    for r in rows:
+        had = r.get("review_reason", "")
+        new = [SHEET_WORDS["kept_on_redraft"]] if r["subcategory"] in kept else []
+        new += [SHEET_WORDS["note"] + t for t in row_notes.get(r["subcategory"], [])]
+        dup = sorted(own & set(r.get("also_covers", [])), key=lambda s: [x["subcategory"] for x in rows].index(s))
+        if dup:
+            new.append(SHEET_WORDS["also_own_row"].format(", ".join(dup)))
+        new = [t for t in new if t not in had]
+        if new:
+            r = {**r, "status": "needs_human_review", "review_reason": " ".join(filter(None, [had, *new]))[:1000]}
+        out.append(r)
+    return out
 
 
 REVIEW_KINDS = ("row", "missing", "note")
@@ -242,8 +267,14 @@ def store_mapping(data, inp, m: dict, review) -> tuple[Path, str]:
     doc = load_json(AI_MAPPING, "mapping.json") if AI_MAPPING.is_file() else {"areas": {}}
     rows, no_question, kept, removed = keep_human_decisions(rows, data.get("no_question", []),
                                                            doc["areas"].get(data["area"]), inp)
+    own = {r["subcategory"] for r in rows}
+    row_notes = {}
+    for x in [x for x in notes if x["subcategory"] in own]:   # a note on a row: the person decides it
+        row_notes.setdefault(x["subcategory"], []).append(x["reason"])
+    notes = [x for x in notes if x["subcategory"] not in own]
+    rows = flag_for_review(rows, {r["subcategory"] for r in rows if r.get("decided_by") == "human"}, row_notes)
     merged = draft_of(data["area"], rows, no_question)
-    problems = validate_mapping(merged, inp, m, None) if kept else []
+    problems = validate_mapping(merged, inp, m, None, merged=True) if kept else []
     if problems:   # a person's earlier decision no longer fits the current rules: they decide, not the script
         print("[record_bank] ERROR: merged with the rows a person decided, the area breaks the rules; nothing "
               "stored. Fix those lines in mapping.xlsx (sheet_io.py import mapping), then record again:\n  - "
@@ -316,11 +347,20 @@ def mapping_freshness(entry: dict, area_id: str, inp: dict) -> str:
     return "recheck"
 
 
+def stored_area_problems(area_id: str, rows: list, no_question: list, inp: dict, m: dict) -> list[str]:
+    """A stored area (or one edited in the sheet) against the rules. A row whose also_covers names another row of the
+    area may stay while it is flagged for a person (needs_human_review); it cannot be set to pass until fixed."""
+    problems = validate_mapping(draft_of(area_id, rows, no_question), inp, m, None, merged=True)
+    passed = [r for r in rows if r.get("status", "pass") == "pass"]
+    return problems + [p for p in also_covers_problems(rows, inp)
+                       if p.split(":")[0] in {r["subcategory"] for r in passed} and "own row" in p]
+
+
 def stored_mapping_problems(inp: dict, m: dict) -> list[str]:
     """Every recorded area re-checked with validate_mapping against the current rules (regression check). Writes nothing."""
     doc = load_json(AI_MAPPING, "mapping.json") if AI_MAPPING.is_file() else {"areas": {}}
     return [f"mapping {a}: {p}" for a, e in doc["areas"].items()
-            for p in validate_mapping(draft_of(a, e["rows"], e.get("no_question", [])), inp, m, None)]
+            for p in stored_area_problems(a, e["rows"], e.get("no_question", []), inp, m)]
 
 
 def revalidate(inp: dict, m: dict) -> tuple[dict, list[str], int]:
@@ -336,7 +376,7 @@ def revalidate(inp: dict, m: dict) -> tuple[dict, list[str], int]:
         if state == "redraft":
             lines.append(f"{area_id}: its own row in the AI areas sheet or the sources changed; re-draft it")
             continue
-        problems = validate_mapping(draft_of(area_id, entry["rows"], entry.get("no_question", [])), inp, m, None)
+        problems = stored_area_problems(area_id, entry["rows"], entry.get("no_question", []), inp, m)
         if problems:
             lines += [f"{area_id}: {p}" for p in problems]
             continue
@@ -462,7 +502,7 @@ def mapping_from_sheet(lines: list[dict], doc: dict, inp: dict, m: dict) -> tupl
         rows.sort(key=lambda r: list(inp["subs"]).index(r["subcategory"]))
         with_rows = {r["function"] for r in rows}
         draft = draft_of(area_id, rows, [q for q in areas[area_id].get("no_question", []) if q["function"] not in with_rows])
-        problems += [f"{area_id}: {e}" for e in validate_mapping(draft, inp, m, None)]
+        problems += [f"{area_id}: {e}" for e in stored_area_problems(area_id, rows, draft["no_question"], inp, m)]
         new_doc["areas"][area_id].update(rows=rows, no_question=draft["no_question"])
         new_doc["areas"][area_id].pop("missing", None)
         if missing:
